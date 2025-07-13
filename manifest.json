@@ -1,0 +1,44 @@
+{
+  "name": "TX-6 Bluetooth Control",
+  "short_name": "TX-6 CTL",
+  "description": "Control TX-6 mixer from your phone",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#e2e2e4",
+  "theme_color": "#110237",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot.png",
+      "sizes": "720x1280",
+      "type": "image/png"
+    },
+    {
+      "src": "screenshot-wide.png",
+      "form_factor": "wide",
+      "sizes": "1280x720",
+      "type": "image/png"
+    }
+  ]
+}

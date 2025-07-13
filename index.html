@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TX-6 Bluetooth Control</title>
+    <meta property="og:title" content="TX-6 Remote">
+    <meta property="og:description" content="Control TX-6 with Bluetooth or USB">
+    <meta property="og:image" content="https://tx6.psimyn.com/tx6-og-1200.jpg">
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#e2e2e4">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <script defer src="alpine-3.14.9.min.js"></script>
+</head>
+
+<body x-data="tx6Controller()" x-init="init()">
+    <header>
+        <div class="status" x-text="status"></div>
+        <div class="connection-buttons">
+            <button @click="connectBle()" class="connect-btn" x-show="!isConnected" :disabled="connecting">
+                Connect BLE
+            </button>
+            <button @click="connectUsb()" class="connect-btn" x-show="!isConnected" :disabled="connecting">
+                Connect USB
+            </button>
+        </div>
+        <div class="track-selector">
+            <template x-for="(track, index) in tracks" :key="index">
+                <button class="track-button" :class="{ active: currentTrack === index }" @click="selectTrack(index)"
+                    x-text="`T${index + 1}`">
+                </button>
+            </template>
+        </div>
+    </header>
+
+    <div class="knob-container">
+        <div class="slider-wrapper">
+            <div class="knob-wrapper main-knob">
+                <div class="volume-slider">
+                    <input type="range" min="0" max="127" x-model="sliderValue" @input="handleSliderChange">
+                </div>
+                <div class="value-display">
+                    <span class="knob-value value-large" x-text="Math.floor(sliderValue * 100 / 127)"></span>
+                </div>
+            </div>
+            <div class="slider-mode">
+                <div class="radio-group">
+                    <template x-for="mode in sliderModes" :key="mode.value">
+                        <label class="radio-label">
+                            <input type="radio" name="slider-mode" :value="mode.value" x-model="currentSliderMode"
+                                @change="selectSliderMode(mode.value)" class="radio-input">
+                            <span x-text="mode.label"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <div class="knob-wrapper">
+            <div class="knob" @mousedown="startKnobDrag('eq', $event)" @touchstart="startKnobDrag('eq', $event)">
+                <div class="knob-indicator indicator-small"
+                    :style="`background: ${eqIndicatorColor}; transform: translateX(-50%) rotate(${knobs.eq.angle}deg)`">
+                </div>
+            </div>
+            <div class="value-display">
+                <span class="knob-value" x-text="eqDisplayValue"></span>
+            </div>
+            <div class="slider-mode">
+                <div class="radio-group">
+                    <template x-for="mode in eqModes" :key="mode.value">
+                        <label class="radio-label">
+                            <input type="radio" name="eq-mode" :value="mode.value" x-model="currentEqMode"
+                                @change="selectEqMode(mode.value)" class="radio-input">
+                            <span x-text="mode.label"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <div class="fx-buttons">
+            <button @click="toggleFx(1)" class="fx-button" :class="{ active: fx.fx1Active }">
+                <span class="fx-button-inner">FX1</span>
+            </button>
+            <button @click="toggleFx(2)" class="fx-button orange" :class="{ active: fx.fx2Active }">
+                <span class="fx-button-inner">FX2</span>
+            </button>
+            <button @click="fx.settingsActive = !fx.settingsActive" class="fx-settings-button white"
+                :class="{ active: fx.settingsActive }" aria-label="FX settings">
+                <span>...</span>
+            </button>
+        </div>
+
+        <!-- FX Settings Overlay -->
+        <div class="fx-settings-overlay" :class="{ active: fx.settingsActive }">
+
+            <div class="fx-channel-tabs">
+                <div class="fx-channel-tab" :class="{ active: fx.currentChannel === 7 }"
+                    @click="fx.currentChannel = 7; updateFxDisplay()">
+                    FX I
+                </div>
+                <div class="fx-channel-tab" :class="{ active: fx.currentChannel === 8 }"
+                    @click="fx.currentChannel = 8; updateFxDisplay()">
+                    FX II
+                </div>
+            </div>
+
+            <div class="fx-settings-knobs">
+                <div class="knob-wrapper">
+                    <div class="value-display">
+                        <select x-model="fx.channels[fx.currentChannel].engine" @change="handleFxEngineChange"
+                            class="fx-engine-select">
+                            <template x-for="(option, index) in fx.channels[fx.currentChannel].types" :key="index">
+                                <option :value="calculateMidiValue(index, fx.channels[fx.currentChannel].types.length)"
+                                    x-text="option"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="knob-wrapper">
+                    <div class="knob" @mousedown="startKnobDrag('fxParam1', $event)"
+                        @touchstart="startKnobDrag('fxParam1', $event)">
+                        <div class="knob-indicator indicator-small"
+                            :style="`transform: translateX(-50%) rotate(${knobs.fxParam1.angle}deg)`">
+                        </div>
+                    </div>
+                    <div class="value-display">
+                        <span class="knob-value" x-text="fxParam1DisplayValue"></span>
+                    </div>
+                </div>
+
+                <div class="knob-wrapper">
+                    <div class="knob" @mousedown="startKnobDrag('fxReturn', $event)"
+                        @touchstart="startKnobDrag('fxReturn', $event)">
+                        <div class="knob-indicator indicator-small"
+                            :style="`transform: translateX(-50%) rotate(${knobs.fxReturn.angle}deg)`">
+                        </div>
+                    </div>
+                    <div class="value-display">
+                        <span class="knob-value" x-text="Math.floor(knobs.fxReturn.value * 100 / 127)"></span>
+                        <span class="knob-label" x-text="fx.currentChannel === 7 ? 'Return' : 'Track'"></span>
+                    </div>
+                </div>
+
+                <div class="knob-wrapper" :style="fxParam2Visibility">
+                    <div class="knob" @mousedown="startKnobDrag('fxParam2', $event)"
+                        @touchstart="startKnobDrag('fxParam2', $event)">
+                        <div class="knob-indicator indicator-small"
+                            :style="`transform: translateX(-50%) rotate(${knobs.fxParam2.angle}deg)`">
+                        </div>
+                    </div>
+                    <div class="value-display">
+                        <span class="knob-value" x-text="Math.floor(knobs.fxParam2.value * 100 / 127)"></span>
+                        <span class="knob-label">res</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="master-controls">
+        <h2 class="master-title">Master</h2>
+        <div class="knob-container">
+            <div class="secondary-knobs">
+                <div class="knob-wrapper">
+                    <div class="knob" @mousedown="startBpmKnobDrag($event)" @touchstart="startBpmKnobDrag($event)">
+                        <div class="knob-indicator indicator-small"
+                            :style="`transform: translateX(-50%) rotate(${knobs.bpm.angle}deg)`">
+                        </div>
+                    </div>
+                    <div class="value-display">
+                        <span class="knob-label">BPM</span>
+                    </div>
+                </div>
+
+                <button @click="toggleStartStop()" class="start-stop-button" :class="{ active: startStopActive }">
+                    <svg class="play-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 5v14l11-7z" />
+                    </svg>
+                    <svg class="stop-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 6h12v12H6z" />
+                    </svg>
+                </button>
+
+                <div class="knob-wrapper">
+                    <div class="knob" @mousedown="startKnobDrag('masterAux', $event)"
+                        @touchstart="startKnobDrag('masterAux', $event)">
+                        <div class="knob-indicator indicator-small"
+                            :style="`transform: translateX(-50%) rotate(${knobs.masterAux.angle}deg)`">
+                        </div>
+                    </div>
+                    <div class="value-display">
+                        <span class="knob-value" x-text="Math.floor(knobs.masterAux.value * 100 / 127)"></span>
+                        <span class="knob-label">Aux</span>
+                    </div>
+                </div>
+
+                <div class="knob-wrapper">
+                    <div class="knob" @mousedown="startKnobDrag('masterCue', $event)"
+                        @touchstart="startKnobDrag('masterCue', $event)">
+                        <div class="knob-indicator indicator-small"
+                            :style="`transform: translateX(-50%) rotate(${knobs.masterCue.angle}deg)`">
+                        </div>
+                    </div>
+                    <div class="value-display">
+                        <span class="knob-value" x-text="Math.floor(knobs.masterCue.value * 100 / 127)"></span>
+                        <span class="knob-label">Cue</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="knob-wrapper main-knob">
+                <div class="knob" @mousedown="startKnobDrag('masterVolume', $event)"
+                    @touchstart="startKnobDrag('masterVolume', $event)">
+                    <div class="knob-indicator indicator-small"
+                        :style="`transform: translateX(-50%) rotate(${knobs.masterVolume.angle}deg)`">
+                    </div>
+                </div>
+                <div class="value-display">
+                    <span class="knob-value value-large"
+                        x-text="Math.floor(knobs.masterVolume.value * 100 / 127)"></span>
+                    <span class="knob-label">Vol</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="fullscreen-toggle-btn" @click="toggleFullscreen()" x-show="!isFullscreen" title="Enter fullscreen"
+        aria-label="Enter fullscreen">
+        <span>⛶</span>
+    </button>
+
+    <script>
+        // MIDI constants and utilities
+        const MIDI_SERVICE_UUID = '03b80e5a-ede8-4b33-a751-6ce34ec4c700';
+        const MIDI_IO_CHARACTERISTIC_UUID = '7772e5db-3868-4112-a1a9-f2669d106bf3';
+
+        const CC = {
+            VOLUME: 7,
+            AUX: 14,
+            CUE: 15,
+            FX: 82,
+            EQ_HIGH: 85,
+            EQ_MID: 86,
+            EQ_LOW: 87,
+            FILTER: 74,
+            START_STOP: 46,
+            BPM: 47,
+            FX_ENGINE: 15,
+            FX_PARAM1: 12,
+            FX_PARAM2: 13,
+            FX_RETURN: 7,
+            FX_TRACK_SELECT: 9
+        };
+
+        const CHANNELS = {
+            TRACK1: 0, TRACK2: 1, TRACK3: 2, TRACK4: 3, TRACK5: 4, TRACK6: 5,
+            MASTER: 6, FX1: 7, FX2: 8
+        };
+
+        // Utility functions
+        const midiToAngle = (value) => -150 + (value / 127) * 300;
+        const midiToEqDisplay = (value) => {
+            const dbValue = Math.round((value - 64) * (18 / 64));
+            return dbValue === 0 ? "0dB" : (dbValue > 0 ? "+" + dbValue : dbValue) + "dB";
+        };
+
+        // MIDI Controller module
+        const createMidiController = () => {
+            let connectionType = null;
+            let bluetoothDevice = null;
+            let midiCharacteristic = null;
+            let midiAccess = null;
+            let midiOutput = null;
+
+            const timestampGenerator = () => {
+                let localTime = performance.now() & 8191;
+                return [((localTime >> 7) | 0x80) & 0xBF, (localTime & 0x7F) | 0x80];
+            };
+
+            const midiEncoder = (midiData) => {
+                let midiBLEmessage = [timestampGenerator()[0]];
+                for (let pos = 0; pos < midiData.length; pos++) {
+                    if ((midiData[pos] >>> 7) === 1) {
+                        midiBLEmessage.push(timestampGenerator()[1]);
+                    }
+                    midiBLEmessage.push(midiData[pos]);
+                }
+                return midiBLEmessage;
+            };
+
+            const sendMidiData = (data) => {
+                if (connectionType === 'ble' && midiCharacteristic) {
+                    const bleMidiData = new Uint8Array(midiEncoder(data));
+                    return midiCharacteristic.writeValue(bleMidiData);
+                } else if (connectionType === 'usb' && midiOutput) {
+                    midiOutput.send(data);
+                    return Promise.resolve();
+                }
+                return Promise.resolve();
+            };
+
+            const sendCC = (channel, cc, value) => {
+                return sendMidiData([0xB0 + channel, cc, value]);
+            };
+
+            const connectBle = async () => {
+                if (!navigator.bluetooth) {
+                    throw new Error('Web Bluetooth API not supported');
+                }
+
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [MIDI_SERVICE_UUID], name: 'TX-6' }]
+                });
+
+                const server = await bluetoothDevice.gatt.connect();
+                const service = await server.getPrimaryService(MIDI_SERVICE_UUID);
+                midiCharacteristic = await service.getCharacteristic(MIDI_IO_CHARACTERISTIC_UUID);
+                connectionType = 'ble';
+
+                await midiCharacteristic.startNotifications();
+                return bluetoothDevice;
+            };
+
+            const connectUsb = async () => {
+                if (!navigator.requestMIDIAccess) {
+                    throw new Error('Web MIDI API not supported');
+                }
+
+                midiAccess = await navigator.requestMIDIAccess({ sysex: true });
+                const outputs = Array.from(midiAccess.outputs.values());
+
+                if (outputs.length === 0) {
+                    throw new Error('No MIDI output devices found');
+                }
+
+                // For simplicity, connect to first device. In real app, show device picker
+                midiOutput = outputs[0];
+                connectionType = 'usb';
+                return midiOutput;
+            };
+
+            const disconnect = () => {
+                if (connectionType === 'ble' && bluetoothDevice?.gatt.connected) {
+                    bluetoothDevice.gatt.disconnect();
+                }
+                connectionType = null;
+                midiCharacteristic = null;
+                midiOutput = null;
+            };
+
+            return { sendCC, connectBle, connectUsb, disconnect };
+        };
+
+        // Main Alpine.js component
+        window.tx6Controller = () => ({
+            // Connection state
+            status: '',
+            isConnected: false,
+            connecting: false,
+
+            // Track management
+            tracks: Array(6).fill(null).map((_, i) => ({ id: i, name: `T${i + 1}` })),
+            currentTrack: 0,
+
+            // Slider state
+            sliderValue: 0,
+            currentSliderMode: 7, // CC.VOLUME
+            sliderModes: [
+                { value: 7, label: 'VOL' },
+                { value: 92, label: 'AUX' },
+                { value: 91, label: 'FX1' },
+                { value: 93, label: 'CMP' }
+            ],
+
+            // EQ state
+            currentEqMode: 86, // CC.EQ_MID
+            eqModes: [
+                { value: 74, label: 'FLT' },
+                { value: 85, label: 'HIGH' },
+                { value: 86, label: 'MID' },
+                { value: 87, label: 'LOW' }
+            ],
+
+            // Knobs state
+            knobs: {
+                eq: { value: 64, angle: 0 },
+                masterVolume: { value: 0, angle: -150 },
+                masterAux: { value: 0, angle: -150 },
+                masterCue: { value: 0, angle: -150 },
+                bpm: { value: 64, angle: 0, accumulatedAngle: 0 },
+                fxParam1: { value: 0, angle: -150 },
+                fxParam2: { value: 0, angle: -150 },
+                fxReturn: { value: 0, angle: -150 }
+            },
+
+            // FX state
+            fx: {
+                fx1Active: false,
+                fx2Active: false,
+                settingsActive: false,
+                currentChannel: 7, // CHANNELS.FX1
+                channels: {
+                    7: { // FX1
+                        types: ['REV', 'CHO', 'DLY'],
+                        engine: 0,
+                        values: { param1: 0, param2: 0, return: 0 }
+                    },
+                    8: { // FX2
+                        types: ['FLT', 'CRU', 'DST', 'TRM', 'FRZ', 'TPE'],
+                        engine: 0,
+                        values: { param1: 0, param2: 0, track: 0 }
+                    }
+                }
+            },
+
+            // UI state
+            startStopActive: false,
+            isFullscreen: false,
+            activeKnob: null,
+            dragState: { startValue: 0, initialY: 0, lastBpmDelta: 0 },
+
+            // Track values storage
+            trackValues: {},
+
+            // MIDI controller instance
+            midi: null,
+
+            // Initialization
+            init() {
+                this.midi = createMidiController();
+                this.initializeTrackValues();
+                this.setupFullscreenListener();
+                this.updateEqIndicatorColor();
+            },
+
+            initializeTrackValues() {
+                const modes = [7, 14, 15, 74, 82, 85, 86, 87]; // All CC modes
+                for (let track = 0; track < 7; track++) {
+                    for (let mode of modes) {
+                        const key = `${track}-${mode}`;
+                        this.trackValues[key] = (mode >= 74 && mode <= 87) ? 64 : 0;
+                    }
+                }
+            },
+
+            // Connection methods
+            async connectBle() {
+                this.connecting = true;
+                this.status = 'Connecting to Bluetooth...';
+                try {
+                    await this.midi.connectBle();
+                    this.isConnected = true;
+                    this.status = 'Connected to TX-6 via Bluetooth';
+                    setTimeout(() => this.status = '', 2000);
+                } catch (error) {
+                    this.status = `Connection failed: ${error.message}`;
+                    setTimeout(() => this.status = '', 3000);
+                } finally {
+                    this.connecting = false;
+                }
+            },
+
+            async connectUsb() {
+                this.connecting = true;
+                this.status = 'Connecting to USB MIDI...';
+                try {
+                    await this.midi.connectUsb();
+                    this.isConnected = true;
+                    this.status = 'Connected to TX-6 via USB';
+                    setTimeout(() => this.status = '', 2000);
+                } catch (error) {
+                    this.status = `Connection failed: ${error.message}`;
+                    setTimeout(() => this.status = '', 3000);
+                } finally {
+                    this.connecting = false;
+                }
+            },
+
+            // Track management
+            selectTrack(trackIndex) {
+                // Save current track's slider value
+                const oldKey = `${this.currentTrack}-${this.currentSliderMode}`;
+                this.trackValues[oldKey] = this.sliderValue;
+
+                this.currentTrack = trackIndex;
+
+                // Load new track's slider value
+                const newKey = `${trackIndex}-${this.currentSliderMode}`;
+                this.sliderValue = this.trackValues[newKey] || 0;
+            },
+
+            selectSliderMode(ccNumber) {
+                // Save current value
+                const oldKey = `${this.currentTrack}-${this.currentSliderMode}`;
+                this.trackValues[oldKey] = this.sliderValue;
+
+                this.currentSliderMode = ccNumber;
+
+                // Load value for new mode
+                const newKey = `${this.currentTrack}-${ccNumber}`;
+                this.sliderValue = this.trackValues[newKey] || 0;
+            },
+
+            selectEqMode(ccNumber) {
+                // Save current EQ value
+                const oldKey = `${this.currentTrack}-${this.currentEqMode}`;
+                this.trackValues[oldKey] = this.knobs.eq.value;
+
+                this.currentEqMode = ccNumber;
+
+                // Load EQ value for new mode
+                const newKey = `${this.currentTrack}-${ccNumber}`;
+                const value = this.trackValues[newKey] !== undefined ? this.trackValues[newKey] : 64;
+
+                this.setKnobValue('eq', value);
+                this.updateEqIndicatorColor();
+            },
+
+            handleSliderChange() {
+                const key = `${this.currentTrack}-${this.currentSliderMode}`;
+                this.trackValues[key] = this.sliderValue;
+                this.midi.sendCC(this.currentTrack, this.currentSliderMode, this.sliderValue);
+            },
+
+            // Knob handling
+            setKnobValue(knobType, value) {
+                this.knobs[knobType].value = value;
+                this.knobs[knobType].angle = midiToAngle(value);
+            },
+
+            startKnobDrag(knobType, event) {
+                event.preventDefault();
+
+                // Double tap to reset EQ knob to center
+                if (knobType === 'eq') {
+                    const now = Date.now();
+                    if (this.lastTapTime && (now - this.lastTapTime) < 300) {
+                        this.setKnobValue('eq', 64);
+                        this.handleEqChange(64);
+                        this.lastTapTime = 0;
+                        return;
+                    }
+                    this.lastTapTime = now;
+                }
+
+                this.activeKnob = knobType;
+                this.dragState.startValue = this.knobs[knobType].value;
+                this.dragState.initialY = event.type === 'touchstart' ?
+                    event.touches[0].clientY : event.clientY;
+
+                const handleMove = (e) => this.handleKnobMove(e);
+                const handleEnd = () => {
+                    document.removeEventListener('mousemove', handleMove);
+                    document.removeEventListener('touchmove', handleMove);
+                    document.removeEventListener('mouseup', handleEnd);
+                    document.removeEventListener('touchend', handleEnd);
+                    this.activeKnob = null;
+                };
+
+                document.addEventListener('mousemove', handleMove);
+                document.addEventListener('touchmove', handleMove);
+                document.addEventListener('mouseup', handleEnd);
+                document.addEventListener('touchend', handleEnd);
+            },
+
+            handleKnobMove(event) {
+                if (!this.activeKnob) return;
+
+                const currentY = event.type === 'touchmove' ?
+                    event.touches[0].clientY : event.clientY;
+
+                const deltaY = currentY - this.dragState.initialY;
+                const sensitivity = 1.5;
+                const valueDelta = Math.round(-deltaY / sensitivity);
+                const newValue = Math.max(0, Math.min(127, this.dragState.startValue + valueDelta));
+
+                if (this.knobs[this.activeKnob].value !== newValue) {
+                    this.setKnobValue(this.activeKnob, newValue);
+                    this.handleKnobChange(this.activeKnob, newValue);
+                }
+            },
+
+            handleKnobChange(knobType, value) {
+                switch (knobType) {
+                    case 'eq':
+                        this.handleEqChange(value);
+                        break;
+                    case 'masterVolume':
+                        this.midi.sendCC(CHANNELS.MASTER, CC.VOLUME, value);
+                        break;
+                    case 'masterAux':
+                        this.midi.sendCC(CHANNELS.MASTER, CC.AUX, value);
+                        break;
+                    case 'masterCue':
+                        this.midi.sendCC(CHANNELS.MASTER, CC.CUE, value);
+                        break;
+                    case 'fxParam1':
+                        this.midi.sendCC(this.fx.currentChannel, CC.FX_PARAM1, value);
+                        this.fx.channels[this.fx.currentChannel].values.param1 = value;
+                        break;
+                    case 'fxParam2':
+                        this.midi.sendCC(this.fx.currentChannel, CC.FX_PARAM2, value);
+                        this.fx.channels[this.fx.currentChannel].values.param2 = value;
+                        break;
+                    case 'fxReturn':
+                        const ccType = this.fx.currentChannel === 7 ? CC.FX_RETURN : CC.FX_TRACK_SELECT;
+                        this.midi.sendCC(this.fx.currentChannel, ccType, value);
+                        if (this.fx.currentChannel === 7) {
+                            this.fx.channels[this.fx.currentChannel].values.return = value;
+                        } else {
+                            this.fx.channels[this.fx.currentChannel].values.track = value;
+                        }
+                        break;
+                }
+            },
+
+            handleEqChange(value) {
+                this.midi.sendCC(this.currentTrack, this.currentEqMode, value);
+                const key = `${this.currentTrack}-${this.currentEqMode}`;
+                this.trackValues[key] = value;
+            },
+
+            // BPM knob special handling
+            startBpmKnobDrag(event) {
+                event.preventDefault();
+                this.activeKnob = 'bpm';
+                this.dragState.initialY = event.type === 'touchstart' ?
+                    event.touches[0].clientY : event.clientY;
+                this.dragState.lastBpmDelta = 0;
+
+                if (!this.knobs.bpm.accumulatedAngle) {
+                    this.knobs.bpm.accumulatedAngle = this.knobs.bpm.angle;
+                }
+
+                const handleMove = (e) => this.handleBpmMove(e);
+                const handleEnd = () => {
+                    document.removeEventListener('mousemove', handleMove);
+                    document.removeEventListener('touchmove', handleMove);
+                    document.removeEventListener('mouseup', handleEnd);
+                    document.removeEventListener('touchend', handleEnd);
+                    this.activeKnob = null;
+                };
+
+                document.addEventListener('mousemove', handleMove);
+                document.addEventListener('touchmove', handleMove);
+                document.addEventListener('mouseup', handleEnd);
+                document.addEventListener('touchend', handleEnd);
+            },
+
+            handleBpmMove(event) {
+                if (this.activeKnob !== 'bpm') return;
+
+                const currentY = event.type === 'touchmove' ?
+                    event.touches[0].clientY : event.clientY;
+
+                const deltaY = currentY - this.dragState.initialY;
+                const angleDelta = -deltaY / 2;
+
+                this.knobs.bpm.accumulatedAngle += angleDelta - (this.dragState.lastBpmDelta || 0);
+                this.dragState.lastBpmDelta = angleDelta;
+                this.knobs.bpm.angle = this.knobs.bpm.accumulatedAngle;
+
+                if (deltaY !== 0) {
+                    const relativeValue = deltaY < 0 ? 1 : -1;
+                    this.midi.sendCC(CHANNELS.MASTER, CC.BPM, relativeValue);
+                }
+            },
+
+            // FX methods
+            toggleFx(fxNumber) {
+                if (fxNumber === 1) {
+                    this.fx.fx1Active = !this.fx.fx1Active;
+                    this.midi.sendCC(CHANNELS.FX1, CC.FX, this.fx.fx1Active ? 127 : 0);
+                } else {
+                    this.fx.fx2Active = !this.fx.fx2Active;
+                    this.midi.sendCC(CHANNELS.FX2, CC.FX, this.fx.fx2Active ? 127 : 0);
+                }
+            },
+
+            handleFxEngineChange() {
+                const value = parseInt(this.fx.channels[this.fx.currentChannel].engine);
+                this.midi.sendCC(this.fx.currentChannel, CC.FX_ENGINE, value);
+            },
+
+            updateFxDisplay() {
+                const channelData = this.fx.channels[this.fx.currentChannel];
+                this.setKnobValue('fxParam1', channelData.values.param1);
+                this.setKnobValue('fxParam2', channelData.values.param2);
+
+                const returnValue = this.fx.currentChannel === 7 ?
+                    channelData.values.return : channelData.values.track;
+                this.setKnobValue('fxReturn', returnValue);
+            },
+
+            calculateMidiValue(index, totalOptions) {
+                return Math.round((index / (totalOptions - 1)) * 127);
+            },
+
+            // Other methods
+            toggleStartStop() {
+                this.startStopActive = !this.startStopActive;
+                this.midi.sendCC(CHANNELS.MASTER, CC.START_STOP, 127);
+            },
+
+            toggleFullscreen() {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                }
+            },
+
+            setupFullscreenListener() {
+                document.addEventListener('fullscreenchange', () => {
+                    this.isFullscreen = !!document.fullscreenElement;
+                });
+            },
+
+            updateEqIndicatorColor() {
+                // This would need to be implemented based on your CSS custom properties
+            },
+
+            // Computed properties
+            get eqDisplayValue() {
+                if (this.currentEqMode === CC.FILTER) {
+                    const filterValues = [10, 11, 13, 15, 18, 22, 24, 29, 33, 39, 47, 53, 63, 71, 85, 101, 114, 136, 163, 184, 219, 247, 295, 353, 397, 475, 534, 639, 763, 859, '1.0k', '1.2k', '1.4k', '1.7k', '1.9k', '2.2k', '2.7k', '3.0k', '3.6k', '4.0k', '4.8k', '5.7k', '6.5k', '7.7k', '8.7k', '10.4k', '12.4k', '14.0k', '16.7k', '20.0k'];
+                    const kPoint = filterValues.findIndex(a => a === '1.0k');
+                    const allValues = [...filterValues, '-', ...filterValues];
+                    const index = Math.round(this.knobs.eq.value / 127 * 100);
+                    return allValues[index];
+                } else {
+                    return midiToEqDisplay(this.knobs.eq.value);
+                }
+            },
+
+            get eqIndicatorColor() {
+                switch (this.currentEqMode) {
+                    case CC.EQ_MID: return 'var(--accent-color-orange)';
+                    case CC.EQ_LOW: return 'var(--accent-color-white)';
+                    case CC.FILTER: return 'var(--accent-color)';
+                    default: return 'var(--accent-color-blue)';
+                }
+            },
+
+            get fxParam1DisplayValue() {
+                const channelData = this.fx.channels[this.fx.currentChannel];
+                const currentType = channelData.types[Math.floor(this.fx.channels[this.fx.currentChannel].engine / (128 / channelData.types.length))];
+
+                // This would contain the parameter configuration logic
+                // For now, just return percentage
+                return Math.floor(this.knobs.fxParam1.value * 100 / 127);
+            },
+
+            get fxParam2Visibility() {
+                const channelData = this.fx.channels[this.fx.currentChannel];
+                const currentType = channelData.types[Math.floor(this.fx.channels[this.fx.currentChannel].engine / (128 / channelData.types.length))];
+
+                // Hide param2 for certain FX types
+                const hideParam2 = ['REV', 'CHO', 'DLY', 'CRU', 'DST', 'TRM', 'FRZ', 'TPE'].includes(currentType);
+                return hideParam2 ? 'visibility: hidden' : 'visibility: visible';
+            }
+        });
+
+        // Service Worker registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
+</body>
+
+</html>

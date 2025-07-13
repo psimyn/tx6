@@ -1,0 +1,737 @@
+:root { 
+    --bg-color: #e2e2e4;
+    --bg-color-darker: #d0d0d3;
+    --text-color: #50514f;
+    --knob-color: #f5f5f5;
+    --knob-color-secondary: #eee;
+    --knob-border: rgba(0, 0, 0, 0.1);
+    --knob-shine: rgba(255, 255, 255, 0.6);
+    --knob-shadow: rgba(0, 0, 0, 0.2);
+    --slider-track: var(--accent-color-blue); /* rgba(0, 0, 0, 0.8) */
+    --accent-color: #e2e2e4;
+    --accent-color-orange: #ff9500;
+    --accent-color-white: #ffffff;
+    --accent-color-blue: #110237;
+    --eq-center-color: #ff9500;
+    --button-color: #110237;
+    --button-color-secondary: #080031ee;
+    --button-hover: #221247;
+    --button-active: #110237;
+    --button-orange: #ff9500;
+    --button-orange-hover: #ff8000;
+    --button-orange-active: #e67e00;
+    --label-color: #110237;
+    --select-bg: #f0f0f2;
+    --select-border: rgba(0, 0, 0, 0.1);
+}
+
+*, *:before, *:after {
+    box-sizing: border-box;
+}
+
+html, body {
+    font-size: min(1.25rem, 5vw);
+    overscroll-behavior: none; /* Disable pull-to-refresh */
+    margin: 0;
+    padding: 0.25rem 0;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-image: linear-gradient(to bottom, rgba(0,0,0,0.001) 1px, transparent 1px), 
+                      linear-gradient(to right, rgba(0,0,0,0.001) 1px, transparent 1px);
+    background-size: 10px 10px;
+}
+
+h1 {
+    font-size: 1.8rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.status {
+    font-size: 1rem;
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    max-width: calc(100vw - 2rem);
+    background: white;
+    z-index: 10;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    transform: translateY(40px);
+    display: none;
+}
+
+.status:not(:empty) {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#connect-btn {
+    background-color: var(--button-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#connect-btn:hover {
+    background-color: var(--button-hover);
+}
+
+.knob-container {
+    max-width: 600px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: min(1rem, 3vw);
+    margin: 0 auto;
+    position: relative;
+}
+
+.main-knob {
+    flex: 0 0 auto;
+}
+
+.secondary-knobs {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: end;
+    gap: 1.5rem;
+    margin-right: 1rem;
+    justify-items: center;
+}
+
+.secondary-knobs .knob-wrapper .knob {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.knob-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.knob {
+    background-color: var(--knob-color);
+    border-radius: 50%;
+    position: relative;
+    border: 1px solid var(--knob-border);
+    box-shadow: 0 0 0 3px var(--knob-color-secondary),
+                0 5px 14px rgba(0, 0, 0, 0.1), 
+                8px 0 16px rgba(0, 0, 0, 0.1), 
+                0 8px 6px rgba(0, 0, 0, 0.1), 
+                5px 0 4px rgba(0, 0, 0, 0.1), 
+                0 2px 0 3px #ccc, 
+                1px 0 0 3px #aaa,
+                -2px -2px 3px rgba(255, 255, 255, 0.1);
+    touch-action: none;
+    cursor: pointer;
+    overflow: visible;
+    width: 8rem;
+    height: 8rem;
+}
+
+#eq-knob {
+    width: 5rem;
+    height: 5rem;
+}
+
+.main-controls {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.slider-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.volume-slider {
+    width: 3rem;
+    height: 12.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 1rem 0;
+}
+
+.volume-slider input[type="range"] {
+    --width: 12.5rem;
+    --height: 1.68rem;
+    appearance: none;
+    width: var(--width);
+    height: var(--height);
+    background: linear-gradient(to top,
+        var(--knob-shadow) 1.96%,
+        var(--bg-color) 11.76%,
+        var(--slider-track) 13.73%,
+        var(--slider-track) 52.94%,
+        var(--slider-track) 88.16%, 
+        var(--bg-color) 90.16%,
+        var(--knob-shadow) 98%
+    );
+    outline: none;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    border-radius: 1.5rem;
+    margin: 0;
+}
+
+.volume-slider input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: var(--knob-color-secondary);
+    border-radius: 50%;
+    box-shadow: 1px 1px 2px var(--knob-shadow),
+        -1px 0 1px var(--bg-color),
+        -1px 0 4px var(--knob-shadow);
+}
+
+.volume-slider input[type="range"]::-moz-range-thumb {
+    width: 1.5rem;
+    height: 1.5rem;
+    background: var(--knob-color-secondary);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 1px 2px var(--knob-shadow),
+        0 2px 1px var(--bg-color),
+        0 2px 4px var(--knob-shadow);
+}
+
+.knob-indicator {
+    position: absolute;
+    background: linear-gradient(to bottom, var(--accent-color) 85%, transparent 85%);
+    transform-origin: bottom center;
+    z-index: 2;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-150deg);
+}
+
+.indicator-small {
+    width: 3px;
+    height: 50%;
+}
+
+.indicator-master {
+    width: 3px;
+    height: 50%;
+}
+
+.slider-mode {
+    align-self: flex-end;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--select-bg);
+    border: 1px solid var(--select-border);
+    border-radius: 0.5rem;
+}
+
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.radio-input {
+    appearance: none;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--knob-border);
+    border-radius: 50%;
+    margin: 0;
+    cursor: pointer;
+    position: relative;
+}
+
+.radio-input:checked {
+    border-color: var(--button-color);
+}
+
+.radio-input:checked::after {
+    content: '';
+    position: absolute;
+    width: 0.5rem;
+    height: 0.5rem;
+    background: var(--button-color);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.value-display {
+    font-weight: 500;
+    margin-top: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+}
+
+.knob-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+    min-width: 2ch;
+    text-align: right;
+    display: inline-block;
+}
+
+.value-large {
+    text-align: center;
+    font-size: 1.8rem;
+}
+
+.knob-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-color);
+    opacity: 0.8;
+    font-weight: 500;
+}
+
+.knob::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 15%;
+    height: 15%;
+    background-color: var(--accent-color);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+#eq-knob::before {
+    background-color: var(--eq-center-color);
+    transition: background-color 0.1s ease;
+}
+
+.connection-info {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: #777;
+}
+
+header {
+    width: 100%;
+}
+
+.track-selector {
+    background: var(--select-bg);
+    border-radius: 999px;
+    padding: 0.4rem 0.5rem;
+    display: flex;
+    justify-content: space-around;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin: 0 auto 1rem auto;
+}
+
+.track-button {
+    background: none;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    max-width: 12vw;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.track-button:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.track-button.active {
+    background: var(--button-color);
+    color: white;
+}
+
+.track-button.active:hover {
+    background: var(--button-hover);
+}
+
+.master-controls {
+    margin-top: auto;
+    margin-top: 0.25rem;
+}
+
+.master-title {
+    font-size: 0.8rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0.5rem 0;
+}
+
+.connection-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+}
+
+.connect-btn {
+    background-color: var(--button-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: box-shadow 0.4s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+        0 0 0 1px var(--bg-color),            
+        0 2px 4px rgba(0, 0, 0, 0.02),
+        0 4px 8px rgba(0, 0, 0, 0.01),
+        inset 0 1px 1px rgba(255, 255, 255, 0.02);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+    margin-bottom: 0.5rem;
+}
+
+.connect-btn:hover {
+    background-color: var(--button-hover);
+    box-shadow: 
+        0 0 0 1px var(--bg-color),
+        0 4px 8px rgba(0, 0, 0, 0.03),
+        0 6px 12px rgba(0, 0, 0, 0.015),
+        inset 0 1px 1px rgba(255, 255, 255, 0.02);
+}
+
+.connect-btn:active {
+    transform: translateY(1px);
+    box-shadow: 
+        0 0 0 1px var(--bg-color),
+        0 1px 2px rgba(0, 0, 0, 0.2),
+        0 2px 4px rgba(0, 0, 0, 0.1),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.connect-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.1), 
+        transparent
+    );
+    transition: left 0.7s ease;
+}
+
+.connect-btn:hover::before {
+    left: 100%;
+}
+
+.fx-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.fx-button {
+    --background-color: var(--button-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    min-width: 80px;
+    aspect-ratio: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: relative;
+    align-self: flex-start;
+}
+
+.fx-button-inner {
+    width: 70%;
+    height: 30%;
+    content: '';
+    position: absolute;
+    top: 35%;
+    left: 15%;
+    background-color: var(--background-color);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fx-button:hover {
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+}
+
+.fx-button:active {
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2),
+        inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.fx-button.orange {
+    --background-color: var(--button-orange);
+}
+.fx-button.white {
+    --background-color: white;
+    color: var(--button-color);
+}
+
+.start-stop-button {
+    color: var(--text-color);
+    border: none;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 3.25rem;
+    height: 3.25rem;
+    box-shadow: inset 0 -1px 4px rgba(0, 0, 0, 0.02),
+        0 2px 4px rgba(0, 0, 0, 0.2),
+        -2px -2px 3px rgba(255, 255, 255, 0.1);
+    position: relative;
+    --background-color: var(--knob-color);
+    background: linear-gradient(to bottom right, var(--background-color), var(--knob-color-secondary));
+    padding: 0;
+    display: grid;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-start;
+}
+
+.start-stop-button.active {
+    --background-color: var(--knob-color-secondary);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.start-stop-button svg {
+    grid-row-start: 1;
+    grid-column-start: 1;
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: var(--text-color);
+    opacity: 1;
+    transition: all 0.2s ease;
+}
+
+.start-stop-button.active .play-icon {
+    opacity: 0;
+}
+
+.start-stop-button:not(.active) .stop-icon {
+    opacity: 0;
+}
+
+.start-stop-button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.start-stop-button:active {
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.02);
+}
+
+.fx-settings-button {
+    margin-top: auto;
+    position: relative;
+    height: 2rem;
+    width: auto;
+    aspect-ratio: initial;
+    box-shadow: inset 0 -1px 4px rgba(0, 0, 0, 0.02), 2px 2px 3px rgba(0, 0, 0, 0.1), -2px -2px 3px rgba(255, 255, 255, 0.1);
+    position: relative;
+    --background-color: var(--knob-color);
+    background: linear-gradient(to bottom right, var(--background-color), var(--knob-color-secondary));
+    cursor: pointer;
+    padding: 0;
+    color: var(--button-color);
+    border: 0;
+    border-radius: 3px;
+}
+
+.fx-settings-button.active,
+.fx-button.active {
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+    background-color: var(--background-color);
+}
+
+.fx-settings-overlay {
+    position: absolute;
+    background-color: var(--bg-color);
+    z-index: 100;
+    display: none;
+    flex-direction: row-reverse;
+    gap: 1.5rem;
+    top: -0.5rem;
+    left: 0;
+    right: 5rem;
+    bottom: 0;
+    pointer-events: auto;
+    transform-origin: bottom right;
+}
+
+.fx-settings-overlay.active {
+    display: flex;
+    animation: expandOverlay 0.05s ease-out forwards;
+}
+
+@keyframes expandOverlay {
+    0% {
+        transform: scaleX(0.1) scaleY(0.9);
+        opacity: 0;
+    }
+    60% {
+        transform: scaleX(0.7) scaleY(1);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scaleX(1) scaleY(1);
+        opacity: 1;
+    }
+}
+
+.fx-settings-overlay .knob {
+    height: 4rem;
+    width: 4rem;
+    aspect-ratio: 1;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.fx-settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.fx-settings-knobs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    pointer-events: auto;
+}
+
+.fx-channel-tabs {
+    flex-shrink: 0;
+    display: flex;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    height: 75%;
+}
+
+.fx-channel-tab {
+    flex: 1;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    --background-color: var(--button-color);
+    border: 1px solid var(--background-color);
+    color: var(--background-color);
+    background-color: transparent;
+}
+
+.fx-channel-tab:first-child {
+    border-bottom: none;
+}
+
+.fx-channel-tab + .fx-channel-tab {
+    --background-color: var(--button-orange);
+    border-top: none;
+}
+
+.fx-channel-tab.active {
+    color: white;
+    background-color: var(--background-color);
+    box-shadow: 0 0 0 2px var(--background-color);
+    z-index: 1;
+}
+
+.fx-settings-overlay .knob-wrapper {
+    pointer-events: auto;
+}
+
+.fx-engine-select {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 4px;
+    background-color: var(--knob-color);
+    border: 1px solid var(--knob-border);
+    color: var(--text-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.fx-engine-select option {
+    background-color: var(--knob-color);
+    color: var(--text-color);
+}
+
+.fullscreen-toggle-btn {
+    position: fixed;
+    right: .1rem;
+    bottom: .1rem;
+    color: var(--text-color);
+    background-color: transparent;
+    border: none;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+.fullscreen-toggle-btn #fullscreen-icon {
+    font-size: 1.1em;
+}
