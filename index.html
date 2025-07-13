@@ -87,14 +87,18 @@
             <button @click="toggleFx(2)" class="fx-button orange" :class="{ active: fx.fx2Active }">
                 <span class="fx-button-inner">FX2</span>
             </button>
-            <button @click="fx.settingsActive = !fx.settingsActive" class="fx-settings-button white"
-                :class="{ active: fx.settingsActive }" aria-label="FX settings">
+            <button @click="settingsView = settingsView === 'fx' ? null : 'fx'" class="fx-settings-button white"
+                :class="{ active: settingsView === 'fx' }" aria-label="FX settings">
                 <span>...</span>
+            </button>
+            <button @click="settingsView = settingsView === 'lfo' ? null : 'lfo'" class="fx-settings-button" style="margin-top:0.5rem;"
+                :class="{ active: settingsView === 'lfo' }" aria-label="LFO settings">
+                <span>LFO</span>
             </button>
         </div>
 
         <!-- FX Settings Overlay -->
-        <div class="fx-settings-overlay" :class="{ active: fx.settingsActive }">
+        <div class="fx-settings-overlay" :class="{ active: settingsView === 'fx' }">
 
             <div class="fx-channel-tabs">
                 <div class="fx-channel-tab" :class="{ active: fx.currentChannel === 7 }"
@@ -158,6 +162,60 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+
+        <!-- LFO Settings Overlay -->
+        <div class="fx-settings-overlay" :class="{ active: settingsView === 'lfo' }" style="z-index: 20;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1rem;">
+                <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;">
+                    <div class="knob-wrapper">
+                        <div class="value-display">
+                            <select id="lfo-target" x-model="lfo[currentTrack].target" class="fx-engine-select">
+    <option value="vol">VOL</option>
+    <option value="fx1">FX1</option>
+    <option value="cmp">CMP</option>
+    <option value="flt">FLT</option>
+</select>
+                        </div>
+                    </div>
+                    <div class="knob-wrapper">
+                        <div class="value-display">
+                            <select id="lfo-shape" x-model="lfo[currentTrack].shape" class="fx-engine-select">
+    <option value="sine">Sine</option>
+    <option value="triangle">Triangle</option>
+    <option value="square">Square</option>
+    <option value="saw">Saw</option>
+</select>
+                        </div>
+                    </div>
+                    <div class="knob-wrapper">
+                        <div class="knob" @mousedown="startKnobDrag('lfoRate', $event)" @touchstart="startKnobDrag('lfoRate', $event)">
+    <div class="knob-indicator indicator-small" :style="`transform: translateX(-50%) rotate(${knobs.lfoRate.angle}deg)`"></div>
+</div>
+<div class="value-display">
+    <span class="knob-value" x-text="(0.1 + (lfo[currentTrack].rate / 127) * 9.9).toFixed(2)"></span>
+    <span class="knob-label">Hz</span>
+</div>
+                    </div>
+                    <div class="knob-wrapper">
+                        <div class="knob" @mousedown="startKnobDrag('lfoAmount', $event)" @touchstart="startKnobDrag('lfoAmount', $event)">
+    <div class="knob-indicator indicator-small" :style="`transform: translateX(-50%) rotate(${knobs.lfoAmount.angle}deg)`"></div>
+</div>
+<div class="value-display">
+    <span class="knob-value" x-text="(knobs.lfoAmount.value - 50)"></span>
+    <span class="knob-label">Amount</span>
+</div>
+                    </div>
+                    <div class="knob-wrapper">
+                        <div class="value-display">
+                            <label class="radio-label">
+                                <input type="checkbox" x-model="lfo[currentTrack].enabled" class="radio-input">
+    <span>Enabled</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -296,6 +354,10 @@
             const sendMidiData = (data) => {
                 if (connectionType === 'ble' && midiCharacteristic) {
                     const bleMidiData = new Uint8Array(midiEncoder(data));
+                    // handle (index):357 Uncaught (in promise) NetworkError: Failed to execute 'writeValue' on 'BluetoothRemoteGATTCharacteristic': GATT Server is disconnected. Cannot perform GATT operations. (Re)connect first with `device.gatt.connect`.
+                    if (!bluetoothDevice.gatt.connected) {
+                        return connectBle();
+                    }
                     return midiCharacteristic.writeValue(bleMidiData);
                 } else if (connectionType === 'usb' && midiOutput) {
                     midiOutput.send(data);
@@ -395,14 +457,27 @@
                 bpm: { value: 64, angle: 0, accumulatedAngle: 0 },
                 fxParam1: { value: 0, angle: -150 },
                 fxParam2: { value: 0, angle: -150 },
-                fxReturn: { value: 0, angle: -150 }
+                fxReturn: { value: 0, angle: -150 },
+                lfoRate: { value: 64, angle: 0 },
+                lfoAmount: { value: 0, angle: -150 }
             },
+
+            // View state for overlays
+            settingsView: null, // 'fx', 'lfo', or null
+
+            // LFO state: array per track
+            lfo: Array(6).fill().map(() => ({
+                target: 'vol',
+                shape: 'sine',
+                enabled: false,
+                rate: 10, // 1 Hz default (0-127 mapped to 0.1-10 Hz)
+                amount: 50 // 0 default (-50 to +50)
+            })),
 
             // FX state
             fx: {
                 fx1Active: false,
                 fx2Active: false,
-                settingsActive: false,
                 currentChannel: 7, // CHANNELS.FX1
                 channels: {
                     7: { // FX1
@@ -431,11 +506,103 @@
             midi: null,
 
             // Initialization
+            lfoIntervals: [],
+            lfoPhases: Array(6).fill(0),
+
             init() {
                 this.midi = createMidiController();
                 this.initializeTrackValues();
                 this.setupFullscreenListener();
                 this.updateEqIndicatorColor();
+                // Sync LFO knobs to initial track
+                this.knobs.lfoRate.value = this.lfo[this.currentTrack].rate;
+                this.knobs.lfoRate.angle = midiToAngle(this.lfo[this.currentTrack].rate);
+                this.knobs.lfoAmount.value = this.lfo[this.currentTrack].amount;
+                this.knobs.lfoAmount.angle = midiToAngle(this.lfo[this.currentTrack].amount);
+                this.startLfoEngine();
+            },
+
+            startLfoEngine() {
+                if (this.lfoIntervals.length) {
+                    this.lfoIntervals.forEach(id => clearInterval(id));
+                }
+                this.lfoIntervals = [];
+                for (let i = 0; i < 6; i++) {
+                    this.lfoIntervals[i] = setInterval(() => this.runLfo(i), 20);
+                }
+            },
+
+            runLfo(trackIdx) {
+                const lfo = this.lfo[trackIdx];
+                if (!lfo.enabled) return;
+                // Convert rate (0-127) to Hz: 0.1-10Hz
+                const hz = 0.1 + (lfo.rate / 127) * 9.9;
+                const dt = 0.02; // 20ms
+                const phaseInc = 2 * Math.PI * hz * dt;
+                this.lfoPhases[trackIdx] = (this.lfoPhases[trackIdx] + phaseInc) % (2 * Math.PI);
+                let shapeVal = 0;
+                switch (lfo.shape) {
+                    case 'sine':
+                        shapeVal = Math.sin(this.lfoPhases[trackIdx]);
+                        break;
+                    case 'triangle':
+                        shapeVal = 2 * Math.abs((this.lfoPhases[trackIdx] / Math.PI) % 2 - 1) - 1;
+                        break;
+                    case 'square':
+                        shapeVal = Math.sign(Math.sin(this.lfoPhases[trackIdx]));
+                        break;
+                    case 'saw':
+                        shapeVal = 2 * ((this.lfoPhases[trackIdx] / (2 * Math.PI)) % 1) - 1;
+                        break;
+                }
+                // Amount: -50 to +50
+                const amt = lfo.amount - 50;
+                // Map to MIDI value (0-127) or -50 to 50 for display
+                let lfoValue = 0;
+                let cc = 7; // Default VOL
+                switch (lfo.target) {
+                    case 'vol': {
+                        cc = 7;
+                        const base = Number(this.trackValues[`${trackIdx}-7`]);
+                        lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 0 : base) + amt * shapeVal));
+                        if (this.currentTrack === trackIdx && this.currentSliderMode === 7) {
+                            this.sliderValue = lfoValue;
+                        }
+                        break;
+                    }
+                    case 'fx1': {
+                        cc = 91;
+                        const base = Number(this.trackValues[`${trackIdx}-91`]);
+                        lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 0 : base) + amt * shapeVal));
+                        if (this.currentTrack === trackIdx && this.currentSliderMode === 91) {
+                            this.sliderValue = lfoValue;
+                        }
+                        break;
+                    }
+                    case 'cmp': {
+                        cc = 93;
+                        const base = Number(this.trackValues[`${trackIdx}-93`]);
+                        lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 0 : base) + amt * shapeVal));
+                        if (this.currentTrack === trackIdx && this.currentSliderMode === 93) {
+                            this.sliderValue = lfoValue;
+                        }
+                        break;
+                    }
+                    case 'flt': {
+                        cc = 74;
+                        const base = Number(this.trackValues[`${trackIdx}-74`]);
+                        // Default to 64 for filter
+                        lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 64 : base) + amt * shapeVal));
+                        if (this.currentTrack === trackIdx && this.currentSliderMode === 74) {
+                            this.sliderValue = lfoValue;
+                        }
+                        break;
+                    }
+                }
+                // Send MIDI CC for this LFO
+                if (this.isConnected) {
+                    this.midi.sendCC(trackIdx, cc, Math.round(lfoValue));
+                }
             },
 
             initializeTrackValues() {
@@ -487,11 +654,21 @@
                 const oldKey = `${this.currentTrack}-${this.currentSliderMode}`;
                 this.trackValues[oldKey] = this.sliderValue;
 
+                // Save LFO knob values to current track's LFO state
+                this.lfo[this.currentTrack].rate = this.knobs.lfoRate.value;
+                this.lfo[this.currentTrack].amount = this.knobs.lfoAmount.value;
+
                 this.currentTrack = trackIndex;
 
                 // Load new track's slider value
                 const newKey = `${trackIndex}-${this.currentSliderMode}`;
                 this.sliderValue = this.trackValues[newKey] || 0;
+
+                // Sync LFO knobs to new track's LFO state
+                this.knobs.lfoRate.value = this.lfo[trackIndex].rate;
+                this.knobs.lfoRate.angle = midiToAngle(this.lfo[trackIndex].rate);
+                this.knobs.lfoAmount.value = this.lfo[trackIndex].amount;
+                this.knobs.lfoAmount.angle = midiToAngle(this.lfo[trackIndex].amount);
             },
 
             selectSliderMode(ccNumber) {
@@ -529,8 +706,18 @@
 
             // Knob handling
             setKnobValue(knobType, value) {
+                if (knobType === 'lfoAmount') {
+                    // Clamp to 0-100, center is 50
+                    value = Math.max(0, Math.min(100, value));
+                }
                 this.knobs[knobType].value = value;
                 this.knobs[knobType].angle = midiToAngle(value);
+                // Sync LFO knob values to per-track LFO state
+                if (knobType === 'lfoRate') {
+                    this.lfo[this.currentTrack].rate = value;
+                } else if (knobType === 'lfoAmount') {
+                    this.lfo[this.currentTrack].amount = value;
+                }
             },
 
             startKnobDrag(knobType, event) {
@@ -615,6 +802,12 @@
                         } else {
                             this.fx.channels[this.fx.currentChannel].values.track = value;
                         }
+                        break;
+                    case 'lfoRate':
+                        this.lfo[this.currentTrack].rate = value;
+                        break;
+                    case 'lfoAmount':
+                        this.lfo[this.currentTrack].amount = value;
                         break;
                 }
             },
