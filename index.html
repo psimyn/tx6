@@ -91,8 +91,8 @@
                 :class="{ active: settingsView === 'fx' }" aria-label="FX settings">
                 <span>...</span>
             </button>
-            <button @click="settingsView = settingsView === 'lfo' ? null : 'lfo'" class="fx-settings-button" style="margin-top:0.5rem;"
-                :class="{ active: settingsView === 'lfo' }" aria-label="LFO settings">
+            <button @click="settingsView = settingsView === 'lfo' ? null : 'lfo'" class="fx-settings-button"
+                style="margin-top:0.5rem;" :class="{ active: settingsView === 'lfo' }" aria-label="LFO settings">
                 <span>LFO</span>
             </button>
         </div>
@@ -172,46 +172,56 @@
                     <div class="knob-wrapper">
                         <div class="value-display">
                             <select id="lfo-target" x-model="lfo[currentTrack].target" class="fx-engine-select">
-    <option value="vol">VOL</option>
-    <option value="fx1">FX1</option>
-    <option value="cmp">CMP</option>
-    <option value="flt">FLT</option>
-</select>
+                                <option value="vol">VOL</option>
+                                <option value="fx1">FX1</option>
+                                <option value="cmp">CMP</option>
+                                <option value="flt">FLT</option>
+                            </select>
                         </div>
                     </div>
                     <div class="knob-wrapper">
                         <div class="value-display">
                             <select id="lfo-shape" x-model="lfo[currentTrack].shape" class="fx-engine-select">
-    <option value="sine">Sine</option>
-    <option value="triangle">Triangle</option>
-    <option value="square">Square</option>
-    <option value="saw">Saw</option>
-</select>
+                                <option value="sine">Sine</option>
+                                <option value="triangle">Triangle</option>
+                                <option value="square">Square</option>
+                                <option value="saw">Saw</option>
+                            </select>
                         </div>
                     </div>
                     <div class="knob-wrapper">
-                        <div class="knob" @mousedown="startKnobDrag('lfoRate', $event)" @touchstart="startKnobDrag('lfoRate', $event)">
-    <div class="knob-indicator indicator-small" :style="`transform: translateX(-50%) rotate(${knobs.lfoRate.angle}deg)`"></div>
-</div>
-<div class="value-display">
-    <span class="knob-value" x-text="(0.1 + (lfo[currentTrack].rate / 127) * 9.9).toFixed(2)"></span>
-    <span class="knob-label">Hz</span>
-</div>
+                        <div class="knob" @mousedown="startKnobDrag('lfoRate', $event)"
+                            @touchstart="startKnobDrag('lfoRate', $event)">
+                            <div class="knob-indicator indicator-small"
+                                :style="`transform: translateX(-50%) rotate(${knobs.lfoRate.angle}deg)`"></div>
+                        </div>
+                        <div class="value-display">
+                            <span class="knob-value"
+                                x-text="(0.1 + (lfo[currentTrack].rate / 127) * 9.9).toFixed(2)"></span>
+                            <span class="knob-label">Hz</span>
+                        </div>
+                        <div class="rate-buttons">
+                            <button @click="setLfoRateFromBpm(0.25)" class="rate-button">¼</button>
+                            <button @click="setLfoRateFromBpm(0.5)" class="rate-button">½</button>
+                            <button @click="setLfoRateFromBpm(1)" class="rate-button">1</button>
+                        </div>
                     </div>
                     <div class="knob-wrapper">
-                        <div class="knob" @mousedown="startKnobDrag('lfoAmount', $event)" @touchstart="startKnobDrag('lfoAmount', $event)">
-    <div class="knob-indicator indicator-small" :style="`transform: translateX(-50%) rotate(${knobs.lfoAmount.angle}deg)`"></div>
-</div>
-<div class="value-display">
-    <span class="knob-value" x-text="(knobs.lfoAmount.value - 50)"></span>
-    <span class="knob-label">Amount</span>
-</div>
+                        <div class="knob" @mousedown="startKnobDrag('lfoAmount', $event)"
+                            @touchstart="startKnobDrag('lfoAmount', $event)">
+                            <div class="knob-indicator indicator-small"
+                                :style="`transform: translateX(-50%) rotate(${knobs.lfoAmount.angle}deg)`"></div>
+                        </div>
+                        <div class="value-display">
+                            <span class="knob-value" x-text="(knobs.lfoAmount.value - 50)"></span>
+                            <span class="knob-label">Amount</span>
+                        </div>
                     </div>
                     <div class="knob-wrapper">
                         <div class="value-display">
                             <label class="radio-label">
                                 <input type="checkbox" x-model="lfo[currentTrack].enabled" class="radio-input">
-    <span>Enabled</span>
+                                <span>Enabled</span>
                             </label>
                         </div>
                     </div>
@@ -225,17 +235,13 @@
         <div class="knob-container">
             <div class="secondary-knobs">
                 <div class="knob-wrapper">
-                    <div class="knob" @mousedown="startBpmKnobDrag($event)" @touchstart="startBpmKnobDrag($event)">
-                        <div class="knob-indicator indicator-small"
-                            :style="`transform: translateX(-50%) rotate(${knobs.bpm.angle}deg)`">
-                        </div>
-                    </div>
                     <div class="value-display">
+                                                <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()" class="bpm-input" min="40" max="400">
                         <span class="knob-label">BPM</span>
                     </div>
                 </div>
 
-                <button @click="toggleStartStop()" class="start-stop-button" :class="{ active: startStopActive }">
+                <button @click="togglePlay()" class="start-stop-button" :class="{ active: startStopActive }">
                     <svg class="play-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M8 5v14l11-7z" />
                     </svg>
@@ -366,8 +372,12 @@
                 return Promise.resolve();
             };
 
-            const sendCC = (channel, cc, value) => {
-                return sendMidiData([0xB0 + channel, cc, value]);
+            const sendCC = (channel, controller, value) => {
+                return sendMidiData([0xB0 + channel, controller, value]);
+            };
+
+            const sendSystemRealTime = (message) => {
+                return sendMidiData([message]);
             };
 
             const connectBle = async () => {
@@ -415,7 +425,7 @@
                 midiOutput = null;
             };
 
-            return { sendCC, connectBle, connectUsb, disconnect };
+            return { sendCC, sendSystemRealTime, connectBle, connectUsb, disconnect };
         };
 
         // Main Alpine.js component
@@ -454,7 +464,7 @@
                 masterVolume: { value: 0, angle: -150 },
                 masterAux: { value: 0, angle: -150 },
                 masterCue: { value: 0, angle: -150 },
-                bpm: { value: 64, angle: 0, accumulatedAngle: 0 },
+
                 fxParam1: { value: 0, angle: -150 },
                 fxParam2: { value: 0, angle: -150 },
                 fxReturn: { value: 0, angle: -150 },
@@ -494,6 +504,8 @@
             },
 
             // UI state
+            bpm: 100,
+            midiClockInterval: null,
             startStopActive: false,
             isFullscreen: false,
             activeKnob: null,
@@ -504,6 +516,7 @@
 
             // MIDI controller instance
             midi: null,
+            midiClockTimer: null,
 
             // Initialization
             lfoIntervals: [],
@@ -812,57 +825,41 @@
                 }
             },
 
+            togglePlay() {
+                this.startStopActive = !this.startStopActive;
+                if (this.startStopActive) {
+                    this.midi.sendSystemRealTime(0xFA); // MIDI Start
+                    const interval = 60000 / (this.bpm * 24); // 24 pulses per quarter note
+                    this.midiClockTimer = setInterval(() => {
+                        this.midi.sendSystemRealTime(0xF8); // MIDI Clock
+                    }, interval);
+                } else {
+                    this.midi.sendSystemRealTime(0xFC); // MIDI Stop
+                    clearInterval(this.midiClockTimer);
+                    this.midiClockTimer = null;
+                }
+            },
+
+            updateBpm() {
+                // Ensure BPM is within a reasonable range
+                this.bpm = Math.max(40, Math.min(400, this.bpm));
+                // If the clock is running, restart it with the new BPM
+                if (this.startStopActive) {
+                    clearInterval(this.midiClockTimer);
+                    const interval = 60000 / (this.bpm * 24);
+                    this.midiClockTimer = setInterval(() => {
+                        this.midi.sendSystemRealTime(0xF8); // MIDI Clock
+                    }, interval);
+                }
+            },
+
             handleEqChange(value) {
                 this.midi.sendCC(this.currentTrack, this.currentEqMode, value);
                 const key = `${this.currentTrack}-${this.currentEqMode}`;
                 this.trackValues[key] = value;
             },
 
-            // BPM knob special handling
-            startBpmKnobDrag(event) {
-                event.preventDefault();
-                this.activeKnob = 'bpm';
-                this.dragState.initialY = event.type === 'touchstart' ?
-                    event.touches[0].clientY : event.clientY;
-                this.dragState.lastBpmDelta = 0;
 
-                if (!this.knobs.bpm.accumulatedAngle) {
-                    this.knobs.bpm.accumulatedAngle = this.knobs.bpm.angle;
-                }
-
-                const handleMove = (e) => this.handleBpmMove(e);
-                const handleEnd = () => {
-                    document.removeEventListener('mousemove', handleMove);
-                    document.removeEventListener('touchmove', handleMove);
-                    document.removeEventListener('mouseup', handleEnd);
-                    document.removeEventListener('touchend', handleEnd);
-                    this.activeKnob = null;
-                };
-
-                document.addEventListener('mousemove', handleMove);
-                document.addEventListener('touchmove', handleMove);
-                document.addEventListener('mouseup', handleEnd);
-                document.addEventListener('touchend', handleEnd);
-            },
-
-            handleBpmMove(event) {
-                if (this.activeKnob !== 'bpm') return;
-
-                const currentY = event.type === 'touchmove' ?
-                    event.touches[0].clientY : event.clientY;
-
-                const deltaY = currentY - this.dragState.initialY;
-                const angleDelta = -deltaY / 2;
-
-                this.knobs.bpm.accumulatedAngle += angleDelta - (this.dragState.lastBpmDelta || 0);
-                this.dragState.lastBpmDelta = angleDelta;
-                this.knobs.bpm.angle = this.knobs.bpm.accumulatedAngle;
-
-                if (deltaY !== 0) {
-                    const relativeValue = deltaY < 0 ? 1 : -1;
-                    this.midi.sendCC(CHANNELS.MASTER, CC.BPM, relativeValue);
-                }
-            },
 
             // FX methods
             toggleFx(fxNumber) {
@@ -878,6 +875,26 @@
             handleFxEngineChange() {
                 const value = parseInt(this.fx.channels[this.fx.currentChannel].engine);
                 this.midi.sendCC(this.fx.currentChannel, CC.FX_ENGINE, value);
+            },
+
+            setLfoRateFromBpm(multiplier) {
+                const quarterNoteDuration = 60 / this.bpm;
+                const noteDuration = quarterNoteDuration / multiplier;
+                const targetHz = 1 / noteDuration;
+
+                // Convert Hz to our 0-127 scale
+                // Formula: hz = 0.1 + (value / 127) * 9.9
+                // Reversed: value = ((hz - 0.1) / 9.9) * 127
+                let rateValue = ((targetHz - 0.1) / 9.9) * 127;
+
+                // Clamp the value between 0 and 127
+                rateValue = Math.max(0, Math.min(127, Math.round(rateValue)));
+
+                this.lfo[this.currentTrack].rate = rateValue;
+
+                // Update the knob visuals
+                this.knobs.lfoRate.value = rateValue;
+                this.knobs.lfoRate.angle = midiToAngle(rateValue);
             },
 
             updateFxDisplay() {

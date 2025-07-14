@@ -147,8 +147,36 @@ h1 {
     touch-action: none;
     cursor: pointer;
     overflow: visible;
-    width: 8rem;
-    height: 8rem;
+    width: 6rem;
+    height: 6rem;
+}
+
+.rate-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.rate-button {
+    background: #333;
+    border: 1px solid #555;
+    color: #eee;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.rate-button:hover {
+    background: #444;
+}
+
+.bpm-input {
+    width: 60px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 1.2em;
+    padding: 5px;
 }
 
 #eq-knob {
