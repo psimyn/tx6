@@ -169,7 +169,8 @@ h1 {
     border-radius: 4px;
     text-align: center;
     font-size: 1.2em;
-    padding: 5px;
+    padding: 5px 2px;
+    text-align: center;
 }
 
 #eq-knob {

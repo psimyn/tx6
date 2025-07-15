@@ -227,9 +227,9 @@
         <div class="knob-container">
             <div class="secondary-knobs">
                 <div class="knob-wrapper">
-                    <div class="value-display">
-                                                <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()" class="bpm-input" min="40" max="400">
-                        <span class="knob-label">BPM</span>
+                    <div>
+                        <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()" class="bpm-input" min="40" max="400">
+                        <div class="knob-label">BPM</div>
                     </div>
                 </div>
 
