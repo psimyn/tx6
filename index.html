@@ -207,24 +207,16 @@
                         </div>
                     </div>
                     <div class="knob-wrapper">
-                        <div class="knob" @mousedown="startKnobDrag('lfoAmount', $event)"
-                            @touchstart="startKnobDrag('lfoAmount', $event)">
+                                                <div class="knob" @mousedown="startKnobDrag('lfoAmount', $event)"
+                            @touchstart="handleLfoAmountTouchStart($event)" @dblclick="resetLfoAmount()">
                             <div class="knob-indicator indicator-small"
                                 :style="`transform: translateX(-50%) rotate(${knobs.lfoAmount.angle}deg)`"></div>
                         </div>
                         <div class="value-display">
                             <span class="knob-value" x-text="(knobs.lfoAmount.value - 50)"></span>
-                            <span class="knob-label">Amount</span>
                         </div>
                     </div>
-                    <div class="knob-wrapper">
-                        <div class="value-display">
-                            <label class="radio-label">
-                                <input type="checkbox" x-model="lfo[currentTrack].enabled" class="radio-input">
-                                <span>Enabled</span>
-                            </label>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -360,10 +352,6 @@
             const sendMidiData = (data) => {
                 if (connectionType === 'ble' && midiCharacteristic) {
                     const bleMidiData = new Uint8Array(midiEncoder(data));
-                    // handle (index):357 Uncaught (in promise) NetworkError: Failed to execute 'writeValue' on 'BluetoothRemoteGATTCharacteristic': GATT Server is disconnected. Cannot perform GATT operations. (Re)connect first with `device.gatt.connect`.
-                    if (!bluetoothDevice.gatt.connected) {
-                        return connectBle();
-                    }
                     return midiCharacteristic.writeValue(bleMidiData);
                 } else if (connectionType === 'usb' && midiOutput) {
                     midiOutput.send(data);
@@ -479,7 +467,7 @@
             lfo: Array(6).fill().map(() => ({
                 target: 'vol',
                 shape: 'sine',
-                enabled: false,
+                enabled: true,
                 rate: 10, // 1 Hz default (0-127 mapped to 0.1-10 Hz)
                 amount: 50 // 0 default (-50 to +50)
             })),
@@ -510,6 +498,7 @@
             isFullscreen: false,
             activeKnob: null,
             dragState: { startValue: 0, initialY: 0, lastBpmDelta: 0 },
+            lastTapTime: 0,
 
             // Track values storage
             trackValues: {},
@@ -519,38 +508,27 @@
             midiClockTimer: null,
 
             // Initialization
-            lfoIntervals: [],
             lfoPhases: Array(6).fill(0),
 
             init() {
                 this.midi = createMidiController();
                 this.initializeTrackValues();
                 this.setupFullscreenListener();
-                this.updateEqIndicatorColor();
                 // Sync LFO knobs to initial track
                 this.knobs.lfoRate.value = this.lfo[this.currentTrack].rate;
                 this.knobs.lfoRate.angle = midiToAngle(this.lfo[this.currentTrack].rate);
                 this.knobs.lfoAmount.value = this.lfo[this.currentTrack].amount;
                 this.knobs.lfoAmount.angle = midiToAngle(this.lfo[this.currentTrack].amount);
-                this.startLfoEngine();
             },
 
-            startLfoEngine() {
-                if (this.lfoIntervals.length) {
-                    this.lfoIntervals.forEach(id => clearInterval(id));
-                }
-                this.lfoIntervals = [];
-                for (let i = 0; i < 6; i++) {
-                    this.lfoIntervals[i] = setInterval(() => this.runLfo(i), 20);
-                }
-            },
 
-            runLfo(trackIdx) {
+
+            runLfo(trackIdx, dt) {
                 const lfo = this.lfo[trackIdx];
-                if (!lfo.enabled) return;
+                if (lfo.amount === 50) return; // Amount is 0, so do nothing
                 // Convert rate (0-127) to Hz: 0.1-10Hz
                 const hz = 0.1 + (lfo.rate / 127) * 9.9;
-                const dt = 0.02; // 20ms
+
                 const phaseInc = 2 * Math.PI * hz * dt;
                 this.lfoPhases[trackIdx] = (this.lfoPhases[trackIdx] + phaseInc) % (2 * Math.PI);
                 let shapeVal = 0;
@@ -613,9 +591,9 @@
                     }
                 }
                 // Send MIDI CC for this LFO
-                if (this.isConnected) {
+                // if (this.isConnected) {
                     this.midi.sendCC(trackIdx, cc, Math.round(lfoValue));
-                }
+                // }
             },
 
             initializeTrackValues() {
@@ -708,7 +686,6 @@
                 const value = this.trackValues[newKey] !== undefined ? this.trackValues[newKey] : 64;
 
                 this.setKnobValue('eq', value);
-                this.updateEqIndicatorColor();
             },
 
             handleSliderChange() {
@@ -830,8 +807,12 @@
                 if (this.startStopActive) {
                     this.midi.sendSystemRealTime(0xFA); // MIDI Start
                     const interval = 60000 / (this.bpm * 24); // 24 pulses per quarter note
+                    const dt = interval / 1000.0;
                     this.midiClockTimer = setInterval(() => {
                         this.midi.sendSystemRealTime(0xF8); // MIDI Clock
+                        for (let i = 0; i < 6; i++) {
+                            this.runLfo(i, dt);
+                        }
                     }, interval);
                 } else {
                     this.midi.sendSystemRealTime(0xFC); // MIDI Stop
@@ -847,8 +828,12 @@
                 if (this.startStopActive) {
                     clearInterval(this.midiClockTimer);
                     const interval = 60000 / (this.bpm * 24);
+                    const dt = interval / 1000.0;
                     this.midiClockTimer = setInterval(() => {
                         this.midi.sendSystemRealTime(0xF8); // MIDI Clock
+                        for (let i = 0; i < 6; i++) {
+                            this.runLfo(i, dt);
+                        }
                     }, interval);
                 }
             },
@@ -870,6 +855,26 @@
                     this.fx.fx2Active = !this.fx.fx2Active;
                     this.midi.sendCC(CHANNELS.FX2, CC.FX, this.fx.fx2Active ? 127 : 0);
                 }
+            },
+
+            handleLfoAmountTouchStart(event) {
+                const now = new Date().getTime();
+                const DOUBLE_TAP_DELAY = 300; // ms
+
+                if ((now - this.lastTapTime) < DOUBLE_TAP_DELAY) {
+                    event.preventDefault(); // prevent drag from starting
+                    this.resetLfoAmount();
+                    this.lastTapTime = 0; // reset tap time to prevent triple tap issues
+                } else {
+                    this.lastTapTime = now;
+                    this.startKnobDrag('lfoAmount', event);
+                }
+            },
+
+            resetLfoAmount() {
+                this.lfo[this.currentTrack].amount = 50;
+                this.knobs.lfoAmount.value = 50;
+                this.knobs.lfoAmount.angle = midiToAngle(50);
             },
 
             handleFxEngineChange() {
@@ -911,12 +916,6 @@
                 return Math.round((index / (totalOptions - 1)) * 127);
             },
 
-            // Other methods
-            toggleStartStop() {
-                this.startStopActive = !this.startStopActive;
-                this.midi.sendCC(CHANNELS.MASTER, CC.START_STOP, 127);
-            },
-
             toggleFullscreen() {
                 if (document.documentElement.requestFullscreen) {
                     document.documentElement.requestFullscreen();
@@ -927,10 +926,6 @@
                 document.addEventListener('fullscreenchange', () => {
                     this.isFullscreen = !!document.fullscreenElement;
                 });
-            },
-
-            updateEqIndicatorColor() {
-                // This would need to be implemented based on your CSS custom properties
             },
 
             // Computed properties
