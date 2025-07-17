@@ -130,6 +130,7 @@ h1 {
     flex-direction: column;
     align-items: center;
     position: relative;
+    gap: 0.4rem;
 }
 
 .knob {
@@ -167,12 +168,19 @@ h1 {
 
 .bpm-input {
     width: 60px;
-    background-color: var(--bg-color);
-    border: 1px solid #555;
+    background-color: var(--knob-color);
+    border: 1px solid var(--knob-border);
     border-radius: 4px;
     text-align: center;
-    font-size: 1.2em;
-    padding: 5px 2px;
+    font-size: 1rem;
+    padding: 0.35rem 0.5rem;
+    color: var(--text-color);
+}
+
+.bpm-input:focus {
+    outline: none;
+    border-color: var(--button-color);
+    box-shadow: 0 0 0 1px var(--button-color);
 }
 
 #eq-knob {
@@ -272,13 +280,17 @@ h1 {
     justify-content: center;
 }
 
-.mode-select {
-    background: var(--select-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2350514f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 0.5rem center/12px 12px;
+.mode-select, .fx-engine-select {
+    --select-bg: var(--knob-color);
+    --select-border: var(--knob-border);
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2350514f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    
+    background: var(--select-bg) var(--select-chevron) no-repeat right 0.5rem center/12px 12px;
     border: 1px solid var(--select-border);
     border-radius: 4px;
-    padding: 0.2rem 0.5rem 0.2rem 0.5rem;
-    margin-bottom: 0.5rem;
-    font-size: 0.8rem;
+    padding: 0.35rem 1.25rem 0.35rem 0.75rem;
+    margin: 0.25rem 0;
+    font-size: 0.85rem;
     color: var(--text-color);
     cursor: pointer;
     appearance: none;
@@ -287,23 +299,35 @@ h1 {
     text-align: left;
     min-width: 3.35rem;
     position: relative;
-    z-index: 1;
+    z-index: 2; /* Increased z-index */
+    transition: border-color 0.2s, box-shadow 0.2s;
+    pointer-events: auto; /* Ensure select is clickable */
 }
 
-.mode-select:focus {
+.fx-engine-select {
+    width: 100%;
+    max-width: 120px;
+    margin: 0.5rem 0;
+}
+
+.mode-select:focus, .fx-engine-select:focus {
     outline: none;
     border-color: var(--button-color);
     box-shadow: 0 0 0 1px var(--button-color);
 }
 
 /* Hide default dropdown arrows */
-.mode-select::-ms-expand {
+.mode-select::-ms-expand,
+.fx-engine-select::-ms-expand {
     display: none;
 }
 
 .mode-select::-webkit-inner-spin-button,
 .mode-select::-webkit-outer-spin-button,
-.mode-select::-webkit-calendar-picker-indicator {
+.mode-select::-webkit-calendar-picker-indicator,
+.fx-engine-select::-webkit-inner-spin-button,
+.fx-engine-select::-webkit-outer-spin-button,
+.fx-engine-select::-webkit-calendar-picker-indicator {
     display: none;
     -webkit-appearance: none;
     margin: 0;
@@ -311,7 +335,7 @@ h1 {
 
 /* Firefox specific */
 @-moz-document url-prefix() {
-    .mode-select {
+    .mode-select, .fx-engine-select {
         text-indent: 0.01px;
         text-overflow: '';
     }
@@ -354,7 +378,6 @@ h1 {
 }
 
 .value-display {
-    margin-top: 0.25rem;
     pointer-events: none;
 }
 
@@ -660,7 +683,7 @@ header {
 .fx-settings-overlay {
     position: absolute;
     background-color: var(--bg-color);
-    z-index: 100;
+    z-index: 10; /* Reduced z-index */
     display: none;
     flex-direction: row-reverse;
     gap: 1.5rem;
@@ -668,8 +691,13 @@ header {
     left: 0;
     right: 5rem;
     bottom: 0;
-    pointer-events: auto;
+    pointer-events: none; /* Changed to none to allow clicks to pass through */
     transform-origin: bottom right;
+}
+
+/* Ensure form elements inside overlay are still interactive */
+.fx-settings-overlay * {
+    pointer-events: auto;
 }
 
 .fx-settings-overlay.active {
@@ -753,18 +781,7 @@ header {
     pointer-events: auto;
 }
 
-.fx-engine-select {
-    width: 100%;
-    padding: 0.5rem;
-    border-radius: 4px;
-    background-color: var(--knob-color);
-    border: 1px solid var(--knob-border);
-    color: var(--text-color);
-    font-size: 0.9rem;
-    cursor: pointer;
-    margin-top: 0.5rem;
-}
-
+/* FX engine select specific styles */
 .fx-engine-select option {
     background-color: var(--knob-color);
     color: var(--text-color);
