@@ -133,6 +133,10 @@ h1 {
     gap: 0.4rem;
 }
 
+.main-knob {
+    align-self: flex-end;
+}
+
 .knob {
     background-color: var(--knob-color);
     border-radius: 50%;
@@ -385,8 +389,8 @@ h1 {
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-color);
-    min-width: 2ch;
-    text-align: right;
+    min-width: 3ch;
+    text-align: center;
     display: inline-block;
 }
 

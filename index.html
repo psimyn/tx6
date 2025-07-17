@@ -36,7 +36,7 @@
     </header>
 
     <div class="knob-container">
-        <div class="knob-wrapper main-knob">
+        <div class="knob-wrapper">
             <select x-model="currentSliderMode" @change="selectSliderMode($event.target.value)" class="mode-select">
                 <template x-for="mode in sliderModes" :key="mode.value">
                     <option :value="mode.value" x-text="mode.label"></option>
@@ -426,7 +426,7 @@
             ],
 
             // EQ state
-            currentEqMode: 86, // CC.EQ_MID
+            currentEqMode: 74, // Default to Filter
             eqModes: [
                 { value: 74, label: 'FLT' },
                 { value: 85, label: 'HIGH' },
@@ -578,10 +578,8 @@
                         break;
                     }
                 }
-                // Send MIDI CC for this LFO
-                // if (this.isConnected) {
+                
                 this.midi.sendCC(trackIdx, cc, Math.round(lfoValue));
-                // }
             },
 
             initializeTrackValues() {
