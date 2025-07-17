@@ -36,29 +36,26 @@
     </header>
 
     <div class="knob-container">
-        <div class="slider-wrapper">
-            <div class="knob-wrapper main-knob">
-                <div class="volume-slider">
-                    <input type="range" min="0" max="127" x-model="sliderValue" @input="handleSliderChange">
-                </div>
-                <div class="value-display">
-                    <span class="knob-value value-large" x-text="Math.floor(sliderValue * 100 / 127)"></span>
-                </div>
+        <div class="knob-wrapper main-knob">
+            <select x-model="currentSliderMode" @change="selectSliderMode($event.target.value)" class="mode-select">
+                <template x-for="mode in sliderModes" :key="mode.value">
+                    <option :value="mode.value" x-text="mode.label"></option>
+                </template>
+            </select>
+            <div class="volume-slider">
+                <input type="range" min="0" max="127" x-model="sliderValue" @input="handleSliderChange">
             </div>
-            <div class="slider-mode">
-                <div class="radio-group">
-                    <template x-for="mode in sliderModes" :key="mode.value">
-                        <label class="radio-label">
-                            <input type="radio" name="slider-mode" :value="mode.value" x-model="currentSliderMode"
-                                @change="selectSliderMode(mode.value)" class="radio-input">
-                            <span x-text="mode.label"></span>
-                        </label>
-                    </template>
-                </div>
+            <div class="value-display">
+                <span class="knob-value value-large" x-text="Math.floor(sliderValue * 100 / 127)"></span>
             </div>
         </div>
 
         <div class="knob-wrapper">
+            <select x-model="currentEqMode" @change="selectEqMode($event.target.value)" class="mode-select">
+                <template x-for="mode in eqModes" :key="mode.value">
+                    <option :value="mode.value" x-text="mode.label"></option>
+                </template>
+            </select>
             <div class="knob" @mousedown="startKnobDrag('eq', $event)" @touchstart="startKnobDrag('eq', $event)">
                 <div class="knob-indicator indicator-small"
                     :style="`background: ${eqIndicatorColor}; transform: translateX(-50%) rotate(${knobs.eq.angle}deg)`">
@@ -66,30 +63,20 @@
             </div>
             <div class="value-display">
                 <span class="knob-value" x-text="eqDisplayValue"></span>
-            </div>
-            <div class="slider-mode">
-                <div class="radio-group">
-                    <template x-for="mode in eqModes" :key="mode.value">
-                        <label class="radio-label">
-                            <input type="radio" name="eq-mode" :value="mode.value" x-model="currentEqMode"
-                                @change="selectEqMode(mode.value)" class="radio-input">
-                            <span x-text="mode.label"></span>
-                        </label>
-                    </template>
-                </div>
+
             </div>
         </div>
 
         <div class="fx-buttons">
+            <button @click="settingsView = settingsView === 'fx' ? null : 'fx'" class="fx-settings-button white"
+                :class="{ active: settingsView === 'fx' }" aria-label="FX settings">
+                <span>FX</span>
+            </button>
             <button @click="toggleFx(1)" class="fx-button" :class="{ active: fx.fx1Active }">
                 <span class="fx-button-inner">FX1</span>
             </button>
             <button @click="toggleFx(2)" class="fx-button orange" :class="{ active: fx.fx2Active }">
                 <span class="fx-button-inner">FX2</span>
-            </button>
-            <button @click="settingsView = settingsView === 'fx' ? null : 'fx'" class="fx-settings-button white"
-                :class="{ active: settingsView === 'fx' }" aria-label="FX settings">
-                <span>...</span>
             </button>
             <button @click="settingsView = settingsView === 'lfo' ? null : 'lfo'" class="fx-settings-button"
                 style="margin-top:0.5rem;" :class="{ active: settingsView === 'lfo' }" aria-label="LFO settings">
@@ -207,7 +194,7 @@
                         </div>
                     </div>
                     <div class="knob-wrapper">
-                                                <div class="knob" @mousedown="startKnobDrag('lfoAmount', $event)"
+                        <div class="knob" @mousedown="startKnobDrag('lfoAmount', $event)"
                             @touchstart="handleLfoAmountTouchStart($event)" @dblclick="resetLfoAmount()">
                             <div class="knob-indicator indicator-small"
                                 :style="`transform: translateX(-50%) rotate(${knobs.lfoAmount.angle}deg)`"></div>
@@ -228,7 +215,8 @@
             <div class="secondary-knobs">
                 <div class="knob-wrapper">
                     <div>
-                        <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()" class="bpm-input" min="40" max="400">
+                        <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()"
+                            class="bpm-input" min="40" max="400">
                         <div class="knob-label">BPM</div>
                     </div>
                 </div>
@@ -592,7 +580,7 @@
                 }
                 // Send MIDI CC for this LFO
                 // if (this.isConnected) {
-                    this.midi.sendCC(trackIdx, cc, Math.round(lfoValue));
+                this.midi.sendCC(trackIdx, cc, Math.round(lfoValue));
                 // }
             },
 
@@ -679,7 +667,7 @@
                 const oldKey = `${this.currentTrack}-${this.currentEqMode}`;
                 this.trackValues[oldKey] = this.knobs.eq.value;
 
-                this.currentEqMode = ccNumber;
+                this.currentEqMode = Number(ccNumber);
 
                 // Load EQ value for new mode
                 const newKey = `${this.currentTrack}-${ccNumber}`;
@@ -843,8 +831,6 @@
                 const key = `${this.currentTrack}-${this.currentEqMode}`;
                 this.trackValues[key] = value;
             },
-
-
 
             // FX methods
             toggleFx(fxNumber) {

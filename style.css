@@ -97,9 +97,10 @@ h1 {
 
 .knob-container {
     max-width: 600px;
+    width: 100%;
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: space-between;
     flex-wrap: wrap;
     gap: min(1rem, 3vw);
     margin: 0 auto;
@@ -128,6 +129,7 @@ h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
+    position: relative;
 }
 
 .knob {
@@ -146,8 +148,8 @@ h1 {
     touch-action: none;
     cursor: pointer;
     overflow: visible;
-    width: 6rem;
-    height: 6rem;
+    width: 4rem;
+    height: 4rem;
 }
 
 .rate-buttons {
@@ -165,12 +167,12 @@ h1 {
 
 .bpm-input {
     width: 60px;
+    background-color: var(--bg-color);
     border: 1px solid #555;
     border-radius: 4px;
     text-align: center;
     font-size: 1.2em;
     padding: 5px 2px;
-    text-align: center;
 }
 
 #eq-knob {
@@ -184,15 +186,9 @@ h1 {
     align-items: center;
 }
 
-.slider-wrapper {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-
 .volume-slider {
     width: 3rem;
-    height: 12.5rem;
+    height: 10.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -202,7 +198,7 @@ h1 {
 }
 
 .volume-slider input[type="range"] {
-    --width: 12.5rem;
+    --width: 10.5rem;
     --height: 1.68rem;
     appearance: none;
     width: var(--width);
@@ -268,17 +264,57 @@ h1 {
     align-self: flex-end;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
     padding: 0.5rem;
     background: var(--select-bg);
     border: 1px solid var(--select-border);
     border-radius: 0.5rem;
+    height: 100%;
+    justify-content: center;
 }
 
-.radio-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
+.mode-select {
+    background: var(--select-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2350514f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 0.5rem center/12px 12px;
+    border: 1px solid var(--select-border);
+    border-radius: 4px;
+    padding: 0.2rem 0.5rem 0.2rem 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-color);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-align: left;
+    min-width: 3.35rem;
+    position: relative;
+    z-index: 1;
+}
+
+.mode-select:focus {
+    outline: none;
+    border-color: var(--button-color);
+    box-shadow: 0 0 0 1px var(--button-color);
+}
+
+/* Hide default dropdown arrows */
+.mode-select::-ms-expand {
+    display: none;
+}
+
+.mode-select::-webkit-inner-spin-button,
+.mode-select::-webkit-outer-spin-button,
+.mode-select::-webkit-calendar-picker-indicator {
+    display: none;
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox specific */
+@-moz-document url-prefix() {
+    .mode-select {
+        text-indent: 0.01px;
+        text-overflow: '';
+    }
 }
 
 .radio-label {
@@ -318,15 +354,12 @@ h1 {
 }
 
 .value-display {
-    font-weight: 500;
-    margin-top: 0.6rem;
-    display: flex;
-    align-items: center;
-    gap: 0.125rem;
+    margin-top: 0.25rem;
+    pointer-events: none;
 }
 
 .knob-value {
-    font-size: 1.5rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-color);
     min-width: 2ch;
