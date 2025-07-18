@@ -292,8 +292,7 @@ h1 {
     background: var(--select-bg) var(--select-chevron) no-repeat right 0.5rem center/12px 12px;
     border: 1px solid var(--select-border);
     border-radius: 4px;
-    padding: 0.35rem 1.25rem 0.35rem 0.75rem;
-    margin: 0.25rem 0;
+    padding: 0.5rem 1.25rem 0.5rem 0.75rem;
     font-size: 0.85rem;
     color: var(--text-color);
     cursor: pointer;
