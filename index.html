@@ -320,6 +320,8 @@
             let midiCharacteristic = null;
             let midiAccess = null;
             let midiOutput = null;
+            let isSending = false;
+            let sendQueue = [];
 
             const timestampGenerator = () => {
                 let localTime = performance.now() & 8191;
@@ -337,15 +339,70 @@
                 return midiBLEmessage;
             };
 
-            const sendMidiData = (data) => {
-                if (connectionType === 'ble' && midiCharacteristic) {
-                    const bleMidiData = new Uint8Array(midiEncoder(data));
-                    return midiCharacteristic.writeValue(bleMidiData);
-                } else if (connectionType === 'usb' && midiOutput) {
-                    midiOutput.send(data);
-                    return Promise.resolve();
+            const processQueue = () => {
+                if (isSending || sendQueue.length === 0) return;
+                
+                const msg = sendQueue.shift();
+                isSending = true;
+                
+                const sendNext = () => {
+                    isSending = false;
+                    if (sendQueue.length > 0) {
+                        // Use setTimeout(0) for minimal delay
+                        setTimeout(processQueue, 0);
+                    }
+                };
+
+                try {
+                    if (connectionType === 'ble' && midiCharacteristic) {
+                        // For BLE, we need to handle the promise
+                        const bleMidiData = new Uint8Array(midiEncoder(msg.data));
+                        midiCharacteristic.writeValue(bleMidiData)
+                            .then(() => {
+                                msg.resolve();
+                                sendNext();
+                            })
+                            .catch(error => {
+                                console.error('BLE send error:', error);
+                                msg.reject(error);
+                                sendNext();
+                            });
+                    } else if (connectionType === 'usb' && midiOutput) {
+                        // For USB, send immediately
+                        midiOutput.send(msg.data);
+                        msg.resolve();
+                        sendNext();
+                    } else {
+                        // No connection, just resolve
+                        msg.resolve();
+                        sendNext();
+                    }
+                } catch (error) {
+                    console.error('Error in MIDI send:', error);
+                    msg.reject(error);
+                    sendNext();
                 }
-                return Promise.resolve();
+            };
+
+            const sendMidiData = (data) => {
+                // For system real-time messages (like clock), prioritize them
+                const isRealtime = data.length === 1 && data[0] >= 0xF8;
+                
+                return new Promise((resolve, reject) => {
+                    const msg = { data, resolve, reject };
+                    
+                    if (isRealtime && sendQueue.length > 0) {
+                        // Insert real-time messages at the front of the queue
+                        sendQueue.unshift(msg);
+                    } else {
+                        sendQueue.push(msg);
+                    }
+                    
+                    if (!isSending) {
+                        // Use setTimeout(0) for minimal delay
+                        setTimeout(processQueue, 0);
+                    }
+                });
             };
 
             const sendCC = (channel, controller, value) => {
@@ -386,8 +443,15 @@
                     throw new Error('No MIDI output devices found');
                 }
 
-                // For simplicity, connect to first device. In real app, show device picker
-                midiOutput = outputs[0];
+                // Look for TX-6 specifically
+                midiOutput = outputs.find(output => 
+                    output.name && output.name.toLowerCase().includes('tx-6')
+                );
+
+                if (!midiOutput) {
+                    throw new Error('TX-6 MIDI device not found');
+                }
+
                 connectionType = 'usb';
                 return midiOutput;
             };
@@ -396,6 +460,9 @@
                 if (connectionType === 'ble' && bluetoothDevice?.gatt.connected) {
                     bluetoothDevice.gatt.disconnect();
                 }
+                // Clear any pending messages
+                sendQueue = [];
+                isSending = false;
                 connectionType = null;
                 midiCharacteristic = null;
                 midiOutput = null;
@@ -579,7 +646,12 @@
                     }
                 }
                 
-                this.midi.sendCC(trackIdx, cc, Math.round(lfoValue));
+                const roundedValue = Math.round(lfoValue);
+                this.midi.sendCC(trackIdx, cc, roundedValue);
+                
+                // Update the trackValues to maintain state
+                const key = `${trackIdx}-${cc}`;
+                this.trackValues[key] = roundedValue;
             },
 
             initializeTrackValues() {
@@ -653,16 +725,20 @@
                 const oldKey = `${this.currentTrack}-${this.currentSliderMode}`;
                 this.trackValues[oldKey] = this.sliderValue;
 
-                this.currentSliderMode = ccNumber;
+                this.currentSliderMode = Number(ccNumber);
 
                 // Load value for new mode
                 const newKey = `${this.currentTrack}-${ccNumber}`;
-                this.sliderValue = this.trackValues[newKey] || 0;
+                const newValue = this.trackValues[newKey] !== undefined ? this.trackValues[newKey] : 0;
+                
+                // Update the slider value and send MIDI CC
+                this.sliderValue = newValue;
+                this.midi.sendCC(this.currentTrack, this.currentSliderMode, newValue);
             },
 
             selectEqMode(ccNumber) {
                 // Save current EQ value
-                const oldKey = `${this.currentTrack}-${this.currentEqMode}`;
+                const oldKey = `eqDisplayValue${this.currentTrack}-${this.currentEqMode}`;
                 this.trackValues[oldKey] = this.knobs.eq.value;
 
                 this.currentEqMode = Number(ccNumber);
@@ -671,7 +747,12 @@
                 const newKey = `${this.currentTrack}-${ccNumber}`;
                 const value = this.trackValues[newKey] !== undefined ? this.trackValues[newKey] : 64;
 
+                // Update the knob's visual state and send MIDI CC
                 this.setKnobValue('eq', value);
+                this.handleKnobChange('eq', value);
+                
+                // Force UI update for the knob indicator
+                this.knobs.eq.angle = midiToAngle(value);
             },
 
             handleSliderChange() {
