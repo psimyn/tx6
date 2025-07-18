@@ -698,6 +698,25 @@ header {
     transform-origin: bottom right;
 }
 
+.lfo-overlay {
+    right: 0 !important; /* Make LFO overlay full width */
+    bottom: 0;
+}
+
+.overlay-close-btn {
+    margin-left: auto;
+    height: 2rem;
+    width: auto;
+    aspect-ratio: initial;
+    box-shadow: inset 0 -1px 4px rgba(0, 0, 0, 0.02), 2px 2px 3px rgba(0, 0, 0, 0.1), -2px -2px 3px rgba(255, 255, 255, 0.1);
+    border: 0;
+    padding: 0.5rem 1rem;
+}
+
+.overlay-close-btn:hover {
+    background: var(--button-hover);
+}
+
 /* Ensure form elements inside overlay are still interactive */
 .fx-settings-overlay * {
     pointer-events: auto;

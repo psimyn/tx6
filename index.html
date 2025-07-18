@@ -25,7 +25,7 @@
             <button @click="connectUsb()" class="connect-btn" x-show="!isConnected" :disabled="connecting">
                 Connect USB
             </button>
-        </div>
+                </div>
         <div class="track-selector">
             <template x-for="(track, index) in tracks" :key="index">
                 <button class="track-button" :class="{ active: currentTrack === index }" @click="selectTrack(index)"
@@ -153,8 +153,8 @@
         </div>
 
         <!-- LFO Settings Overlay -->
-        <div class="fx-settings-overlay" :class="{ active: settingsView === 'lfo' }" style="z-index: 20;">
-            <div style="display:flex;flex-direction:column;align-items:center;gap:1rem;">
+        <div class="fx-settings-overlay lfo-overlay" :class="{ active: settingsView === 'lfo' }" style="z-index: 20;">
+            <div style="display:flex;flex-direction:column;justify-content:space-between;gap:1rem;">
                 <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;">
                     <div class="knob-wrapper">
                         <div class="value-display">
@@ -203,8 +203,9 @@
                             <span class="knob-value" x-text="(knobs.lfoAmount.value - 50)"></span>
                         </div>
                     </div>
-
                 </div>
+                <button @click="settingsView = null" class="overlay-close-btn" aria-label="Close LFO settings">BACK</button>
+
             </div>
         </div>
     </div>
@@ -253,10 +254,9 @@
                     <div class="value-display">
                         <span class="knob-value" x-text="Math.floor(knobs.masterCue.value * 100 / 127)"></span>
                         <span class="knob-label">Cue</span>
-                    </div>
                 </div>
             </div>
-
+        </div>
             <div class="knob-wrapper main-knob">
                 <div class="knob" @mousedown="startKnobDrag('masterVolume', $event)"
                     @touchstart="startKnobDrag('masterVolume', $event)">
