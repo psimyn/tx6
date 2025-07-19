@@ -686,7 +686,7 @@ header {
 .fx-settings-overlay {
     position: absolute;
     background-color: var(--bg-color);
-    z-index: 10; /* Reduced z-index */
+    z-index: 10;
     display: none;
     flex-direction: row-reverse;
     gap: 1.5rem;
@@ -694,13 +694,14 @@ header {
     left: 0;
     right: 5rem;
     bottom: 0;
-    pointer-events: none; /* Changed to none to allow clicks to pass through */
+    pointer-events: none;
     transform-origin: bottom right;
 }
 
 .lfo-overlay {
-    right: 0 !important; /* Make LFO overlay full width */
-    bottom: 0;
+    right: 0 !important;
+    bottom: unset;
+    padding-bottom: 1rem;
 }
 
 .overlay-close-btn {
@@ -713,11 +714,6 @@ header {
     padding: 0.5rem 1rem;
 }
 
-.overlay-close-btn:hover {
-    background: var(--button-hover);
-}
-
-/* Ensure form elements inside overlay are still interactive */
 .fx-settings-overlay * {
     pointer-events: auto;
 }

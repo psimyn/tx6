@@ -78,7 +78,7 @@
             <button @click="toggleFx(2)" class="fx-button orange" :class="{ active: fx.fx2Active }">
                 <span class="fx-button-inner">FX2</span>
             </button>
-            <button @click="settingsView = settingsView === 'lfo' ? null : 'lfo'" class="fx-settings-button"
+            <button @click="toggleLfoView()" class="fx-settings-button"
                 style="margin-top:0.5rem;" :class="{ active: settingsView === 'lfo' }" aria-label="LFO settings">
                 <span>LFO</span>
             </button>
@@ -154,7 +154,8 @@
 
         <!-- LFO Settings Overlay -->
         <div class="fx-settings-overlay lfo-overlay" :class="{ active: settingsView === 'lfo' }" style="z-index: 20;">
-            <div style="display:flex;flex-direction:column;justify-content:space-between;gap:1rem;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1rem;">
+                <canvas id="lfo-canvas" width="300" height="100" style="border: 1px solid var(--knob-border); border-radius: 4px;"></canvas>
                 <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;">
                     <div class="knob-wrapper">
                         <div class="value-display">
@@ -184,13 +185,13 @@
                         </div>
                         <div class="value-display">
                             <span class="knob-value"
-                                x-text="(0.1 + (lfo[currentTrack].rate / 127) * 9.9).toFixed(2)"></span>
+                                x-text="(0.1 + (lfo[currentTrack].rate / 127) * 29.9).toFixed(2)"></span>
                             <span class="knob-label">Hz</span>
                         </div>
                         <div class="rate-buttons">
-                            <button @click="setLfoRateFromBpm(0.25)" class="rate-button">¼</button>
-                            <button @click="setLfoRateFromBpm(0.5)" class="rate-button">½</button>
-                            <button @click="setLfoRateFromBpm(1)" class="rate-button">1</button>
+                            <button @click="setLfoRateFromBpm(0.25)" class="rate-button">1</button>
+                            <button @click="setLfoRateFromBpm(0.5)" class="rate-button">1/2</button>
+                            <button @click="setLfoRateFromBpm(1)" class="rate-button">1/4</button>
                         </div>
                     </div>
                     <div class="knob-wrapper">
@@ -308,6 +309,7 @@
 
         // Utility functions
         const midiToAngle = (value) => -150 + (value / 127) * 300;
+        const lfoAmountToAngle = (value) => -150 + (value / 100) * 300; // 0-100 range, 50 = center (0 degrees)
         const midiToEqDisplay = (value) => {
             const dbValue = Math.round((value - 64) * (18 / 64));
             return dbValue === 0 ? "0dB" : (dbValue > 0 ? "+" + dbValue : dbValue) + "dB";
@@ -515,8 +517,96 @@
                 lfoAmount: { value: 0, angle: -150 }
             },
 
-            // View state for overlays
-            settingsView: null, // 'fx', 'lfo', or null
+            toggleLfoView() {
+                this.settingsView = this.settingsView === 'lfo' ? null : 'lfo';
+                if (this.settingsView === 'lfo') {
+                    this.$nextTick(() => this.drawLfoWaveform());
+                }
+            },
+
+            drawLfoWaveform() {
+                const canvas = document.getElementById('lfo-canvas');
+                if (!canvas) return;
+                
+                const ctx = canvas.getContext('2d');
+                const width = canvas.width;
+                const height = canvas.height;
+                const centerY = height / 2;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, width, height);
+                
+                // Get current LFO settings
+                const currentLfo = this.lfo[this.currentTrack];
+                const shape = currentLfo.shape;
+                const amount = currentLfo.amount - 50; // Convert to -50 to +50
+                const amplitude = Math.abs(amount) / 50 * (centerY - 10); // Scale amplitude
+                
+                // Calculate frequency - convert rate (0-127) to Hz: 0.1-30Hz
+                const hz = 0.1 + (currentLfo.rate / 127) * 29.9;
+                
+                // Calculate how many cycles to show based on frequency
+                // Show 2 seconds worth of waveform
+                const timeSpan = 2; // seconds
+                const cycles = Math.max(0.5, hz * timeSpan);
+                
+                // Draw center line
+                ctx.strokeStyle = 'rgba(80, 81, 79, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                ctx.lineTo(width, centerY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Draw frequency indicator text
+                ctx.fillStyle = 'rgba(80, 81, 79, 0.6)';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(`${hz.toFixed(2)} Hz`, width - 5, 15);
+                
+                // Draw waveform
+                ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--button-color');
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                for (let x = 0; x < width; x++) {
+                    // Phase now considers the number of cycles to display
+                    const phase = (x / width) * cycles * 2 * Math.PI;
+                    let y = 0;
+                    
+                    switch (shape) {
+                        case 'sine':
+                            y = Math.sin(phase);
+                            break;
+                        case 'triangle':
+                            y = 2 * Math.abs((phase / Math.PI) % 2 - 1) - 1;
+                            break;
+                        case 'square':
+                            y = Math.sign(Math.sin(phase));
+                            break;
+                        case 'saw':
+                            y = 2 * ((phase / (2 * Math.PI)) % 1) - 1;
+                            break;
+                    }
+                    
+                    // Apply amount scaling and invert if negative
+                    y = amount >= 0 ? y * amplitude : -y * amplitude;
+                    y = centerY - y; // Invert Y coordinate for canvas
+                    
+                    if (x === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                
+                ctx.stroke();
+                
+
+            },
+
 
             // LFO state: array per track
             lfo: Array(6).fill().map(() => ({
@@ -554,6 +644,7 @@
             activeKnob: null,
             dragState: { startValue: 0, initialY: 0, lastBpmDelta: 0 },
             lastTapTime: 0,
+            settingsView: null, // 'fx', 'lfo', or null
 
             // Track values storage
             trackValues: {},
@@ -573,7 +664,10 @@
                 this.knobs.lfoRate.value = this.lfo[this.currentTrack].rate;
                 this.knobs.lfoRate.angle = midiToAngle(this.lfo[this.currentTrack].rate);
                 this.knobs.lfoAmount.value = this.lfo[this.currentTrack].amount;
-                this.knobs.lfoAmount.angle = midiToAngle(this.lfo[this.currentTrack].amount);
+                this.knobs.lfoAmount.angle = lfoAmountToAngle(this.lfo[this.currentTrack].amount);
+                
+                // Initial LFO visualization
+                this.$nextTick(() => this.drawLfoWaveform());
             },
 
 
@@ -581,8 +675,8 @@
             runLfo(trackIdx, dt) {
                 const lfo = this.lfo[trackIdx];
                 if (lfo.amount === 50) return; // Amount is 0, so do nothing
-                // Convert rate (0-127) to Hz: 0.1-10Hz
-                const hz = 0.1 + (lfo.rate / 127) * 9.9;
+                // Convert rate (0-127) to Hz: 0.1-30Hz
+                const hz = 0.1 + (lfo.rate / 127) * 29.9;
 
                 const phaseInc = 2 * Math.PI * hz * dt;
                 this.lfoPhases[trackIdx] = (this.lfoPhases[trackIdx] + phaseInc) % (2 * Math.PI);
@@ -601,8 +695,8 @@
                         shapeVal = 2 * ((this.lfoPhases[trackIdx] / (2 * Math.PI)) % 1) - 1;
                         break;
                 }
-                // Amount: -50 to +50
-                const amt = lfo.amount - 50;
+                // Amount: -50 to +50, but scale it down significantly
+                const amt = (lfo.amount - 50) * 0.2; // Scale down by 80% for more reasonable modulation
                 // Map to MIDI value (0-127) or -50 to 50 for display
                 let lfoValue = 0;
                 let cc = 7; // Default VOL
@@ -717,7 +811,10 @@
                 this.knobs.lfoRate.value = this.lfo[trackIndex].rate;
                 this.knobs.lfoRate.angle = midiToAngle(this.lfo[trackIndex].rate);
                 this.knobs.lfoAmount.value = this.lfo[trackIndex].amount;
-                this.knobs.lfoAmount.angle = midiToAngle(this.lfo[trackIndex].amount);
+                this.knobs.lfoAmount.angle = lfoAmountToAngle(this.lfo[trackIndex].amount);
+                
+                // Update LFO visualization
+                this.$nextTick(() => this.drawLfoWaveform());
             },
 
             selectSliderMode(ccNumber) {
@@ -766,14 +863,19 @@
                 if (knobType === 'lfoAmount') {
                     // Clamp to 0-100, center is 50
                     value = Math.max(0, Math.min(100, value));
+                    this.knobs[knobType].value = value;
+                    this.knobs[knobType].angle = lfoAmountToAngle(value);
+                } else {
+                    this.knobs[knobType].value = value;
+                    this.knobs[knobType].angle = midiToAngle(value);
                 }
-                this.knobs[knobType].value = value;
-                this.knobs[knobType].angle = midiToAngle(value);
                 // Sync LFO knob values to per-track LFO state
                 if (knobType === 'lfoRate') {
                     this.lfo[this.currentTrack].rate = value;
+                    this.$nextTick(() => this.drawLfoWaveform());
                 } else if (knobType === 'lfoAmount') {
                     this.lfo[this.currentTrack].amount = value;
+                    this.$nextTick(() => this.drawLfoWaveform());
                 }
             },
 
@@ -939,7 +1041,8 @@
             resetLfoAmount() {
                 this.lfo[this.currentTrack].amount = 50;
                 this.knobs.lfoAmount.value = 50;
-                this.knobs.lfoAmount.angle = midiToAngle(50);
+                this.knobs.lfoAmount.angle = lfoAmountToAngle(50);
+                this.$nextTick(() => this.drawLfoWaveform());
             },
 
             handleFxEngineChange() {
@@ -953,9 +1056,9 @@
                 const targetHz = 1 / noteDuration;
 
                 // Convert Hz to our 0-127 scale
-                // Formula: hz = 0.1 + (value / 127) * 9.9
-                // Reversed: value = ((hz - 0.1) / 9.9) * 127
-                let rateValue = ((targetHz - 0.1) / 9.9) * 127;
+                // Formula: hz = 0.1 + (value / 127) * 29.9
+                // Reversed: value = ((hz - 0.1) / 29.9) * 127
+                let rateValue = ((targetHz - 0.1) / 29.9) * 127;
 
                 // Clamp the value between 0 and 127
                 rateValue = Math.max(0, Math.min(127, Math.round(rateValue)));
@@ -965,6 +1068,7 @@
                 // Update the knob visuals
                 this.knobs.lfoRate.value = rateValue;
                 this.knobs.lfoRate.angle = midiToAngle(rateValue);
+                this.$nextTick(() => this.drawLfoWaveform());
             },
 
             updateFxDisplay() {
