@@ -254,6 +254,28 @@ h1 {
         0 2px 4px var(--knob-shadow);
 }
 
+.volume-slider {
+    position: relative;
+}
+
+.volume-slider input[type="range"].slider-overlay {
+    position: absolute;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 1;
+    background: none;
+}
+
+.volume-slider .slider-overlay::-webkit-slider-thumb {
+    background: var(--accent-color-orange);
+    opacity: 0.7;
+}
+
+.volume-slider .slider-overlay::-moz-range-thumb {
+    background: var(--accent-color-orange);
+    opacity: 0.7;
+}
+
 .knob-indicator {
     position: absolute;
     background: linear-gradient(to bottom, var(--accent-color) 85%, transparent 85%);

@@ -44,6 +44,7 @@
             </select>
             <div class="volume-slider">
                 <input type="range" min="0" max="127" x-model="sliderValue" @input="handleSliderChange">
+                <input type="range" min="0" max="127" x-model="sliderOutputValue" class="slider-overlay" readonly tabindex="-1">
             </div>
             <div class="value-display">
                 <span class="knob-value value-large" x-text="Math.floor(sliderValue * 100 / 127)"></span>
@@ -482,6 +483,7 @@
 
             // Slider state
             sliderValue: 0,
+            lfoOutputValues: {}, // Store LFO-modulated values per track/CC
             currentSliderMode: 7, // CC.VOLUME
             sliderModes: [
                 { value: 7, label: 'VOL' },
@@ -667,8 +669,6 @@
                 this.$nextTick(() => this.drawLfoWaveform());
             },
 
-
-
             runLfo(trackIdx, dt) {
                 const lfo = this.lfo[trackIdx];
                 if (lfo.amount === 50) return; // Amount is 0, so do nothing
@@ -692,8 +692,9 @@
                         shapeVal = 2 * ((this.lfoPhases[trackIdx] / (2 * Math.PI)) % 1) - 1;
                         break;
                 }
-                // Amount: -50 to +50, but scale it down significantly
-                const amt = (lfo.amount - 50) * 0.2; // Scale down by 80% for more reasonable modulation
+                // Amount: 0-100 where 50 = no modulation, scale to reasonable MIDI range
+                // Convert to -50 to +50, then scale down for reasonable modulation depth
+                const amt = (lfo.amount - 50) * 0.5; // ±25 MIDI units max modulation
                 // Map to MIDI value (0-127) or -50 to 50 for display
                 let lfoValue = 0;
                 let cc = 7; // Default VOL
@@ -702,27 +703,18 @@
                         cc = 7;
                         const base = Number(this.trackValues[`${trackIdx}-7`]);
                         lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 0 : base) + amt * shapeVal));
-                        if (this.currentTrack === trackIdx && this.currentSliderMode === 7) {
-                            this.sliderValue = lfoValue;
-                        }
                         break;
                     }
                     case 'fx1': {
                         cc = 91;
                         const base = Number(this.trackValues[`${trackIdx}-91`]);
                         lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 0 : base) + amt * shapeVal));
-                        if (this.currentTrack === trackIdx && this.currentSliderMode === 91) {
-                            this.sliderValue = lfoValue;
-                        }
                         break;
                     }
                     case 'cmp': {
                         cc = 93;
                         const base = Number(this.trackValues[`${trackIdx}-93`]);
                         lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 0 : base) + amt * shapeVal));
-                        if (this.currentTrack === trackIdx && this.currentSliderMode === 93) {
-                            this.sliderValue = lfoValue;
-                        }
                         break;
                     }
                     case 'flt': {
@@ -730,12 +722,13 @@
                         const base = Number(this.trackValues[`${trackIdx}-74`]);
                         // Default to 64 for filter
                         lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 64 : base) + amt * shapeVal));
-                        if (this.currentTrack === trackIdx && this.currentSliderMode === 74) {
-                            this.sliderValue = lfoValue;
-                        }
                         break;
                     }
                 }
+                
+                // Store the LFO-modulated value
+                const outputKey = `${trackIdx}-${cc}`;
+                this.lfoOutputValues[outputKey] = lfoValue;
                 
                 const roundedValue = Math.round(lfoValue);
                 this.midi.sendCC(trackIdx, cc, roundedValue);
@@ -800,16 +793,16 @@
 
                 this.currentTrack = trackIndex;
 
-                // Load new track's slider value
-                const newKey = `${trackIndex}-${this.currentSliderMode}`;
+                // Update slider to new track's value
+                const newKey = `${this.currentTrack}-${this.currentSliderMode}`;
                 this.sliderValue = this.trackValues[newKey] || 0;
 
                 // Sync LFO knobs to new track's LFO state
-                this.knobs.lfoRate.value = this.lfo[trackIndex].rate;
-                this.knobs.lfoRate.angle = midiToAngle(this.lfo[trackIndex].rate);
-                this.knobs.lfoAmount.value = this.lfo[trackIndex].amount;
-                this.knobs.lfoAmount.angle = lfoAmountToAngle(this.lfo[trackIndex].amount);
-                
+                this.knobs.lfoRate.value = this.lfo[this.currentTrack].rate;
+                this.knobs.lfoRate.angle = midiToAngle(this.lfo[this.currentTrack].rate);
+                this.knobs.lfoAmount.value = this.lfo[this.currentTrack].amount;
+                this.knobs.lfoAmount.angle = lfoAmountToAngle(this.lfo[this.currentTrack].amount);
+
                 // Update LFO visualization
                 this.$nextTick(() => this.drawLfoWaveform());
             },
@@ -993,7 +986,45 @@
                     this.midiClockTimer = null;
                     clearInterval(this.lfoTimer);
                     this.lfoTimer = null;
+                    // Smoothly return to user values instead of instant clear
+                    this.smoothReturnToUserValues();
                 }
+            },
+
+            smoothReturnToUserValues() {
+                // Create a smooth transition back to user values over 200ms
+                const transitionDuration = 200; // ms
+                const steps = 20;
+                const stepDuration = transitionDuration / steps;
+                
+                // Store initial LFO values for interpolation
+                const initialValues = { ...this.lfoOutputValues };
+                
+                let currentStep = 0;
+                const transitionTimer = setInterval(() => {
+                    currentStep++;
+                    const progress = currentStep / steps;
+                    
+                    // Interpolate between LFO values and user values
+                    for (const key in initialValues) {
+                        const [trackIdx, cc] = key.split('-').map(Number);
+                        const lfoValue = initialValues[key];
+                        const userValue = this.trackValues[key] || 0;
+                        
+                        // Linear interpolation
+                        const interpolatedValue = lfoValue + (userValue - lfoValue) * progress;
+                        this.lfoOutputValues[key] = interpolatedValue;
+                        
+                        // Send MIDI for the interpolated value
+                        this.midi.sendCC(trackIdx, cc, Math.round(interpolatedValue));
+                    }
+                    
+                    if (currentStep >= steps) {
+                        clearInterval(transitionTimer);
+                        // Clear LFO output values completely after transition
+                        this.lfoOutputValues = {};
+                    }
+                }, stepDuration);
             },
 
             updateBpm() {
@@ -1138,6 +1169,15 @@
                 // Hide param2 for certain FX types
                 const hideParam2 = ['REV', 'CHO', 'DLY', 'CRU', 'DST', 'TRM', 'FRZ', 'TPE'].includes(currentType);
                 return hideParam2 ? 'visibility: hidden' : 'visibility: visible';
+            },
+
+            get sliderOutputValue() {
+                const key = `${this.currentTrack}-${this.currentSliderMode}`;
+                // Return LFO-modulated value if available and LFO is running, otherwise return user value
+                if (this.startStopActive && this.lfoOutputValues[key] !== undefined) {
+                    return this.lfoOutputValues[key];
+                }
+                return this.sliderValue;
             }
         });
 
