@@ -624,15 +624,17 @@
 
             },
 
-
-            // Global LFO state: 6 named LFOs that can be assigned to any track
             globalLfos: [
-                { name: 'LFO A', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 0 },
-                { name: 'LFO B', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 1 },
-                { name: 'LFO C', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 2 },
-                { name: 'LFO D', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 3 },
-                { name: 'LFO E', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 4 },
-                { name: 'LFO F', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 5 }
+                { name: 'LFO 1', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 0 },
+                { name: 'LFO 2', target: 'vol', shape: 'triangle', enabled: true, rate: 10, amount: 50, assignedTrack: 1 },
+                { name: 'LFO 3', target: 'vol', shape: 'square', enabled: true, rate: 10, amount: 50, assignedTrack: 2 },
+                { name: 'LFO 4', target: 'vol', shape: 'saw', enabled: true, rate: 10, amount: 50, assignedTrack: 3 },
+                { name: 'LFO 5', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 4 },
+                { name: 'LFO 6', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 0 },
+                { name: 'LFO 7', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 0 },
+                { name: 'LFO 8', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 0 },
+                { name: 'LFO 9', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 0 },
+                { name: 'LFO 10', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 0 },
             ],
             currentLfoIndex: 0, // Currently selected LFO for editing
 
@@ -674,21 +676,17 @@
             lfoTimer: null,
 
             // Initialization
-            lfoPhases: Array(6).fill(0),
+            lfoPhases: Array(10).fill(0),
 
             init() {
                 this.midi = createMidiController();
                 this.initializeTrackValues();
                 this.setupFullscreenListener();
-                // Sync LFO knobs to initial LFO
                 this.updateLfoKnobs();
-
-                // Initial LFO visualization
                 this.$nextTick(() => this.drawLfoWaveform());
             },
 
             runLfo(trackIdx, dt) {
-                // Find LFOs assigned to this track
                 const assignedLfos = this.globalLfos.filter(lfo => lfo.assignedTrack === trackIdx);
 
                 assignedLfos.forEach((lfo, lfoIndex) => {
