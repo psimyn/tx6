@@ -338,7 +338,15 @@ h1 {
 .fx-engine-select {
     width: 100%;
     max-width: 120px;
-    margin: 0.5rem 0;
+}
+
+#lfo-shape {
+    position: absolute;
+    transform: rotate(-90deg) translate(-100%, -100%);
+    transform-origin: top left;
+    top: 0;
+    left: 0;
+    width: auto;
 }
 
 .mode-select:focus, .fx-engine-select:focus {
@@ -427,7 +435,7 @@ h1 {
 }
 
 .knob-label {
-    font-size: 0.9rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: var(--text-color);

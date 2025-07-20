@@ -25,7 +25,7 @@
             <button @click="connectUsb()" class="connect-btn" x-show="!isConnected" :disabled="connecting">
                 Connect USB
             </button>
-                </div>
+        </div>
         <div class="track-selector">
             <template x-for="(track, index) in tracks" :key="index">
                 <button class="track-button" :class="{ active: currentTrack === index }" @click="selectTrack(index)"
@@ -44,7 +44,8 @@
             </select>
             <div class="volume-slider">
                 <input type="range" min="0" max="127" x-model="sliderValue" @input="handleSliderChange">
-                <input type="range" min="0" max="127" x-model="sliderOutputValue" class="slider-overlay" readonly tabindex="-1">
+                <input type="range" min="0" max="127" x-model="sliderOutputValue" class="slider-overlay" readonly
+                    tabindex="-1">
             </div>
             <div class="value-display">
                 <span class="knob-value value-large" x-text="Math.floor(sliderValue * 100 / 127)"></span>
@@ -152,30 +153,34 @@
         </div>
 
         <div class="fx-settings-overlay lfo-overlay" :class="{ active: settingsView === 'lfo' }" style="z-index: 20;">
-            <div style="display:flex;flex-direction:column;align-items:center;gap:1rem;">
-                <canvas id="lfo-canvas" width="300" height="100" style="border: 1px solid var(--knob-border); border-radius: 4px;"></canvas>
+            <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1rem;">
+                <div class="knob-wrapper">
+                    <div class="value-display">
+                        <select id="lfo-target" x-model="globalLfos[currentLfoIndex].target"
+                            class="fx-engine-select">
+                            <option value="vol">VOL</option>
+                            <option value="fx1">FX1</option>
+                            <option value="cmp">CMP</option>
+                            <option value="flt">FLT</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Canvas with shape selector on the left -->
+                <div style="display:flex;align-items:center;gap:1rem;position:relative;">
+                    <select id="lfo-shape" x-model="globalLfos[currentLfoIndex].shape" class="fx-engine-select"
+                        style="writing-mode:horizontal-tb;">
+                        <option value="sine">Sine</option>
+                        <option value="triangle">Triangle</option>
+                        <option value="square">Square</option>
+                        <option value="saw">Saw</option>
+                    </select>
+
+                    <canvas id="lfo-canvas" width="300" height="100"
+                        style="border: 1px solid var(--knob-border); border-radius: 4px;"></canvas>
+                </div>
                 <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;">
                     <div class="knob-wrapper">
-                        <div class="value-display">
-                            <select id="lfo-target" x-model="lfo[currentTrack].target" class="fx-engine-select">
-                                <option value="vol">VOL</option>
-                                <option value="fx1">FX1</option>
-                                <option value="cmp">CMP</option>
-                                <option value="flt">FLT</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="knob-wrapper">
-                        <div class="value-display">
-                            <select id="lfo-shape" x-model="lfo[currentTrack].shape" class="fx-engine-select">
-                                <option value="sine">Sine</option>
-                                <option value="triangle">Triangle</option>
-                                <option value="square">Square</option>
-                                <option value="saw">Saw</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="knob-wrapper">
+                        <label class="knob-label">RATE</label>
                         <div class="knob" @mousedown="startKnobDrag('lfoRate', $event)"
                             @touchstart="startKnobDrag('lfoRate', $event)">
                             <div class="knob-indicator indicator-small"
@@ -183,16 +188,18 @@
                         </div>
                         <div class="value-display">
                             <span class="knob-value"
-                                x-text="(0.1 + (lfo[currentTrack].rate / 127) * 29.9).toFixed(2)"></span>
+                                x-text="(0.1 + (globalLfos[currentLfoIndex].rate / 127) * 29.9).toFixed(2)"></span>
                             <span class="knob-label">Hz</span>
                         </div>
                         <div class="rate-buttons">
                             <button @click="setLfoRateFromBpm(0.25)" class="rate-button">1</button>
                             <button @click="setLfoRateFromBpm(0.5)" class="rate-button">1/2</button>
                             <button @click="setLfoRateFromBpm(1)" class="rate-button">1/4</button>
+                            <button @click="setLfoRateFromBpm(2)" class="rate-button">1/8</button>
                         </div>
                     </div>
                     <div class="knob-wrapper">
+                        <label class="knob-label">SIZE</label>
                         <div class="knob" @mousedown="startKnobDrag('lfoAmount', $event)"
                             @touchstart="handleLfoAmountTouchStart($event)" @dblclick="resetLfoAmount()">
                             <div class="knob-indicator indicator-small"
@@ -203,73 +210,81 @@
                         </div>
                     </div>
                 </div>
-                <button @click="settingsView = null" class="overlay-close-btn" aria-label="Close LFO settings">BACK</button>
+
+                <select x-model="currentLfoIndex" @change="updateLfoKnobs()" class="fx-engine-select"
+                    style="min-width:80px;">
+                    <template x-for="(lfo, index) in globalLfos" :key="index">
+                        <option :value="index" x-text="lfo.name"></option>
+                    </template>
+                </select>
+
+                <button @click="settingsView = null" class="overlay-close-btn"
+                    aria-label="Close LFO settings">BACK</button>
 
             </div>
         </div>
         <h2 class="master-title">Master</h2>
-            <div class="knob-wrapper">
-                <div>
-                    <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()"
-                        class="bpm-input" min="40" max="400">
-                    <div class="knob-label">BPM</div>
-                </div>
-            </div>
-
-            <button @click="togglePlay()" class="start-stop-button" :class="{ active: startStopActive }">
-                <svg class="play-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 5v14l11-7z" />
-                </svg>
-                <svg class="stop-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 6h12v12H6z" />
-                </svg>
-            </button>
-
-            <button @click="toggleLfoView()" class="fx-settings-button"
-                :class="{ active: settingsView === 'lfo' }" aria-label="LFO settings">
-                <span>LFO</span>
-            </button>
-
-            <div class="knob-wrapper">
-                <div class="knob" @mousedown="startKnobDrag('masterAux', $event)"
-                    @touchstart="startKnobDrag('masterAux', $event)">
-                    <div class="knob-indicator indicator-small"
-                        :style="`transform: translateX(-50%) rotate(${knobs.masterAux.angle}deg)`">
-                    </div>
-                </div>
-                <div class="value-display">
-                    <span class="knob-value" x-text="Math.floor(knobs.masterAux.value * 100 / 127)"></span>
-                    <span class="knob-label">Aux</span>
-                </div>
-            </div>
-
-            <div class="knob-wrapper">
-                <div class="knob" @mousedown="startKnobDrag('masterCue', $event)"
-                    @touchstart="startKnobDrag('masterCue', $event)">
-                    <div class="knob-indicator indicator-small"
-                        :style="`transform: translateX(-50%) rotate(${knobs.masterCue.angle}deg)`">
-                    </div>
-                </div>
-                <div class="value-display">
-                    <span class="knob-value" x-text="Math.floor(knobs.masterCue.value * 100 / 127)"></span>
-                    <span class="knob-label">Cue</span>
-                </div>
-            </div>
-
-            <div class="knob-wrapper main-knob">
-                <div class="knob" @mousedown="startKnobDrag('masterVolume', $event)"
-                    @touchstart="startKnobDrag('masterVolume', $event)">
-                    <div class="knob-indicator indicator-small"
-                        :style="`transform: translateX(-50%) rotate(${knobs.masterVolume.angle}deg)`">
-                    </div>
-                </div>
-                <div class="value-display">
-                    <span class="knob-value value-large"
-                        x-text="Math.floor(knobs.masterVolume.value * 100 / 127)"></span>
-                    <span class="knob-label">Vol</span>
-                </div>
+        <div class="knob-wrapper">
+            <div>
+                <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()" class="bpm-input"
+                    min="40" max="400">
+                <div class="knob-label">BPM</div>
             </div>
         </div>
+
+        <button @click="togglePlay()" class="start-stop-button" :class="{ active: startStopActive }">
+            <svg class="play-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 5v14l11-7z" />
+            </svg>
+            <svg class="stop-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 6h12v12H6z" />
+            </svg>
+        </button>
+
+        <button @click="toggleLfoView()" class="fx-settings-button" :class="{ active: settingsView === 'lfo' }"
+            aria-label="LFO settings">
+            <span>LFO</span>
+        </button>
+
+        <div class="knob-wrapper">
+            <div class="knob" @mousedown="startKnobDrag('masterAux', $event)"
+                @touchstart="startKnobDrag('masterAux', $event)">
+                <div class="knob-indicator indicator-small"
+                    :style="`transform: translateX(-50%) rotate(${knobs.masterAux.angle}deg)`">
+                </div>
+            </div>
+            <div class="value-display">
+                <span class="knob-value" x-text="Math.floor(knobs.masterAux.value * 100 / 127)"></span>
+                <span class="knob-label">Aux</span>
+            </div>
+        </div>
+
+        <div class="knob-wrapper">
+            <div class="knob" @mousedown="startKnobDrag('masterCue', $event)"
+                @touchstart="startKnobDrag('masterCue', $event)">
+                <div class="knob-indicator indicator-small"
+                    :style="`transform: translateX(-50%) rotate(${knobs.masterCue.angle}deg)`">
+                </div>
+            </div>
+            <div class="value-display">
+                <span class="knob-value" x-text="Math.floor(knobs.masterCue.value * 100 / 127)"></span>
+                <span class="knob-label">Cue</span>
+            </div>
+        </div>
+
+        <div class="knob-wrapper main-knob">
+            <div class="knob" @mousedown="startKnobDrag('masterVolume', $event)"
+                @touchstart="startKnobDrag('masterVolume', $event)">
+                <div class="knob-indicator indicator-small"
+                    :style="`transform: translateX(-50%) rotate(${knobs.masterVolume.angle}deg)`">
+                </div>
+            </div>
+            <div class="value-display">
+                <span class="knob-value value-large" x-text="Math.floor(knobs.masterVolume.value * 100 / 127)"></span>
+                <span class="knob-label">Vol</span>
+            </div>
+        </div>
+    </div>
     </div>
 
     <button class="fullscreen-toggle-btn" @click="toggleFullscreen()" x-show="!isFullscreen" title="Enter fullscreen"
@@ -341,10 +356,10 @@
 
             const processQueue = () => {
                 if (isSending || sendQueue.length === 0) return;
-                
+
                 const msg = sendQueue.shift();
                 isSending = true;
-                
+
                 const sendNext = () => {
                     isSending = false;
                     if (sendQueue.length > 0) {
@@ -387,17 +402,17 @@
             const sendMidiData = (data) => {
                 // For system real-time messages (like clock), prioritize them
                 const isRealtime = data.length === 1 && data[0] >= 0xF8;
-                
+
                 return new Promise((resolve, reject) => {
                     const msg = { data, resolve, reject };
-                    
+
                     if (isRealtime && sendQueue.length > 0) {
                         // Insert real-time messages at the front of the queue
                         sendQueue.unshift(msg);
                     } else {
                         sendQueue.push(msg);
                     }
-                    
+
                     if (!isSending) {
                         // Use setTimeout(0) for minimal delay
                         setTimeout(processQueue, 0);
@@ -444,7 +459,7 @@
                 }
 
                 // Look for TX-6 specifically
-                midiOutput = outputs.find(output => 
+                midiOutput = outputs.find(output =>
                     output.name && output.name.toLowerCase().includes('tx-6')
                 );
 
@@ -519,6 +534,9 @@
             toggleLfoView() {
                 this.settingsView = this.settingsView === 'lfo' ? null : 'lfo';
                 if (this.settingsView === 'lfo') {
+                    // Switch to the track assigned to the currently selected LFO
+                    const currentLfo = this.globalLfos[this.currentLfoIndex];
+                    this.switchToTrackForLfo(currentLfo.assignedTrack);
                     this.$nextTick(() => this.drawLfoWaveform());
                 }
             },
@@ -526,29 +544,29 @@
             drawLfoWaveform() {
                 const canvas = document.getElementById('lfo-canvas');
                 if (!canvas) return;
-                
+
                 const ctx = canvas.getContext('2d');
                 const width = canvas.width;
                 const height = canvas.height;
                 const centerY = height / 2;
-                
+
                 // Clear canvas
                 ctx.clearRect(0, 0, width, height);
-                
+
                 // Get current LFO settings
-                const currentLfo = this.lfo[this.currentTrack];
+                const currentLfo = this.globalLfos[this.currentLfoIndex];
                 const shape = currentLfo.shape;
                 const amount = currentLfo.amount - 50; // Convert to -50 to +50
                 const amplitude = Math.abs(amount) / 50 * (centerY - 10); // Scale amplitude
-                
+
                 // Calculate frequency - convert rate (0-127) to Hz: 0.1-30Hz
                 const hz = 0.1 + (currentLfo.rate / 127) * 29.9;
-                
+
                 // Calculate how many cycles to show based on frequency
                 // Show 2 seconds worth of waveform
                 const timeSpan = 2; // seconds
                 const cycles = Math.max(0.5, hz * timeSpan);
-                
+
                 // Draw center line
                 ctx.strokeStyle = 'rgba(80, 81, 79, 0.3)';
                 ctx.lineWidth = 1;
@@ -558,23 +576,23 @@
                 ctx.lineTo(width, centerY);
                 ctx.stroke();
                 ctx.setLineDash([]);
-                
+
                 // Draw frequency indicator text
                 ctx.fillStyle = 'rgba(80, 81, 79, 0.6)';
                 ctx.font = '12px Arial';
                 ctx.textAlign = 'right';
                 ctx.fillText(`${hz.toFixed(2)} Hz`, width - 5, 15);
-                
+
                 // Draw waveform
                 ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--button-color');
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                
+
                 for (let x = 0; x < width; x++) {
                     // Phase now considers the number of cycles to display
                     const phase = (x / width) * cycles * 2 * Math.PI;
                     let y = 0;
-                    
+
                     switch (shape) {
                         case 'sine':
                             y = Math.sin(phase);
@@ -589,32 +607,34 @@
                             y = 2 * ((phase / (2 * Math.PI)) % 1) - 1;
                             break;
                     }
-                    
+
                     // Apply amount scaling and invert if negative
                     y = amount >= 0 ? y * amplitude : -y * amplitude;
                     y = centerY - y; // Invert Y coordinate for canvas
-                    
+
                     if (x === 0) {
                         ctx.moveTo(x, y);
                     } else {
                         ctx.lineTo(x, y);
                     }
                 }
-                
+
                 ctx.stroke();
-                
+
 
             },
 
 
-            // LFO state: array per track
-            lfo: Array(6).fill().map(() => ({
-                target: 'vol',
-                shape: 'sine',
-                enabled: true,
-                rate: 10, // 1 Hz default (0-127 mapped to 0.1-10 Hz)
-                amount: 50 // 0 default (-50 to +50)
-            })),
+            // Global LFO state: 6 named LFOs that can be assigned to any track
+            globalLfos: [
+                { name: 'LFO A', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 0 },
+                { name: 'LFO B', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 1 },
+                { name: 'LFO C', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 2 },
+                { name: 'LFO D', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 3 },
+                { name: 'LFO E', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 4 },
+                { name: 'LFO F', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 5 }
+            ],
+            currentLfoIndex: 0, // Currently selected LFO for editing
 
             // FX state
             fx: {
@@ -660,85 +680,126 @@
                 this.midi = createMidiController();
                 this.initializeTrackValues();
                 this.setupFullscreenListener();
-                // Sync LFO knobs to initial track
-                this.knobs.lfoRate.value = this.lfo[this.currentTrack].rate;
-                this.knobs.lfoRate.angle = midiToAngle(this.lfo[this.currentTrack].rate);
-                this.knobs.lfoAmount.value = this.lfo[this.currentTrack].amount;
-                this.knobs.lfoAmount.angle = lfoAmountToAngle(this.lfo[this.currentTrack].amount);
-                
+                // Sync LFO knobs to initial LFO
+                this.updateLfoKnobs();
+
                 // Initial LFO visualization
                 this.$nextTick(() => this.drawLfoWaveform());
             },
 
             runLfo(trackIdx, dt) {
-                const lfo = this.lfo[trackIdx];
-                if (lfo.amount === 50) return; // Amount is 0, so do nothing
-                // Convert rate (0-127) to Hz: 0.1-30Hz
-                const hz = 0.1 + (lfo.rate / 127) * 29.9;
+                // Find LFOs assigned to this track
+                const assignedLfos = this.globalLfos.filter(lfo => lfo.assignedTrack === trackIdx);
 
-                const phaseInc = 2 * Math.PI * hz * dt;
-                this.lfoPhases[trackIdx] = (this.lfoPhases[trackIdx] + phaseInc) % (2 * Math.PI);
-                let shapeVal = 0;
-                switch (lfo.shape) {
-                    case 'sine':
-                        shapeVal = Math.sin(this.lfoPhases[trackIdx]);
-                        break;
-                    case 'triangle':
-                        shapeVal = 2 * Math.abs((this.lfoPhases[trackIdx] / Math.PI) % 2 - 1) - 1;
-                        break;
-                    case 'square':
-                        shapeVal = Math.sign(Math.sin(this.lfoPhases[trackIdx]));
-                        break;
-                    case 'saw':
-                        shapeVal = 2 * ((this.lfoPhases[trackIdx] / (2 * Math.PI)) % 1) - 1;
-                        break;
+                assignedLfos.forEach((lfo, lfoIndex) => {
+                    const globalLfoIndex = this.globalLfos.indexOf(lfo);
+                    if (lfo.amount === 50) return; // Amount is 0, so do nothing
+                    // Convert rate (0-127) to Hz: 0.1-30Hz
+                    const hz = 0.1 + (lfo.rate / 127) * 29.9;
+
+                    const phaseInc = 2 * Math.PI * hz * dt;
+                    this.lfoPhases[globalLfoIndex] = (this.lfoPhases[globalLfoIndex] + phaseInc) % (2 * Math.PI);
+                    let shapeVal = 0;
+                    switch (lfo.shape) {
+                        case 'sine':
+                            shapeVal = Math.sin(this.lfoPhases[globalLfoIndex]);
+                            break;
+                        case 'triangle':
+                            shapeVal = 2 * Math.abs((this.lfoPhases[globalLfoIndex] / Math.PI) % 2 - 1) - 1;
+                            break;
+                        case 'square':
+                            shapeVal = Math.sign(Math.sin(this.lfoPhases[globalLfoIndex]));
+                            break;
+                        case 'saw':
+                            shapeVal = 2 * ((this.lfoPhases[globalLfoIndex] / (2 * Math.PI)) % 1) - 1;
+                            break;
+                    }
+                    // Amount: 0-100 where 50 = no modulation, scale to reasonable MIDI range
+                    // Convert to -50 to +50, then scale down for reasonable modulation depth
+                    // Scale based on actual knob position: 0-20 range should be subtle, not full range
+                    const amountFromCenter = lfo.amount - 50; // -50 to +50
+                    const amt = lfo.amount - 50; // ±50 MIDI units max modulation
+                    // Map to MIDI value (0-127) or -50 to 50 for display
+                    let lfoValue = 0;
+                    let cc = 7; // Default VOL
+                    switch (lfo.target) {
+                        case 'vol': {
+                            cc = 7;
+                            const base = Number(this.trackValues[`${trackIdx}-7`]);
+                            const modulation = amt * shapeVal;
+                            lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 0 : base) + modulation));
+                            break;
+                        }
+                        case 'fx1': {
+                            cc = 91;
+                            const base = Number(this.trackValues[`${trackIdx}-91`]);
+                            lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 0 : base) + amt * shapeVal));
+                            break;
+                        }
+                        case 'cmp': {
+                            cc = 93;
+                            const base = Number(this.trackValues[`${trackIdx}-93`]);
+                            lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 0 : base) + amt * shapeVal));
+                            break;
+                        }
+                        case 'flt': {
+                            cc = 74;
+                            const base = Number(this.trackValues[`${trackIdx}-74`]);
+                            // Default to 64 for filter
+                            lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 64 : base) + amt * shapeVal));
+                            break;
+                        }
+                    }
+
+                    // Store the LFO-modulated value
+                    const outputKey = `${trackIdx}-${cc}`;
+                    this.lfoOutputValues[outputKey] = lfoValue;
+
+                    const roundedValue = Math.round(lfoValue);
+                    this.midi.sendCC(trackIdx, cc, roundedValue);
+
+                    // DO NOT update trackValues here - that would overwrite user-set values!
+                    // trackValues should ONLY contain user-intended values, never LFO-modulated values
+                });
+            },
+
+            updateLfoKnobs() {
+                // Sync LFO knobs to currently selected global LFO
+                const currentLfo = this.globalLfos[this.currentLfoIndex];
+                this.knobs.lfoRate.value = currentLfo.rate;
+                this.knobs.lfoRate.angle = midiToAngle(currentLfo.rate);
+                this.knobs.lfoAmount.value = currentLfo.amount;
+                this.knobs.lfoAmount.angle = lfoAmountToAngle(currentLfo.amount);
+
+                // Switch track selector to the track assigned to this LFO (without triggering LFO assignment)
+                this.switchToTrackForLfo(currentLfo.assignedTrack);
+
+                // Update LFO visualization
+                this.$nextTick(() => this.drawLfoWaveform());
+            },
+
+            switchToTrackForLfo(trackIndex) {
+                // Switch track for LFO visualization purposes without triggering LFO assignment
+                // Save current track's slider value
+                const oldKey = `${this.currentTrack}-${this.currentSliderMode}`;
+                this.trackValues[oldKey] = this.sliderValue;
+
+                // Save LFO knob values to currently selected global LFO
+                const currentLfo = this.globalLfos[this.currentLfoIndex];
+                currentLfo.rate = this.knobs.lfoRate.value;
+                currentLfo.amount = this.knobs.lfoAmount.value;
+
+                this.currentTrack = trackIndex;
+
+                // Update slider to new track's value
+                const newKey = `${this.currentTrack}-${this.currentSliderMode}`;
+                const userValue = this.trackValues[newKey] || 0;
+                this.sliderValue = userValue;
+
+                // Ensure we're showing the user value, not any lingering LFO value
+                if (this.lfoOutputValues[newKey] !== undefined && !this.startStopActive) {
+                    delete this.lfoOutputValues[newKey];
                 }
-                // Amount: 0-100 where 50 = no modulation, scale to reasonable MIDI range
-                // Convert to -50 to +50, then scale down for reasonable modulation depth
-                // Scale based on actual knob position: 0-20 range should be subtle, not full range
-                const amountFromCenter = lfo.amount - 50; // -50 to +50
-                const amt = lfo.amount - 50; // ±50 MIDI units max modulation
-                // Map to MIDI value (0-127) or -50 to 50 for display
-                let lfoValue = 0;
-                let cc = 7; // Default VOL
-                switch (lfo.target) {
-                    case 'vol': {
-                        cc = 7;
-                        const base = Number(this.trackValues[`${trackIdx}-7`]);
-                        const modulation = amt * shapeVal;
-                        lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 0 : base) + modulation));
-                        break;
-                    }
-                    case 'fx1': {
-                        cc = 91;
-                        const base = Number(this.trackValues[`${trackIdx}-91`]);
-                        lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 0 : base) + amt * shapeVal));
-                        break;
-                    }
-                    case 'cmp': {
-                        cc = 93;
-                        const base = Number(this.trackValues[`${trackIdx}-93`]);
-                        lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 0 : base) + amt * shapeVal));
-                        break;
-                    }
-                    case 'flt': {
-                        cc = 74;
-                        const base = Number(this.trackValues[`${trackIdx}-74`]);
-                        // Default to 64 for filter
-                        lfoValue = Math.max(0, Math.min(127, (isNaN(base) ? 64 : base) + amt * shapeVal));
-                        break;
-                    }
-                }
-                
-                // Store the LFO-modulated value
-                const outputKey = `${trackIdx}-${cc}`;
-                this.lfoOutputValues[outputKey] = lfoValue;
-                
-                const roundedValue = Math.round(lfoValue);
-                this.midi.sendCC(trackIdx, cc, roundedValue);
-                
-                // DO NOT update trackValues here - that would overwrite user-set values!
-                // trackValues should ONLY contain user-intended values, never LFO-modulated values
             },
 
             initializeTrackValues() {
@@ -786,13 +847,19 @@
 
             // Track management
             selectTrack(trackIndex) {
+                // If LFO overlay is open, assign current LFO to the selected track
+                if (this.settingsView === 'lfo') {
+                    this.globalLfos[this.currentLfoIndex].assignedTrack = trackIndex;
+                }
+
                 // Save current track's slider value
                 const oldKey = `${this.currentTrack}-${this.currentSliderMode}`;
                 this.trackValues[oldKey] = this.sliderValue;
 
-                // Save LFO knob values to current track's LFO state
-                this.lfo[this.currentTrack].rate = this.knobs.lfoRate.value;
-                this.lfo[this.currentTrack].amount = this.knobs.lfoAmount.value;
+                // Save LFO knob values to currently selected global LFO
+                const currentLfo = this.globalLfos[this.currentLfoIndex];
+                currentLfo.rate = this.knobs.lfoRate.value;
+                currentLfo.amount = this.knobs.lfoAmount.value;
 
                 this.currentTrack = trackIndex;
 
@@ -800,20 +867,14 @@
                 const newKey = `${this.currentTrack}-${this.currentSliderMode}`;
                 const userValue = this.trackValues[newKey] || 0;
                 this.sliderValue = userValue;
-                
+
                 // Ensure we're showing the user value, not any lingering LFO value
                 if (this.lfoOutputValues[newKey] !== undefined && !this.startStopActive) {
                     delete this.lfoOutputValues[newKey];
                 }
 
-                // Sync LFO knobs to new track's LFO state
-                this.knobs.lfoRate.value = this.lfo[this.currentTrack].rate;
-                this.knobs.lfoRate.angle = midiToAngle(this.lfo[this.currentTrack].rate);
-                this.knobs.lfoAmount.value = this.lfo[this.currentTrack].amount;
-                this.knobs.lfoAmount.angle = lfoAmountToAngle(this.lfo[this.currentTrack].amount);
-
-                // Update LFO visualization
-                this.$nextTick(() => this.drawLfoWaveform());
+                // LFO knobs remain synced to the currently selected global LFO
+                // No need to change them when switching tracks
             },
 
             selectSliderMode(ccNumber) {
@@ -826,7 +887,7 @@
                 // Load value for new mode
                 const newKey = `${this.currentTrack}-${ccNumber}`;
                 const newValue = this.trackValues[newKey] !== undefined ? this.trackValues[newKey] : 0;
-                
+
                 // Update the slider value and send MIDI CC
                 this.sliderValue = newValue;
                 this.midi.sendCC(this.currentTrack, this.currentSliderMode, newValue);
@@ -846,7 +907,7 @@
                 // Update the knob's visual state and send MIDI CC
                 this.setKnobValue('eq', value);
                 this.handleKnobChange('eq', value);
-                
+
                 // Force UI update for the knob indicator
                 this.knobs.eq.angle = midiToAngle(value);
             },
@@ -855,7 +916,7 @@
                 const key = `${this.currentTrack}-${this.currentSliderMode}`;
                 this.trackValues[key] = this.sliderValue;
                 this.midi.sendCC(this.currentTrack, this.currentSliderMode, this.sliderValue);
-                
+
                 // Clear any LFO output value for this parameter to prevent conflicts
                 // The LFO will recalculate from the new base value on next tick
                 if (this.lfoOutputValues[key] !== undefined) {
@@ -874,12 +935,12 @@
                     this.knobs[knobType].value = value;
                     this.knobs[knobType].angle = midiToAngle(value);
                 }
-                // Sync LFO knob values to per-track LFO state
+                // Sync LFO knob values to currently selected global LFO
                 if (knobType === 'lfoRate') {
-                    this.lfo[this.currentTrack].rate = value;
+                    this.globalLfos[this.currentLfoIndex].rate = value;
                     this.$nextTick(() => this.drawLfoWaveform());
                 } else if (knobType === 'lfoAmount') {
-                    this.lfo[this.currentTrack].amount = value;
+                    this.globalLfos[this.currentLfoIndex].amount = value;
                     this.$nextTick(() => this.drawLfoWaveform());
                 }
             },
@@ -968,10 +1029,12 @@
                         }
                         break;
                     case 'lfoRate':
-                        this.lfo[this.currentTrack].rate = value;
+                        this.globalLfos[this.currentLfoIndex].rate = value;
+                        this.$nextTick(() => this.drawLfoWaveform());
                         break;
                     case 'lfoAmount':
-                        this.lfo[this.currentTrack].amount = value;
+                        this.globalLfos[this.currentLfoIndex].amount = value;
+                        this.$nextTick(() => this.drawLfoWaveform());
                         break;
                 }
             },
@@ -980,13 +1043,13 @@
                 this.startStopActive = !this.startStopActive;
                 if (this.startStopActive) {
                     this.midi.sendSystemRealTime(0xFA); // MIDI Start
-                    
+
                     // MIDI Clock timer (separate from LFO)
                     const midiInterval = 60000 / (this.bpm * 24); // 24 pulses per quarter note
                     this.midiClockTimer = setInterval(() => {
                         this.midi.sendSystemRealTime(0xF8); // MIDI Clock
                     }, midiInterval);
-                    
+
                     // LFO timer at 100Hz (10ms interval)
                     const lfoInterval = 10; // 10ms = 100Hz
                     const lfoDt = lfoInterval / 1000.0; // Convert to seconds
@@ -1011,29 +1074,29 @@
                 const transitionDuration = 200; // ms
                 const steps = 20;
                 const stepDuration = transitionDuration / steps;
-                
+
                 // Store initial LFO values for interpolation
                 const initialValues = { ...this.lfoOutputValues };
-                
+
                 let currentStep = 0;
                 const transitionTimer = setInterval(() => {
                     currentStep++;
                     const progress = currentStep / steps;
-                    
+
                     // Interpolate between LFO values and user values
                     for (const key in initialValues) {
                         const [trackIdx, cc] = key.split('-').map(Number);
                         const lfoValue = initialValues[key];
                         const userValue = this.trackValues[key] || 0;
-                        
+
                         // Linear interpolation
                         const interpolatedValue = lfoValue + (userValue - lfoValue) * progress;
                         this.lfoOutputValues[key] = interpolatedValue;
-                        
+
                         // Send MIDI for the interpolated value
                         this.midi.sendCC(trackIdx, cc, Math.round(interpolatedValue));
                     }
-                    
+
                     if (currentStep >= steps) {
                         clearInterval(transitionTimer);
                         // Clear LFO output values completely after transition
@@ -1088,7 +1151,7 @@
             },
 
             resetLfoAmount() {
-                this.lfo[this.currentTrack].amount = 50;
+                this.globalLfos[this.currentLfoIndex].amount = 50;
                 this.knobs.lfoAmount.value = 50;
                 this.knobs.lfoAmount.angle = lfoAmountToAngle(50);
                 this.$nextTick(() => this.drawLfoWaveform());
@@ -1112,7 +1175,7 @@
                 // Clamp the value between 0 and 127
                 rateValue = Math.max(0, Math.min(127, Math.round(rateValue)));
 
-                this.lfo[this.currentTrack].rate = rateValue;
+                this.globalLfos[this.currentLfoIndex].rate = rateValue;
 
                 // Update the knob visuals
                 this.knobs.lfoRate.value = rateValue;
@@ -1205,10 +1268,10 @@
             },
 
             get showEqGhost() {
-                // Show ghost indicator only when LFO target is FLT, LFO is running, AND EQ mode is FLT
-                return this.lfo[this.currentTrack].target === 'flt' && 
-                       this.startStopActive && 
-                       this.currentEqMode === 74;
+                // Show ghost indicator only when any LFO assigned to current track targets FLT, LFO is running, AND EQ mode is FLT
+                const assignedLfos = this.globalLfos.filter(lfo => lfo.assignedTrack === this.currentTrack);
+                const hasFilterLfo = assignedLfos.some(lfo => lfo.target === 'flt');
+                return hasFilterLfo && this.startStopActive && this.currentEqMode === 74;
             }
         });
 
