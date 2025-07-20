@@ -78,10 +78,6 @@
             <button @click="toggleFx(2)" class="fx-button orange" :class="{ active: fx.fx2Active }">
                 <span class="fx-button-inner">FX2</span>
             </button>
-            <button @click="toggleLfoView()" class="fx-settings-button"
-                style="margin-top:0.5rem;" :class="{ active: settingsView === 'lfo' }" aria-label="LFO settings">
-                <span>LFO</span>
-            </button>
         </div>
 
         <!-- FX Settings Overlay -->
@@ -209,55 +205,55 @@
 
             </div>
         </div>
-    </div>
-
-    <div class="master-controls">
         <h2 class="master-title">Master</h2>
-        <div class="knob-container">
-            <div class="secondary-knobs">
-                <div class="knob-wrapper">
-                    <div>
-                        <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()"
-                            class="bpm-input" min="40" max="400">
-                        <div class="knob-label">BPM</div>
-                    </div>
-                </div>
-
-                <button @click="togglePlay()" class="start-stop-button" :class="{ active: startStopActive }">
-                    <svg class="play-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 5v14l11-7z" />
-                    </svg>
-                    <svg class="stop-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 6h12v12H6z" />
-                    </svg>
-                </button>
-
-                <div class="knob-wrapper">
-                    <div class="knob" @mousedown="startKnobDrag('masterAux', $event)"
-                        @touchstart="startKnobDrag('masterAux', $event)">
-                        <div class="knob-indicator indicator-small"
-                            :style="`transform: translateX(-50%) rotate(${knobs.masterAux.angle}deg)`">
-                        </div>
-                    </div>
-                    <div class="value-display">
-                        <span class="knob-value" x-text="Math.floor(knobs.masterAux.value * 100 / 127)"></span>
-                        <span class="knob-label">Aux</span>
-                    </div>
-                </div>
-
-                <div class="knob-wrapper">
-                    <div class="knob" @mousedown="startKnobDrag('masterCue', $event)"
-                        @touchstart="startKnobDrag('masterCue', $event)">
-                        <div class="knob-indicator indicator-small"
-                            :style="`transform: translateX(-50%) rotate(${knobs.masterCue.angle}deg)`">
-                        </div>
-                    </div>
-                    <div class="value-display">
-                        <span class="knob-value" x-text="Math.floor(knobs.masterCue.value * 100 / 127)"></span>
-                        <span class="knob-label">Cue</span>
+            <div class="knob-wrapper">
+                <div>
+                    <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()"
+                        class="bpm-input" min="40" max="400">
+                    <div class="knob-label">BPM</div>
                 </div>
             </div>
-        </div>
+
+            <button @click="togglePlay()" class="start-stop-button" :class="{ active: startStopActive }">
+                <svg class="play-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 5v14l11-7z" />
+                </svg>
+                <svg class="stop-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 6h12v12H6z" />
+                </svg>
+            </button>
+
+            <button @click="toggleLfoView()" class="fx-settings-button"
+                :class="{ active: settingsView === 'lfo' }" aria-label="LFO settings">
+                <span>LFO</span>
+            </button>
+
+            <div class="knob-wrapper">
+                <div class="knob" @mousedown="startKnobDrag('masterAux', $event)"
+                    @touchstart="startKnobDrag('masterAux', $event)">
+                    <div class="knob-indicator indicator-small"
+                        :style="`transform: translateX(-50%) rotate(${knobs.masterAux.angle}deg)`">
+                    </div>
+                </div>
+                <div class="value-display">
+                    <span class="knob-value" x-text="Math.floor(knobs.masterAux.value * 100 / 127)"></span>
+                    <span class="knob-label">Aux</span>
+                </div>
+            </div>
+
+            <div class="knob-wrapper">
+                <div class="knob" @mousedown="startKnobDrag('masterCue', $event)"
+                    @touchstart="startKnobDrag('masterCue', $event)">
+                    <div class="knob-indicator indicator-small"
+                        :style="`transform: translateX(-50%) rotate(${knobs.masterCue.angle}deg)`">
+                    </div>
+                </div>
+                <div class="value-display">
+                    <span class="knob-value" x-text="Math.floor(knobs.masterCue.value * 100 / 127)"></span>
+                    <span class="knob-label">Cue</span>
+                </div>
+            </div>
+
             <div class="knob-wrapper main-knob">
                 <div class="knob" @mousedown="startKnobDrag('masterVolume', $event)"
                     @touchstart="startKnobDrag('masterVolume', $event)">

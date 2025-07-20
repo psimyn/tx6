@@ -98,13 +98,14 @@ h1 {
 .knob-container {
     max-width: 600px;
     width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, auto);
     gap: min(1rem, 3vw);
     margin: 0 auto;
     position: relative;
+    justify-items: center;
+    align-items: start;
 }
 
 .main-knob {
@@ -483,6 +484,7 @@ header {
     text-transform: uppercase;
     letter-spacing: 1px;
     margin: 0.5rem 0;
+    grid-column: span 3;
 }
 
 .connection-buttons {
@@ -661,17 +663,13 @@ header {
 }
 
 .fx-settings-button {
-    margin-top: auto;
-    position: relative;
-    height: 2rem;
-    width: auto;
-    aspect-ratio: initial;
     box-shadow: inset 0 -1px 4px rgba(0, 0, 0, 0.02), 2px 2px 3px rgba(0, 0, 0, 0.1), -2px -2px 3px rgba(255, 255, 255, 0.1);
     position: relative;
     --background-color: var(--knob-color);
     background: linear-gradient(to bottom right, var(--background-color), var(--knob-color-secondary));
     cursor: pointer;
-    padding: 0;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
     color: var(--button-color);
     border: 0;
     border-radius: 3px;
