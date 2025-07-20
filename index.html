@@ -648,6 +648,7 @@
             // MIDI controller instance
             midi: null,
             midiClockTimer: null,
+            lfoTimer: null,
 
             // Initialization
             lfoPhases: Array(6).fill(0),
@@ -971,35 +972,41 @@
                 this.startStopActive = !this.startStopActive;
                 if (this.startStopActive) {
                     this.midi.sendSystemRealTime(0xFA); // MIDI Start
-                    const interval = 60000 / (this.bpm * 24); // 24 pulses per quarter note
-                    const dt = interval / 1000.0;
+                    
+                    // MIDI Clock timer (separate from LFO)
+                    const midiInterval = 60000 / (this.bpm * 24); // 24 pulses per quarter note
                     this.midiClockTimer = setInterval(() => {
                         this.midi.sendSystemRealTime(0xF8); // MIDI Clock
+                    }, midiInterval);
+                    
+                    // LFO timer at 100Hz (10ms interval)
+                    const lfoInterval = 10; // 10ms = 100Hz
+                    const lfoDt = lfoInterval / 1000.0; // Convert to seconds
+                    this.lfoTimer = setInterval(() => {
                         for (let i = 0; i < 6; i++) {
-                            this.runLfo(i, dt);
+                            this.runLfo(i, lfoDt);
                         }
-                    }, interval);
+                    }, lfoInterval);
                 } else {
                     this.midi.sendSystemRealTime(0xFC); // MIDI Stop
                     clearInterval(this.midiClockTimer);
                     this.midiClockTimer = null;
+                    clearInterval(this.lfoTimer);
+                    this.lfoTimer = null;
                 }
             },
 
             updateBpm() {
                 // Ensure BPM is within a reasonable range
                 this.bpm = Math.max(40, Math.min(400, this.bpm));
-                // If the clock is running, restart it with the new BPM
+                // If the clock is running, restart only the MIDI clock with the new BPM
+                // LFO timer remains at 100Hz regardless of BPM
                 if (this.startStopActive) {
                     clearInterval(this.midiClockTimer);
-                    const interval = 60000 / (this.bpm * 24);
-                    const dt = interval / 1000.0;
+                    const midiInterval = 60000 / (this.bpm * 24);
                     this.midiClockTimer = setInterval(() => {
                         this.midi.sendSystemRealTime(0xF8); // MIDI Clock
-                        for (let i = 0; i < 6; i++) {
-                            this.runLfo(i, dt);
-                        }
-                    }, interval);
+                    }, midiInterval);
                 }
             },
 
