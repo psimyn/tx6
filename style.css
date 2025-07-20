@@ -290,6 +290,11 @@ h1 {
     height: 50%;
 }
 
+.knob-ghost {
+    pointer-events: none;
+    z-index: 1;
+}
+
 .indicator-master {
     width: 3px;
     height: 50%;
