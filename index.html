@@ -209,6 +209,17 @@
                             <span class="knob-value" x-text="(knobs.lfoAmount.value - 50)"></span>
                         </div>
                     </div>
+                    <div class="knob-wrapper">
+                        <label class="knob-label">PHASE</label>
+                        <div class="knob" @mousedown="startKnobDrag('lfoPhase', $event)"
+                            @touchstart="startKnobDrag('lfoPhase', $event)">
+                            <div class="knob-indicator indicator-small"
+                                :style="`transform: translateX(-50%) rotate(${knobs.lfoPhase.angle}deg)`"></div>
+                        </div>
+                        <div class="value-display">
+                            <span class="knob-value" x-text="Math.floor(knobs.lfoPhase.value * 360 / 127)"></span>°
+                        </div>
+                    </div>
                 </div>
 
                 <select x-model="currentLfoIndex" @change="updateLfoKnobs()" class="fx-engine-select"
@@ -528,7 +539,8 @@
                 fxParam2: { value: 0, angle: -150 },
                 fxReturn: { value: 0, angle: -150 },
                 lfoRate: { value: 64, angle: 0 },
-                lfoAmount: { value: 0, angle: -150 }
+                lfoAmount: { value: 0, angle: -150 },
+                lfoPhase: { value: 0, angle: -150 }
             },
 
             toggleLfoView() {
@@ -590,7 +602,11 @@
 
                 for (let x = 0; x < width; x++) {
                     // Phase now considers the number of cycles to display
-                    const phase = (x / width) * cycles * 2 * Math.PI;
+                    const basePhase = (x / width) * cycles * 2 * Math.PI;
+                    
+                    // Apply phase offset from knob (0-127 -> 0-2π radians)
+                    const phaseOffset = (currentLfo.phase / 127) * 2 * Math.PI;
+                    const phase = basePhase + phaseOffset;
                     let y = 0;
 
                     switch (shape) {
@@ -625,16 +641,16 @@
             },
 
             globalLfos: [
-                { name: 'LFO 1', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 0 },
-                { name: 'LFO 2', target: 'vol', shape: 'triangle', enabled: true, rate: 10, amount: 50, assignedTrack: 1 },
-                { name: 'LFO 3', target: 'vol', shape: 'square', enabled: true, rate: 10, amount: 50, assignedTrack: 2 },
-                { name: 'LFO 4', target: 'vol', shape: 'saw', enabled: true, rate: 10, amount: 50, assignedTrack: 3 },
-                { name: 'LFO 5', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 4 },
-                { name: 'LFO 6', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 0 },
-                { name: 'LFO 7', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 0 },
-                { name: 'LFO 8', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 0 },
-                { name: 'LFO 9', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 0 },
-                { name: 'LFO 10', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, assignedTrack: 0 },
+                { name: 'LFO 1', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 0 },
+                { name: 'LFO 2', target: 'vol', shape: 'triangle', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 1 },
+                { name: 'LFO 3', target: 'vol', shape: 'square', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 2 },
+                { name: 'LFO 4', target: 'vol', shape: 'saw', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 3 },
+                { name: 'LFO 5', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 4 },
+                { name: 'LFO 6', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 0 },
+                { name: 'LFO 7', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 0 },
+                { name: 'LFO 8', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 0 },
+                { name: 'LFO 9', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 0 },
+                { name: 'LFO 10', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 0 },
             ],
             currentLfoIndex: 0, // Currently selected LFO for editing
 
@@ -697,19 +713,24 @@
 
                     const phaseInc = 2 * Math.PI * hz * dt;
                     this.lfoPhases[globalLfoIndex] = (this.lfoPhases[globalLfoIndex] + phaseInc) % (2 * Math.PI);
+                    
+                    // Apply phase offset from knob (0-127 -> 0-2π radians)
+                    const phaseOffset = (lfo.phase / 127) * 2 * Math.PI;
+                    const effectivePhase = (this.lfoPhases[globalLfoIndex] + phaseOffset) % (2 * Math.PI);
+                    
                     let shapeVal = 0;
                     switch (lfo.shape) {
                         case 'sine':
-                            shapeVal = Math.sin(this.lfoPhases[globalLfoIndex]);
+                            shapeVal = Math.sin(effectivePhase);
                             break;
                         case 'triangle':
-                            shapeVal = 2 * Math.abs((this.lfoPhases[globalLfoIndex] / Math.PI) % 2 - 1) - 1;
+                            shapeVal = 2 * Math.abs((effectivePhase / Math.PI) % 2 - 1) - 1;
                             break;
                         case 'square':
-                            shapeVal = Math.sign(Math.sin(this.lfoPhases[globalLfoIndex]));
+                            shapeVal = Math.sign(Math.sin(effectivePhase));
                             break;
                         case 'saw':
-                            shapeVal = 2 * ((this.lfoPhases[globalLfoIndex] / (2 * Math.PI)) % 1) - 1;
+                            shapeVal = 2 * ((effectivePhase / (2 * Math.PI)) % 1) - 1;
                             break;
                     }
                     // Amount: 0-100 where 50 = no modulation, scale to reasonable MIDI range
@@ -768,6 +789,8 @@
                 this.knobs.lfoRate.angle = midiToAngle(currentLfo.rate);
                 this.knobs.lfoAmount.value = currentLfo.amount;
                 this.knobs.lfoAmount.angle = lfoAmountToAngle(currentLfo.amount);
+                this.knobs.lfoPhase.value = currentLfo.phase;
+                this.knobs.lfoPhase.angle = midiToAngle(currentLfo.phase);
 
                 // Switch track selector to the track assigned to this LFO (without triggering LFO assignment)
                 this.switchToTrackForLfo(currentLfo.assignedTrack);
@@ -786,6 +809,7 @@
                 const currentLfo = this.globalLfos[this.currentLfoIndex];
                 currentLfo.rate = this.knobs.lfoRate.value;
                 currentLfo.amount = this.knobs.lfoAmount.value;
+                currentLfo.phase = this.knobs.lfoPhase.value;
 
                 this.currentTrack = trackIndex;
 
@@ -858,6 +882,7 @@
                 const currentLfo = this.globalLfos[this.currentLfoIndex];
                 currentLfo.rate = this.knobs.lfoRate.value;
                 currentLfo.amount = this.knobs.lfoAmount.value;
+                currentLfo.phase = this.knobs.lfoPhase.value;
 
                 this.currentTrack = trackIndex;
 
@@ -939,6 +964,9 @@
                     this.$nextTick(() => this.drawLfoWaveform());
                 } else if (knobType === 'lfoAmount') {
                     this.globalLfos[this.currentLfoIndex].amount = value;
+                    this.$nextTick(() => this.drawLfoWaveform());
+                } else if (knobType === 'lfoPhase') {
+                    this.globalLfos[this.currentLfoIndex].phase = value;
                     this.$nextTick(() => this.drawLfoWaveform());
                 }
             },
@@ -1032,6 +1060,10 @@
                         break;
                     case 'lfoAmount':
                         this.globalLfos[this.currentLfoIndex].amount = value;
+                        this.$nextTick(() => this.drawLfoWaveform());
+                        break;
+                    case 'lfoPhase':
+                        this.globalLfos[this.currentLfoIndex].phase = value;
                         this.$nextTick(() => this.drawLfoWaveform());
                         break;
                 }
