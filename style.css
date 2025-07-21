@@ -460,10 +460,6 @@ h1 {
     display: inline-block;
 }
 
-.value-large {
-    text-align: center;
-    font-size: 1.8rem;
-}
 
 .knob-label {
     font-size: 0.65rem;
