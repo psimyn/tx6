@@ -179,7 +179,7 @@
                     <canvas id="lfo-canvas" width="300" height="100"
                         style="border: 1px solid var(--knob-border); border-radius: 4px;"></canvas>
                 </div>
-                <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2rem;justify-items:center;">
                     <div class="knob-wrapper">
                         <label class="knob-label">RATE</label>
                         <div class="knob" @mousedown="startKnobDrag('lfoRate', $event)"
@@ -570,7 +570,9 @@
                 const currentLfo = this.globalLfos[this.currentLfoIndex];
                 const shape = currentLfo.shape;
                 const amount = currentLfo.amount - 50; // Convert to -50 to +50
-                const amplitude = Math.abs(amount) / 50 * (centerY - 10); // Scale amplitude
+                // Scale amplitude with proper margins to keep waveform within bounds
+                const maxAmplitude = centerY - 20; // Leave 20px margin from edges
+                const amplitude = Math.abs(amount) / 50 * maxAmplitude;
 
                 // Calculate frequency - convert rate (0-127) to Hz: 0.1-30Hz
                 const hz = 0.1 + (currentLfo.rate / 127) * 29.9;
