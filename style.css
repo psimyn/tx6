@@ -169,6 +169,21 @@ h1 {
     border-radius: 4px;
     padding: 4px 8px;
     cursor: pointer;
+    background-color: var(--knob-color);
+    color: var(--text-color);
+    transition: all 0.2s ease;
+}
+
+.rate-button:hover {
+    background-color: var(--button-hover);
+    color: var(--bg-color);
+}
+
+.rate-button.active {
+    background-color: var(--button-color);
+    border-color: var(--button-color);
+    color: var(--bg-color);
+    font-weight: bold;
 }
 
 .bpm-input {

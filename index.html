@@ -63,7 +63,7 @@
                     :style="`background: ${eqIndicatorColor}; transform: translateX(-50%) rotate(${knobs.eq.angle}deg)`">
                 </div>
                 <div class="knob-indicator indicator-small knob-ghost" x-show="showEqGhost"
-                    :style="`background: var(--accent-color-orange); opacity: 0.5; transform: translateX(-50%) rotate(${eqGhostAngle}deg)`">
+                    :style="`background: var(--accent-color-blue); opacity: 0.3; transform: translateX(-50%) rotate(${eqGhostAngle}deg)`">
                 </div>
             </div>
             <div class="value-display">
@@ -157,6 +157,7 @@
                 <div class="knob-wrapper">
                     <div class="value-display">
                         <select id="lfo-target" x-model="globalLfos[currentLfoIndex].target"
+                            @change="handleLfoTargetChange($event.target.value)"
                             class="fx-engine-select">
                             <option value="vol">VOL</option>
                             <option value="fx1">FX1</option>
@@ -192,10 +193,10 @@
                             <span class="knob-label">Hz</span>
                         </div>
                         <div class="rate-buttons">
-                            <button @click="setLfoRateFromBpm(0.25)" class="rate-button">1</button>
-                            <button @click="setLfoRateFromBpm(0.5)" class="rate-button">1/2</button>
-                            <button @click="setLfoRateFromBpm(1)" class="rate-button">1/4</button>
-                            <button @click="setLfoRateFromBpm(2)" class="rate-button">1/8</button>
+                            <button @click="setLfoRateFromBpm(0.25)" class="rate-button" :class="{ 'active': isRateButtonActive(0.25) }">1</button>
+                            <button @click="setLfoRateFromBpm(0.5)" class="rate-button" :class="{ 'active': isRateButtonActive(0.5) }">½</button>
+                            <button @click="setLfoRateFromBpm(1)" class="rate-button" :class="{ 'active': isRateButtonActive(1) }">¼</button>
+                            <button @click="setLfoRateFromBpm(2)" class="rate-button" :class="{ 'active': isRateButtonActive(2) }">⅛</button>
                         </div>
                     </div>
                     <div class="knob-wrapper">
@@ -693,30 +694,36 @@
 
             // Initialization
             lfoPhases: Array(10).fill(0),
+            lfoStartTime: null, // Absolute start time for clock sync
 
             init() {
                 this.midi = createMidiController();
                 this.initializeTrackValues();
                 this.setupFullscreenListener();
                 this.updateLfoKnobs();
+                this.lfoStartTime = performance.now() / 1000; // Start time in seconds
                 this.$nextTick(() => this.drawLfoWaveform());
             },
 
             runLfo(trackIdx, dt) {
                 const assignedLfos = this.globalLfos.filter(lfo => lfo.assignedTrack === trackIdx);
+                const currentTime = performance.now() / 1000; // Current time in seconds
+                const elapsedTime = currentTime - this.lfoStartTime;
 
                 assignedLfos.forEach((lfo, lfoIndex) => {
                     const globalLfoIndex = this.globalLfos.indexOf(lfo);
                     if (lfo.amount === 50) return; // Amount is 0, so do nothing
+                    
                     // Convert rate (0-127) to Hz: 0.1-30Hz
                     const hz = 0.1 + (lfo.rate / 127) * 29.9;
 
-                    const phaseInc = 2 * Math.PI * hz * dt;
-                    this.lfoPhases[globalLfoIndex] = (this.lfoPhases[globalLfoIndex] + phaseInc) % (2 * Math.PI);
+                    // Calculate absolute phase based on elapsed time (eliminates drift)
+                    const absolutePhase = (2 * Math.PI * hz * elapsedTime) % (2 * Math.PI);
+                    this.lfoPhases[globalLfoIndex] = absolutePhase;
                     
                     // Apply phase offset from knob (0-127 -> 0-2π radians)
                     const phaseOffset = (lfo.phase / 127) * 2 * Math.PI;
-                    const effectivePhase = (this.lfoPhases[globalLfoIndex] + phaseOffset) % (2 * Math.PI);
+                    const effectivePhase = (absolutePhase + phaseOffset) % (2 * Math.PI);
                     
                     let shapeVal = 0;
                     switch (lfo.shape) {
@@ -1138,6 +1145,8 @@
             updateBpm() {
                 // Ensure BPM is within a reasonable range
                 this.bpm = Math.max(40, Math.min(400, this.bpm));
+                // Reset LFO timing to stay synchronized with new BPM
+                this.resetLfoTiming();
                 // If the clock is running, restart only the MIDI clock with the new BPM
                 // LFO timer remains at 100Hz regardless of BPM
                 if (this.startStopActive) {
@@ -1210,7 +1219,40 @@
                 // Update the knob visuals
                 this.knobs.lfoRate.value = rateValue;
                 this.knobs.lfoRate.angle = midiToAngle(rateValue);
+                
+                // Reset LFO timing to stay in sync with new rate
+                this.resetLfoTiming();
                 this.$nextTick(() => this.drawLfoWaveform());
+            },
+
+            resetLfoTiming() {
+                // Reset the start time to current time to eliminate accumulated drift
+                this.lfoStartTime = performance.now() / 1000;
+            },
+
+            // todo: model properly
+            handleLfoTargetChange(newTarget) {
+                // Update the LFO target
+                this.globalLfos[this.currentLfoIndex].target = newTarget;
+                
+                // Force reactivity update to reset ghost indicators
+                // This ensures the ghost indicator disappears from the previous target
+                this.$nextTick(() => {
+                    // Trigger a re-evaluation of computed properties
+                    this.$forceUpdate();
+                });
+            },
+
+            isRateButtonActive(multiplier) {
+                // Calculate the expected rate value for this multiplier
+                const quarterNoteDuration = 60 / this.bpm;
+                const noteDuration = quarterNoteDuration / multiplier;
+                const targetHz = 1 / noteDuration;
+                const expectedRateValue = Math.round(((targetHz - 0.1) / 29.9) * 127);
+                
+                // Check if current LFO rate matches (with small tolerance for rounding)
+                const currentRate = this.globalLfos[this.currentLfoIndex].rate;
+                return Math.abs(currentRate - expectedRateValue) <= 1;
             },
 
             updateFxDisplay() {
