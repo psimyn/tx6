@@ -619,7 +619,7 @@ header {
     cursor: pointer;
     transition: all 0.2s ease;
     font-weight: 500;
-    min-width: 80px;
+    min-width: 4rem;
     aspect-ratio: 1;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     position: relative;
@@ -761,6 +761,7 @@ header {
     box-shadow: inset 0 -1px 4px rgba(0, 0, 0, 0.02), 2px 2px 3px rgba(0, 0, 0, 0.1), -2px -2px 3px rgba(255, 255, 255, 0.1);
     border: 0;
     padding: 0.5rem 1rem;
+    font-size: 0.85rem;
 }
 
 .fx-settings-overlay * {

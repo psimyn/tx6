@@ -1252,9 +1252,9 @@
                 const targetHz = 1 / noteDuration;
                 const expectedRateValue = Math.round(((targetHz - 0.1) / 29.9) * 127);
                 
-                // Check if current LFO rate matches (with small tolerance for rounding)
+                // Check if current LFO rate matches exactly (no tolerance for loose matching)
                 const currentRate = this.globalLfos[this.currentLfoIndex].rate;
-                return Math.abs(currentRate - expectedRateValue) <= 1;
+                return currentRate === expectedRateValue;
             },
 
             updateFxDisplay() {
