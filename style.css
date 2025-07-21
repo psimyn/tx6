@@ -47,7 +47,7 @@ html, body {
     text-align: center;
     background-image: linear-gradient(to bottom, rgba(0,0,0,0.001) 1px, transparent 1px), 
                       linear-gradient(to right, rgba(0,0,0,0.001) 1px, transparent 1px);
-    background-size: 10px 10px;
+    background-size: 0.625rem 0.625rem;
 }
 
 h1 {
@@ -65,11 +65,11 @@ h1 {
     background: white;
     z-index: 10;
     padding: 0.5rem 1rem;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 0.25rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
     opacity: 0;
     transition: opacity 0.3s ease;
-    transform: translateY(40px);
+    transform: translateY(2.5rem);
     display: none;
 }
 
@@ -86,7 +86,7 @@ h1 {
     border: none;
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
-    border-radius: 4px;
+    border-radius: 0.25rem;
     cursor: pointer;
     transition: background-color 0.2s;
 }
@@ -159,20 +159,31 @@ h1 {
 }
 
 .rate-buttons {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
     gap: 0.5rem;
     margin-top: 0.5rem;
+    width: 100%;
+    overflow: visible;
 }
 
 .rate-button {
     border: 1px solid #555;
-    border-radius: 4px;
-    padding: 4px 8px;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
     cursor: pointer;
     background-color: var(--knob-color);
     color: var(--text-color);
     transition: all 0.2s ease;
+    font-size: 0.8rem;
+    text-align: center;
+    overflow: visible;
+    white-space: nowrap;
+}
+
+.rate-button:last-child {
+    font-size: 0.65rem;
 }
 
 .rate-button:hover {
@@ -254,9 +265,9 @@ h1 {
     height: 1.5rem;
     background: var(--knob-color-secondary);
     border-radius: 50%;
-    box-shadow: 1px 1px 2px var(--knob-shadow),
-        -1px 0 1px var(--bg-color),
-        -1px 0 4px var(--knob-shadow);
+    box-shadow: 0.0625rem 0.0625rem 0.125rem var(--knob-shadow),
+        -0.0625rem 0 0.0625rem var(--bg-color),
+        -0.0625rem 0 0.25rem var(--knob-shadow);
 }
 
 .volume-slider input[type="range"]::-moz-range-thumb {
@@ -265,9 +276,9 @@ h1 {
     background: var(--knob-color-secondary);
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 1px 2px var(--knob-shadow),
-        0 2px 1px var(--bg-color),
-        0 2px 4px var(--knob-shadow);
+    box-shadow: 0 0.0625rem 0.125rem var(--knob-shadow),
+        0 0.125rem 0.0625rem var(--bg-color),
+        0 0.125rem 0.25rem var(--knob-shadow);
 }
 
 .volume-slider {
@@ -302,7 +313,7 @@ h1 {
 }
 
 .indicator-small {
-    width: 3px;
+    width: 0.1875rem;
     height: 50%;
 }
 
@@ -312,7 +323,7 @@ h1 {
 }
 
 .indicator-master {
-    width: 3px;
+    width: 0.1875rem;
     height: 50%;
 }
 
@@ -333,9 +344,9 @@ h1 {
     --select-border: var(--knob-border);
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2350514f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     
-    background: var(--select-bg) var(--select-chevron) no-repeat right 0.5rem center/12px 12px;
+    background: var(--select-bg) var(--select-chevron) no-repeat right 0.5rem center/0.75rem 0.75rem;
     border: 1px solid var(--select-border);
-    border-radius: 4px;
+    border-radius: 0.25rem;
     padding: 0.5rem 1.25rem 0.5rem 0.75rem;
     font-size: 0.85rem;
     color: var(--text-color);
@@ -353,12 +364,16 @@ h1 {
 
 .fx-engine-select {
     width: 100%;
-    max-width: 120px;
+    max-width: 7.5rem;
+}
+
+#lfo-canvas {
+    margin-left: 2rem;
 }
 
 #lfo-shape {
     position: absolute;
-    transform: rotate(-90deg) translate(-100%, -100%);
+    transform: rotate(-90deg) translate(-100%, 0);
     transform-origin: top left;
     top: 0;
     left: 0;
@@ -470,7 +485,7 @@ h1 {
     border-radius: 50%;
     transform: translate(-50%, -50%);
     z-index: 3;
-    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2);
+    box-shadow: inset 0.0625rem 0.0625rem 0.125rem rgba(0,0,0,0.2);
 }
 
 #eq-knob::before {
@@ -490,11 +505,11 @@ header {
 
 .track-selector {
     background: var(--select-bg);
-    border-radius: 999px;
+    border-radius: 62.4375rem;
     padding: 0.4rem 0.5rem;
     display: flex;
     justify-content: space-around;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.1);
     margin: 0 auto 1rem auto;
 }
 
@@ -503,7 +518,7 @@ header {
     border: none;
     padding: 0.25rem 0.5rem;
     max-width: 12vw;
-    border-radius: 999px;
+    border-radius: 62.4375rem;
     font-size: 0.9rem;
     color: var(--text-color);
     cursor: pointer;
@@ -550,17 +565,17 @@ header {
     border: none;
     padding: 0.75rem 1rem;
     font-size: 1rem;
-    border-radius: 8px;
+    border-radius: 0.5rem;
     cursor: pointer;
     transition: box-shadow 0.4s ease;
     position: relative;
     overflow: hidden;
     box-shadow: 
         0 0 0 1px var(--bg-color),            
-        0 2px 4px rgba(0, 0, 0, 0.02),
-        0 4px 8px rgba(0, 0, 0, 0.01),
-        inset 0 1px 1px rgba(255, 255, 255, 0.02);
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+        0 0.125rem 0.25rem rgba(0, 0, 0, 0.02),
+        0 0.25rem 0.5rem rgba(0, 0, 0, 0.01),
+        inset 0 0.0625rem 0.0625rem rgba(255, 255, 255, 0.02);
+    text-shadow: 0 0.0625rem 0.0625rem rgba(0, 0, 0, 0.3);
     margin-bottom: 0.5rem;
 }
 
@@ -568,18 +583,18 @@ header {
     background-color: var(--button-hover);
     box-shadow: 
         0 0 0 1px var(--bg-color),
-        0 4px 8px rgba(0, 0, 0, 0.03),
-        0 6px 12px rgba(0, 0, 0, 0.015),
-        inset 0 1px 1px rgba(255, 255, 255, 0.02);
+        0 0.25rem 0.5rem rgba(0, 0, 0, 0.03),
+        0 0.375rem 0.75rem rgba(0, 0, 0, 0.015),
+        inset 0 0.0625rem 0.0625rem rgba(255, 255, 255, 0.02);
 }
 
 .connect-btn:active {
-    transform: translateY(1px);
+    transform: translateY(0.0625rem);
     box-shadow: 
         0 0 0 1px var(--bg-color),
-        0 1px 2px rgba(0, 0, 0, 0.2),
-        0 2px 4px rgba(0, 0, 0, 0.1),
-        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        0 0.0625rem 0.125rem rgba(0, 0, 0, 0.2),
+        0 0.125rem 0.25rem rgba(0, 0, 0, 0.1),
+        inset 0 0.0625rem 0.0625rem rgba(255, 255, 255, 0.1);
 }
 
 .connect-btn::before {
@@ -621,7 +636,7 @@ header {
     font-weight: 500;
     min-width: 4rem;
     aspect-ratio: 1;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.2);
     position: relative;
     align-self: flex-start;
 }
@@ -641,13 +656,13 @@ header {
 }
 
 .fx-button:hover {
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 0.1875rem 0.375rem rgba(0, 0, 0, 0.25);
 }
 
 .fx-button:active {
     border-radius: 50%;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2),
-        inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.2),
+        inset 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.1);
 }
 
 .fx-button.orange {
@@ -667,9 +682,9 @@ header {
     transition: all 0.2s ease;
     width: 3.25rem;
     height: 3.25rem;
-    box-shadow: inset 0 -1px 4px rgba(0, 0, 0, 0.02),
-        0 2px 4px rgba(0, 0, 0, 0.2),
-        -2px -2px 3px rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 -0.0625rem 0.25rem rgba(0, 0, 0, 0.02),
+        0 0.125rem 0.25rem rgba(0, 0, 0, 0.2),
+        -0.125rem -0.125rem 0.1875rem rgba(255, 255, 255, 0.1);
     position: relative;
     --background-color: var(--knob-color);
     background: linear-gradient(to bottom right, var(--background-color), var(--knob-color-secondary));
@@ -684,7 +699,7 @@ header {
 
 .start-stop-button.active {
     --background-color: var(--knob-color-secondary);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.3), 0 0.0625rem 0.0625rem rgba(0, 0, 0, 0.05);
 }
 
 .start-stop-button svg {
@@ -710,11 +725,11 @@ header {
 }
 
 .start-stop-button:active {
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.02);
+    box-shadow: inset 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.2), 0 0.0625rem 0.0625rem rgba(0, 0, 0, 0.02);
 }
 
 .fx-settings-button {
-    box-shadow: inset 0 -1px 4px rgba(0, 0, 0, 0.02), 2px 2px 3px rgba(0, 0, 0, 0.1), -2px -2px 3px rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 -0.0625rem 0.25rem rgba(0, 0, 0, 0.02), 0.125rem 0.125rem 0.1875rem rgba(0, 0, 0, 0.1), -0.125rem -0.125rem 0.1875rem rgba(255, 255, 255, 0.1);
     position: relative;
     --background-color: var(--knob-color);
     background: linear-gradient(to bottom right, var(--background-color), var(--knob-color-secondary));
@@ -723,12 +738,12 @@ header {
     font-size: 0.85rem;
     color: var(--button-color);
     border: 0;
-    border-radius: 3px;
+    border-radius: 0.1875rem;
 }
 
 .fx-settings-button.active,
 .fx-button.active {
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.3);
     background-color: var(--background-color);
 }
 
@@ -751,6 +766,17 @@ header {
     right: 0 !important;
     bottom: unset;
     padding-bottom: 1rem;
+    width: 100%;
+    max-width: none;
+}
+
+.lfo-overlay > div {
+    width: 100%;
+    max-width: 100%;
+}
+
+.lfo-overlay .knob-wrapper:nth-child(2) {
+    margin-left: -1rem;
 }
 
 .overlay-close-btn {
@@ -758,7 +784,7 @@ header {
     height: 2rem;
     width: auto;
     aspect-ratio: initial;
-    box-shadow: inset 0 -1px 4px rgba(0, 0, 0, 0.02), 2px 2px 3px rgba(0, 0, 0, 0.1), -2px -2px 3px rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 -0.0625rem 0.25rem rgba(0, 0, 0, 0.02), 0.125rem 0.125rem 0.1875rem rgba(0, 0, 0, 0.1), -0.125rem -0.125rem 0.1875rem rgba(255, 255, 255, 0.1);
     border: 0;
     padding: 0.5rem 1rem;
     font-size: 0.85rem;
@@ -814,7 +840,7 @@ header {
     display: flex;
     writing-mode: vertical-rl;
     text-orientation: mixed;
-    border-radius: 4px;
+    border-radius: 0.25rem;
     margin-bottom: 1rem;
     height: 75%;
 }
@@ -857,8 +883,8 @@ header {
 
 .fullscreen-toggle-btn {
     position: fixed;
-    right: .1rem;
-    bottom: .1rem;
+    right: 0.1rem;
+    bottom: 0.1rem;
     color: var(--text-color);
     background-color: transparent;
     border: none;

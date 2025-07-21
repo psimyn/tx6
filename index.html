@@ -179,7 +179,7 @@
                     <canvas id="lfo-canvas" width="300" height="100"
                         style="border: 1px solid var(--knob-border); border-radius: 4px;"></canvas>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2rem;justify-items:center;">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;justify-items:center;">
                     <div class="knob-wrapper">
                         <label class="knob-label">RATE</label>
                         <div class="knob" @mousedown="startKnobDrag('lfoRate', $event)"
@@ -195,8 +195,10 @@
                         <div class="rate-buttons">
                             <button @click="setLfoRateFromBpm(0.25)" class="rate-button" :class="{ 'active': isRateButtonActive(0.25) }">1</button>
                             <button @click="setLfoRateFromBpm(0.5)" class="rate-button" :class="{ 'active': isRateButtonActive(0.5) }">½</button>
+                            <button @click="setLfoRateFromBpm(0.333)" class="rate-button" :class="{ 'active': isRateButtonActive(0.333) }">⅓</button>
                             <button @click="setLfoRateFromBpm(1)" class="rate-button" :class="{ 'active': isRateButtonActive(1) }">¼</button>
                             <button @click="setLfoRateFromBpm(2)" class="rate-button" :class="{ 'active': isRateButtonActive(2) }">⅛</button>
+                            <button @click="setLfoRateFromBpm(4)" class="rate-button" :class="{ 'active': isRateButtonActive(4) }">1/16</button>
                         </div>
                     </div>
                     <div class="knob-wrapper">
