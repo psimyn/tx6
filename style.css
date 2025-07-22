@@ -460,7 +460,6 @@ h1 {
     display: inline-block;
 }
 
-
 .knob-label {
     font-size: 0.65rem;
     text-transform: uppercase;
@@ -828,7 +827,14 @@ header {
 .fx-settings-knobs {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 1rem;
     pointer-events: auto;
+}
+
+.fx-settings-knobs .knob-wrapper:nth-child(3) {
+    grid-column: 1;
+    grid-row: 2;
 }
 
 .fx-channel-tabs {

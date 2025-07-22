@@ -112,6 +112,19 @@
                 </div>
 
                 <div class="knob-wrapper">
+                    <div class="knob" @mousedown="startKnobDrag('fxReturn', $event)"
+                        @touchstart="startKnobDrag('fxReturn', $event)">
+                        <div class="knob-indicator indicator-small"
+                            :style="`transform: translateX(-50%) rotate(${knobs.fxReturn.angle}deg)`">
+                        </div>
+                    </div>
+                    <div class="value-display">
+                        <span class="knob-value" x-text="fxTrackDisplayValue"></span>
+                        <span class="knob-label" x-text="fx.currentChannel === 7 ? 'Return' : 'Track'"></span>
+                    </div>
+                </div>
+
+                <div class="knob-wrapper">
                     <div class="knob" @mousedown="startKnobDrag('fxParam1', $event)"
                         @touchstart="startKnobDrag('fxParam1', $event)">
                         <div class="knob-indicator indicator-small"
@@ -120,19 +133,6 @@
                     </div>
                     <div class="value-display">
                         <span class="knob-value" x-text="fxParam1DisplayValue"></span>
-                    </div>
-                </div>
-
-                <div class="knob-wrapper">
-                    <div class="knob" @mousedown="startKnobDrag('fxReturn', $event)"
-                        @touchstart="startKnobDrag('fxReturn', $event)">
-                        <div class="knob-indicator indicator-small"
-                            :style="`transform: translateX(-50%) rotate(${knobs.fxReturn.angle}deg)`">
-                        </div>
-                    </div>
-                    <div class="value-display">
-                        <span class="knob-value" x-text="Math.floor(knobs.fxReturn.value * 100 / 127)"></span>
-                        <span class="knob-label" x-text="fx.currentChannel === 7 ? 'Return' : 'Track'"></span>
                     </div>
                 </div>
 
@@ -1314,6 +1314,25 @@
                 // This would contain the parameter configuration logic
                 // For now, just return percentage
                 return Math.floor(this.knobs.fxParam1.value * 100 / 127);
+            },
+
+            get fxTrackDisplayValue() {
+                const value = this.knobs.fxReturn.value;
+                
+                // FX1 (channel 7) shows percentage, FX2 (channel 8) shows track labels
+                if (this.fx.currentChannel === 7) {
+                    return Math.floor(value * 100 / 127);
+                } else {
+                    // FX2: Map MIDI range 0-127 to 7 track labels
+                    const trackLabels = ['t1', 't2', 't3', 't4', 't5', 't6', 'all'];
+                    
+                    // Use proper rounding to match hardware behavior
+                    // Divide range into 7 equal segments
+                    const segmentSize = 128 / trackLabels.length; // 128 to include value 127
+                    const index = Math.min(Math.floor(value / segmentSize), trackLabels.length - 1);
+                    
+                    return trackLabels[index];
+                }
             },
 
             get fxParam2Visibility() {
