@@ -155,7 +155,14 @@
         <div class="fx-settings-overlay lfo-overlay" :class="{ active: settingsView === 'lfo' }" style="z-index: 20;">
             <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1rem;">
                 <div class="knob-wrapper">
-                    <div class="value-display">
+                    <div class="flex gap-1">
+                        <select x-model="currentLfoIndex" @change="updateLfoKnobs()" class="fx-engine-select"
+                        style="min-width:80px;">
+                        <template x-for="(lfo, index) in globalLfos" :key="index">
+                            <option :value="index" x-text="lfo.name"></option>
+                        </template>
+                    </select>
+    
                         <select id="lfo-target" x-model="globalLfos[currentLfoIndex].target"
                             class="fx-engine-select">
                             <option value="vol">VOL</option>
@@ -226,13 +233,6 @@
                         </div>
                     </div>
                 </div>
-
-                <select x-model="currentLfoIndex" @change="updateLfoKnobs()" class="fx-engine-select"
-                    style="min-width:80px;">
-                    <template x-for="(lfo, index) in globalLfos" :key="index">
-                        <option :value="index" x-text="lfo.name"></option>
-                    </template>
-                </select>
 
                 <button @click="settingsView = null" class="overlay-close-btn"
                     aria-label="Close LFO settings">BACK</button>

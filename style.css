@@ -903,3 +903,11 @@ header {
 .fullscreen-toggle-btn #fullscreen-icon {
     font-size: 1.1em;
 }
+
+.flex {
+    display: flex;
+}
+
+.gap-1 {
+    gap: 1rem;
+}
