@@ -169,11 +169,14 @@
                 <!-- Canvas with shape selector on the left -->
                 <div style="display:flex;align-items:center;gap:1rem;position:relative;">
                     <select id="lfo-shape" x-model="globalLfos[currentLfoIndex].shape" class="fx-engine-select"
+                        @change="$nextTick(() => drawLfoWaveform())"
                         style="writing-mode:horizontal-tb;">
                         <option value="sine">Sine</option>
                         <option value="triangle">Triangle</option>
                         <option value="square">Square</option>
                         <option value="saw">Saw</option>
+                        <option value="revsaw">Rev Saw</option>
+                        <option value="noise">Noise</option>
                     </select>
 
                     <canvas id="lfo-canvas" width="300" height="100"
@@ -627,6 +630,12 @@
                         case 'saw':
                             y = 2 * ((phase / (2 * Math.PI)) % 1) - 1;
                             break;
+                        case 'revsaw':
+                            y = 1 - 2 * ((phase / (2 * Math.PI)) % 1);
+                            break;
+                        case 'noise':
+                            y = Math.random() * 2 - 1;
+                            break;
                     }
 
                     // Apply amount scaling and invert if negative
@@ -646,16 +655,16 @@
             },
 
             globalLfos: [
-                { name: 'LFO 1', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 0 },
-                { name: 'LFO 2', target: 'vol', shape: 'triangle', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 1 },
-                { name: 'LFO 3', target: 'vol', shape: 'square', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 2 },
-                { name: 'LFO 4', target: 'vol', shape: 'saw', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 3 },
-                { name: 'LFO 5', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 4 },
-                { name: 'LFO 6', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 0 },
-                { name: 'LFO 7', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 0 },
-                { name: 'LFO 8', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 0 },
-                { name: 'LFO 9', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 0 },
-                { name: 'LFO 10', target: 'vol', shape: 'sine', enabled: true, rate: 10, amount: 50, phase: 0, assignedTrack: 0 },
+                { name: 'LFO 1', target: 'vol', shape: 'sine', enabled: true, rate: 1.0, amount: 50, phase: 0, assignedTrack: 0 },
+                { name: 'LFO 2', target: 'vol', shape: 'triangle', enabled: true, rate: 1.0, amount: 50, phase: 0, assignedTrack: 1 },
+                { name: 'LFO 3', target: 'vol', shape: 'square', enabled: true, rate: 1.0, amount: 50, phase: 0, assignedTrack: 2 },
+                { name: 'LFO 4', target: 'vol', shape: 'saw', enabled: true, rate: 1.0, amount: 50, phase: 0, assignedTrack: 3 },
+                { name: 'LFO 5', target: 'vol', shape: 'sine', enabled: true, rate: 1.0, amount: 50, phase: 0, assignedTrack: 4 },
+                { name: 'LFO 6', target: 'vol', shape: 'sine', enabled: true, rate: 1.0, amount: 50, phase: 0, assignedTrack: 0 },
+                { name: 'LFO 7', target: 'vol', shape: 'sine', enabled: true, rate: 1.0, amount: 50, phase: 0, assignedTrack: 0 },
+                { name: 'LFO 8', target: 'vol', shape: 'sine', enabled: true, rate: 1.0, amount: 50, phase: 0, assignedTrack: 0 },
+                { name: 'LFO 9', target: 'vol', shape: 'sine', enabled: true, rate: 1.0, amount: 50, phase: 0, assignedTrack: 0 },
+                { name: 'LFO 10', target: 'vol', shape: 'sine', enabled: true, rate: 1.0, amount: 50, phase: 0, assignedTrack: 0 },
             ],
             currentLfoIndex: 0, // Currently selected LFO for editing
 
@@ -679,7 +688,7 @@
             },
 
             // UI state
-            bpm: 100,
+            bpm: parseInt(localStorage.getItem('tx6-bpm')) || 100,
             midiClockInterval: null,
             startStopActive: false,
             isFullscreen: false,
@@ -742,6 +751,12 @@
                             break;
                         case 'saw':
                             shapeVal = 2 * ((effectivePhase / (2 * Math.PI)) % 1) - 1;
+                            break;
+                        case 'revsaw':
+                            shapeVal = 1 - 2 * ((effectivePhase / (2 * Math.PI)) % 1);
+                            break;
+                        case 'noise':
+                            shapeVal = Math.random() * 2 - 1;
                             break;
                     }
                     // Amount: 0-100 where 50 = no modulation, scale to reasonable MIDI range
@@ -1149,7 +1164,9 @@
             updateBpm() {
                 // Ensure BPM is within a reasonable range
                 this.bpm = Math.max(40, Math.min(400, this.bpm));
+                localStorage.setItem('tx6-bpm', this.bpm.toString());
                 // Reset LFO timing to stay synchronized with new BPM
+                // TODO: maybe don't do this? dynammically adjust instead. 
                 this.resetLfoTiming();
                 // If the clock is running, restart only the MIDI clock with the new BPM
                 // LFO timer remains at 100Hz regardless of BPM
