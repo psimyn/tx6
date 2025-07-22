@@ -19,11 +19,11 @@
     <header>
         <div class="status" x-text="status"></div>
         <div class="connection-buttons">
-            <button @click="connectBle()" class="connect-btn" x-show="!isConnected" :disabled="connecting">
-                Connect BLE
+            <button @click="connect('ble')" class="connect-btn" x-show="!isConnected" :disabled="connecting">
+                <i class="fas fa-bluetooth"></i> Connect Bluetooth
             </button>
-            <button @click="connectUsb()" class="connect-btn" x-show="!isConnected" :disabled="connecting">
-                Connect USB
+            <button @click="connect('usb')" class="connect-btn" x-show="!isConnected" :disabled="connecting">
+                <i class="fas fa-usb"></i> Connect USB
             </button>
         </div>
         <div class="track-selector">
@@ -487,19 +487,7 @@
                 return midiOutput;
             };
 
-            const disconnect = () => {
-                if (connectionType === 'ble' && bluetoothDevice?.gatt.connected) {
-                    bluetoothDevice.gatt.disconnect();
-                }
-                // Clear any pending messages
-                sendQueue = [];
-                isSending = false;
-                connectionType = null;
-                midiCharacteristic = null;
-                midiOutput = null;
-            };
-
-            return { sendCC, sendSystemRealTime, connectBle, connectUsb, disconnect };
+            return { sendCC, sendSystemRealTime, connectBle, connectUsb };
         };
 
         // Main Alpine.js component
@@ -688,7 +676,6 @@
 
             // UI state
             bpm: parseInt(localStorage.getItem('tx6-bpm')) || 100,
-            midiClockInterval: null,
             startStopActive: false,
             isFullscreen: false,
             activeKnob: null,
@@ -859,30 +846,22 @@
                 }
             },
 
-            // Connection methods
-            async connectBle() {
+            async connect(type) {
                 this.connecting = true;
-                this.status = 'Connecting to Bluetooth...';
+                const connectionName = type === 'ble' ? 'Bluetooth' : 'USB MIDI';
+                this.status = `Connecting to ${connectionName}...`;
+                
                 try {
-                    await this.midi.connectBle();
+                    if (type === 'ble') {
+                        await this.midi.connectBle();
+                    } else if (type === 'usb') {
+                        await this.midi.connectUsb();
+                    } else {
+                        throw new Error('Invalid connection type');
+                    }
+                    
                     this.isConnected = true;
-                    this.status = 'Connected to TX-6 via Bluetooth';
-                    setTimeout(() => this.status = '', 2000);
-                } catch (error) {
-                    this.status = `Connection failed: ${error.message}`;
-                    setTimeout(() => this.status = '', 3000);
-                } finally {
-                    this.connecting = false;
-                }
-            },
-
-            async connectUsb() {
-                this.connecting = true;
-                this.status = 'Connecting to USB MIDI...';
-                try {
-                    await this.midi.connectUsb();
-                    this.isConnected = true;
-                    this.status = 'Connected to TX-6 via USB';
+                    this.status = `Connected to TX-6 via ${connectionName}`;
                     setTimeout(() => this.status = '', 2000);
                 } catch (error) {
                     this.status = `Connection failed: ${error.message}`;
@@ -1207,18 +1186,6 @@
                 // Ensure BPM is within a reasonable range
                 this.bpm = Math.max(40, Math.min(400, this.bpm));
                 localStorage.setItem('tx6-bpm', this.bpm.toString());
-                // Reset LFO timing to stay synchronized with new BPM
-                // TODO: maybe don't do this? dynammically adjust instead. 
-                this.resetLfoTiming();
-                // If the clock is running, restart only the MIDI clock with the new BPM
-                // LFO timer remains at 100Hz regardless of BPM
-                if (this.startStopActive) {
-                    clearInterval(this.midiClockTimer);
-                    const midiInterval = 60000 / (this.bpm * 24);
-                    this.midiClockTimer = setInterval(() => {
-                        this.midi.sendSystemRealTime(0xF8); // MIDI Clock
-                    }, midiInterval);
-                }
             },
 
             handleEqChange(value) {
@@ -1283,14 +1250,7 @@
                 this.knobs.lfoRate.value = rateValue;
                 this.knobs.lfoRate.angle = midiToAngle(rateValue);
                 
-                // Reset LFO timing to stay in sync with new rate
-                this.resetLfoTiming();
                 this.$nextTick(() => this.drawLfoWaveform());
-            },
-
-            resetLfoTiming() {
-                // Reset the start time to current time to eliminate accumulated drift
-                this.lfoStartTime = performance.now() / 1000;
             },
 
             isRateButtonActive(multiplier) {
