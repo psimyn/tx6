@@ -157,7 +157,6 @@
                 <div class="knob-wrapper">
                     <div class="value-display">
                         <select id="lfo-target" x-model="globalLfos[currentLfoIndex].target"
-                            @change="handleLfoTargetChange($event.target.value)"
                             class="fx-engine-select">
                             <option value="vol">VOL</option>
                             <option value="fx1">FX1</option>
@@ -1100,26 +1099,69 @@
                 if (this.startStopActive) {
                     this.midi.sendSystemRealTime(0xFA); // MIDI Start
 
-                    // MIDI Clock timer (separate from LFO)
-                    const midiInterval = 60000 / (this.bpm * 24); // 24 pulses per quarter note
-                    this.midiClockTimer = setInterval(() => {
-                        this.midi.sendSystemRealTime(0xF8); // MIDI Clock
-                    }, midiInterval);
+                    // Initialize AudioContext for ultra-precise timing
+                    if (!this.audioContext) {
+                        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    
+                    // Resume AudioContext if suspended (required by some browsers)
+                    if (this.audioContext.state === 'suspended') {
+                        this.audioContext.resume();
+                    }
 
-                    // LFO timer at 100Hz (10ms interval)
-                    const lfoInterval = 10; // 10ms = 100Hz
-                    const lfoDt = lfoInterval / 1000.0; // Convert to seconds
-                    this.lfoTimer = setInterval(() => {
+                    // Initialize timing variables using AudioContext time
+                    const startTime = this.audioContext.currentTime;
+                    
+                    // MIDI Clock timing (24 pulses per quarter note) - convert to seconds
+                    const midiInterval = 60.0 / (this.bpm * 24);
+                    let nextMidiTime = startTime + midiInterval; // Track next expected beat time
+                    
+                    const scheduleMidiClock = () => {
+                        if (!this.startStopActive) return;
+                        
+                        const now = this.audioContext.currentTime;
+                        const drift = now - nextMidiTime; // Drift from expected beat time
+                        const nextInterval = Math.max(0, (midiInterval - drift) * 1000); // Convert to ms for setTimeout
+                        
+                        this.midi.sendSystemRealTime(0xF8); // MIDI Clock
+                        nextMidiTime += midiInterval; // Update next expected beat time
+                        
+                        this.midiClockTimer = setTimeout(scheduleMidiClock, nextInterval);
+                    };
+
+                    // LFO timing at 100Hz (0.01s interval)
+                    const lfoInterval = 0.01; // 10ms in seconds
+                    const lfoDt = lfoInterval;
+                    let nextLfoTime = startTime + lfoInterval; // Track next expected LFO time
+                    
+                    const scheduleLfo = () => {
+                        if (!this.startStopActive) return;
+                        
+                        const now = this.audioContext.currentTime;
+                        const drift = now - nextLfoTime; // Drift from expected LFO time
+                        const nextInterval = Math.max(0, (lfoInterval - drift) * 1000); // Convert to ms for setTimeout
+                        
                         for (let i = 0; i < 6; i++) {
                             this.runLfo(i, lfoDt);
                         }
-                    }, lfoInterval);
+                        nextLfoTime += lfoInterval; // Update next expected LFO time
+                        
+                        this.lfoTimer = setTimeout(scheduleLfo, nextInterval);
+                    };
+
+                    // Start both timers with initial intervals
+                    this.midiClockTimer = setTimeout(scheduleMidiClock, midiInterval * 1000);
+                    this.lfoTimer = setTimeout(scheduleLfo, lfoInterval * 1000);
                 } else {
                     this.midi.sendSystemRealTime(0xFC); // MIDI Stop
-                    clearInterval(this.midiClockTimer);
-                    this.midiClockTimer = null;
-                    clearInterval(this.lfoTimer);
-                    this.lfoTimer = null;
+                    if (this.midiClockTimer) {
+                        clearTimeout(this.midiClockTimer);
+                        this.midiClockTimer = null;
+                    }
+                    if (this.lfoTimer) {
+                        clearTimeout(this.lfoTimer);
+                        this.lfoTimer = null;
+                    }
                     // Smoothly return to user values instead of instant clear
                     this.smoothReturnToUserValues();
                 }
@@ -1249,19 +1291,6 @@
             resetLfoTiming() {
                 // Reset the start time to current time to eliminate accumulated drift
                 this.lfoStartTime = performance.now() / 1000;
-            },
-
-            // todo: model properly
-            handleLfoTargetChange(newTarget) {
-                // Update the LFO target
-                this.globalLfos[this.currentLfoIndex].target = newTarget;
-                
-                // Force reactivity update to reset ghost indicators
-                // This ensures the ghost indicator disappears from the previous target
-                this.$nextTick(() => {
-                    // Trigger a re-evaluation of computed properties
-                    this.$forceUpdate();
-                });
             },
 
             isRateButtonActive(multiplier) {
