@@ -140,7 +140,7 @@ h1 {
     aspect-ratio: 1;
     min-width: 4rem;
     min-height: 4rem;
-    max-width: 6rem;
+    max-width: 5.6rem;
 }
 
 .rate-buttons {
@@ -340,6 +340,7 @@ h1 {
     z-index: 2; /* Increased z-index */
     transition: border-color 0.2s, box-shadow 0.2s;
     pointer-events: auto; /* Ensure select is clickable */
+    margin-bottom: 0.5rem;
 }
 
 .fx-engine-select {
@@ -811,6 +812,7 @@ header {
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(2, 1fr);
     gap: 1rem;
+    align-items: start;
     pointer-events: auto;
 }
 

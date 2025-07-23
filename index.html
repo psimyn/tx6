@@ -21,10 +21,10 @@
             <div class="status" x-text="status"></div>
             <div class="connection-buttons">
                 <button @click="connect('ble')" class="connect-btn" x-show="!isConnected" :disabled="connecting">
-                    <i class="fas fa-bluetooth"></i> Connect Bluetooth
+                    Connect Bluetooth
                 </button>
                 <button @click="connect('usb')" class="connect-btn" x-show="!isConnected" :disabled="connecting">
-                    <i class="fas fa-usb"></i> Connect USB
+                    Connect USB
                 </button>
             </div>
             <div class="track-selector">
@@ -57,9 +57,18 @@
                     <option :value="mode.value" x-text="mode.label"></option>
                 </template>
             </select>
-            <div class="knob" @mousedown="startKnobDrag('eq', $event)" @touchstart="startKnobDrag('eq', $event)">
+            <div x-data="knob({ 
+                knobType: 'eq', 
+                minValue: 0, 
+                maxValue: 127, 
+                sensitivity: 1.5, 
+                initialValue: knobs.eq.value,
+                initialAngle: knobs.eq.angle,
+                doubleClickReset: 64, 
+                onChange: (value) => { handleEqChange(value); setKnobValue('eq', value); } 
+            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
                 <div class="knob-indicator indicator-small"
-                    :style="`background: ${eqIndicatorColor}; transform: translateX(-50%) rotate(${knobs.eq.angle}deg)`">
+                    :style="`background: ${eqIndicatorColor}; transform: translateX(-50%) rotate(${knobData.angle}deg)`">
                 </div>
                 <div class="knob-indicator indicator-small knob-ghost" x-show="showEqGhost"
                     :style="`background: var(--accent-color-blue); opacity: 0.3; transform: translateX(-50%) rotate(${eqGhostAngle}deg)`">
@@ -98,23 +107,26 @@
             </div>
 
             <div class="fx-settings-knobs">
-                <div class="knob-wrapper">
-                    <div class="value-display">
-                        <select x-model="fx.channels[fx.currentChannel].engine" @change="handleFxEngineChange"
-                            class="fx-engine-select">
-                            <template x-for="(option, index) in fx.channels[fx.currentChannel].types" :key="index">
-                                <option :value="calculateMidiValue(index, fx.channels[fx.currentChannel].types.length)"
-                                    x-text="option"></option>
-                            </template>
-                        </select>
-                    </div>
-                </div>
+                <select x-model="fx.channels[fx.currentChannel].engine" @change="handleFxEngineChange"
+                    class="fx-engine-select">
+                    <template x-for="(option, index) in fx.channels[fx.currentChannel].types" :key="index">
+                        <option :value="calculateMidiValue(index, fx.channels[fx.currentChannel].types.length)"
+                            x-text="option"></option>
+                    </template>
+                </select>
 
                 <div class="knob-wrapper">
-                    <div class="knob" @mousedown="startKnobDrag('fxReturn', $event)"
-                        @touchstart="startKnobDrag('fxReturn', $event)">
+                    <div x-data="knob({
+                        knobType: 'fxReturn',
+                        minValue: 0,
+                        maxValue: 127,
+                        sensitivity: 1.5,
+                        initialValue: knobs.fxReturn.value,
+                        initialAngle: knobs.fxReturn.angle,
+                        onChange: (value) => { handleKnobChange('fxReturn', value); setKnobValue('fxReturn', value); }
+                    })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
                         <div class="knob-indicator indicator-small"
-                            :style="`transform: translateX(-50%) rotate(${knobs.fxReturn.angle}deg)`">
+                            :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`">
                         </div>
                     </div>
                     <div class="value-display">
@@ -124,10 +136,17 @@
                 </div>
 
                 <div class="knob-wrapper">
-                    <div class="knob" @mousedown="startKnobDrag('fxParam1', $event)"
-                        @touchstart="startKnobDrag('fxParam1', $event)">
+                    <div x-data="knob({
+                        knobType: 'fxParam1',
+                        minValue: 0,
+                        maxValue: 127,
+                        sensitivity: 1.5,
+                        initialValue: knobs.fxParam1.value,
+                        initialAngle: knobs.fxParam1.angle,
+                        onChange: (value) => { handleKnobChange('fxParam1', value); setKnobValue('fxParam1', value); }
+                    })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
                         <div class="knob-indicator indicator-small"
-                            :style="`transform: translateX(-50%) rotate(${knobs.fxParam1.angle}deg)`">
+                            :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`">
                         </div>
                     </div>
                     <div class="value-display">
@@ -136,10 +155,17 @@
                 </div>
 
                 <div class="knob-wrapper" x-show="fxParam2Visibility">
-                    <div class="knob" @mousedown="startKnobDrag('fxParam2', $event)"
-                        @touchstart="startKnobDrag('fxParam2', $event)">
+                    <div x-data="knob({
+                        knobType: 'fxParam2',
+                        minValue: 0,
+                        maxValue: 127,
+                        sensitivity: 1.5,
+                        initialValue: knobs.fxParam2.value,
+                        initialAngle: knobs.fxParam2.angle,
+                        onChange: (value) => { handleKnobChange('fxParam2', value); setKnobValue('fxParam2', value); }
+                    })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
                         <div class="knob-indicator indicator-small"
-                            :style="`transform: translateX(-50%) rotate(${knobs.fxParam2.angle}deg)`">
+                            :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`">
                         </div>
                     </div>
                     <div class="value-display">
@@ -188,10 +214,17 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;justify-items:center;">
                     <div class="knob-wrapper">
                         <label class="knob-label">RATE</label>
-                        <div class="knob" @mousedown="startKnobDrag('lfoRate', $event)"
-                            @touchstart="startKnobDrag('lfoRate', $event)">
+                        <div x-data="knob({
+                            knobType: 'lfoRate',
+                            minValue: 0,
+                            maxValue: 127,
+                            sensitivity: 1.5,
+                            initialValue: knobs.lfoRate.value,
+                            initialAngle: knobs.lfoRate.angle,
+                            onChange: (value) => { handleKnobChange('lfoRate', value); setKnobValue('lfoRate', value); }
+                        })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
                             <div class="knob-indicator indicator-small"
-                                :style="`transform: translateX(-50%) rotate(${knobs.lfoRate.angle}deg)`"></div>
+                                :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`"></div>
                         </div>
                         <div class="value-display">
                             <span class="knob-value"
@@ -215,10 +248,18 @@
                     </div>
                     <div class="knob-wrapper">
                         <label class="knob-label">SIZE</label>
-                        <div class="knob" @mousedown="startKnobDrag('lfoAmount', $event)"
-                            @touchstart="handleLfoAmountTouchStart($event)" @dblclick="resetLfoAmount()">
+                        <div x-data="knob({
+                            knobType: 'lfoAmount',
+                            minValue: 0,
+                            maxValue: 100,
+                            sensitivity: 1.5,
+                            initialValue: knobs.lfoAmount.value,
+                            initialAngle: knobs.lfoAmount.angle,
+                            doubleClickReset: 50,
+                            onChange: (value) => { handleKnobChange('lfoAmount', value); setKnobValue('lfoAmount', value); }
+                        })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
                             <div class="knob-indicator indicator-small"
-                                :style="`transform: translateX(-50%) rotate(${knobs.lfoAmount.angle}deg)`"></div>
+                                :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`"></div>
                         </div>
                         <div class="value-display">
                             <span class="knob-value" x-text="(knobs.lfoAmount.value - 50)"></span>
@@ -226,10 +267,17 @@
                     </div>
                     <div class="knob-wrapper">
                         <label class="knob-label">PHASE</label>
-                        <div class="knob" @mousedown="startKnobDrag('lfoPhase', $event)"
-                            @touchstart="startKnobDrag('lfoPhase', $event)">
+                        <div x-data="knob({
+                            knobType: 'lfoPhase',
+                            minValue: 0,
+                            maxValue: 127,
+                            sensitivity: 1.5,
+                            initialValue: knobs.lfoPhase.value,
+                            initialAngle: knobs.lfoPhase.angle,
+                            onChange: (value) => { handleKnobChange('lfoPhase', value); setKnobValue('lfoPhase', value); }
+                        })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
                             <div class="knob-indicator indicator-small"
-                                :style="`transform: translateX(-50%) rotate(${knobs.lfoPhase.angle}deg)`"></div>
+                                :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`"></div>
                         </div>
                         <div class="value-display">
                             <span class="knob-value" x-text="Math.floor(knobs.lfoPhase.value * 360 / 127)"></span>°
@@ -266,10 +314,17 @@
         </button>
 
         <div class="knob-wrapper">
-            <div class="knob" @mousedown="startKnobDrag('masterAux', $event)"
-                @touchstart="startKnobDrag('masterAux', $event)">
+            <div x-data="knob({
+                knobType: 'masterAux',
+                minValue: 0,
+                maxValue: 127,
+                sensitivity: 1.5,
+                initialValue: knobs.masterAux.value,
+                initialAngle: knobs.masterAux.angle,
+                onChange: (value) => { handleKnobChange('masterAux', value); setKnobValue('masterAux', value); }
+            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
                 <div class="knob-indicator indicator-small"
-                    :style="`transform: translateX(-50%) rotate(${knobs.masterAux.angle}deg)`">
+                    :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`">
                 </div>
             </div>
             <div class="value-display">
@@ -279,10 +334,17 @@
         </div>
 
         <div class="knob-wrapper">
-            <div class="knob" @mousedown="startKnobDrag('masterCue', $event)"
-                @touchstart="startKnobDrag('masterCue', $event)">
+            <div x-data="knob({
+                knobType: 'masterCue',
+                minValue: 0,
+                maxValue: 127,
+                sensitivity: 1.5,
+                initialValue: knobs.masterCue.value,
+                initialAngle: knobs.masterCue.angle,
+                onChange: (value) => { handleKnobChange('masterCue', value); setKnobValue('masterCue', value); }
+            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
                 <div class="knob-indicator indicator-small"
-                    :style="`transform: translateX(-50%) rotate(${knobs.masterCue.angle}deg)`">
+                    :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`">
                 </div>
             </div>
             <div class="value-display">
@@ -292,10 +354,17 @@
         </div>
 
         <div class="knob-wrapper main-knob">
-            <div class="knob" @mousedown="startKnobDrag('masterVolume', $event)"
-                @touchstart="startKnobDrag('masterVolume', $event)">
+            <div x-data="knob({
+                knobType: 'masterVolume',
+                minValue: 0,
+                maxValue: 127,
+                sensitivity: 1.5,
+                initialValue: knobs.masterVolume.value,
+                initialAngle: knobs.masterVolume.angle,
+                onChange: (value) => { handleKnobChange('masterVolume', value); setKnobValue('masterVolume', value); }
+            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
                 <div class="knob-indicator indicator-small"
-                    :style="`transform: translateX(-50%) rotate(${knobs.masterVolume.angle}deg)`">
+                    :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`">
                 </div>
             </div>
             <div class="value-display">
@@ -312,10 +381,6 @@
     </button>
 
     <script>
-        // MIDI constants and utilities
-        const MIDI_SERVICE_UUID = '03b80e5a-ede8-4b33-a751-6ce34ec4c700';
-        const MIDI_IO_CHARACTERISTIC_UUID = '7772e5db-3868-4112-a1a9-f2669d106bf3';
-
         const CC = {
             VOLUME: 7,
             AUX: 14,
@@ -346,6 +411,93 @@
             const dbValue = Math.round((value - 64) * (18 / 64));
             return dbValue === 0 ? "0dB" : (dbValue > 0 ? "+" + dbValue : dbValue) + "dB";
         };
+
+        document.addEventListener('alpine:init', () => {
+
+            // Alpine.js Knob Component
+            Alpine.data('knob', (config) => ({
+                knobData: {
+                    value: config.initialValue || (config.knobType === 'eq' ? 64 : 0),
+                    angle: config.initialAngle || (config.knobType === 'eq' ? 0 : -150)
+                },
+                dragState: {
+                    isDragging: false,
+                    startValue: 0,
+                    initialY: 0
+                },
+                lastTapTime: 0,
+
+                startDrag(event) {
+                    event.preventDefault();
+
+                    // Handle double-click reset for specific knobs
+                    if (config.doubleClickReset) {
+                        const now = Date.now();
+                        if (this.lastTapTime && (now - this.lastTapTime) < 300) {
+                            const resetValue = config.doubleClickReset;
+                            this.setValue(resetValue);
+                            this.lastTapTime = 0;
+                            return;
+                        }
+                        this.lastTapTime = now;
+                    }
+
+                    this.dragState.isDragging = true;
+                    this.dragState.startValue = this.knobData.value;
+                    this.dragState.initialY = event.type === 'touchstart' ?
+                        event.touches[0].clientY : event.clientY;
+
+                    const handleMove = (e) => this.handleMove(e);
+                    const handleEnd = () => {
+                        document.removeEventListener('mousemove', handleMove);
+                        document.removeEventListener('touchmove', handleMove);
+                        document.removeEventListener('mouseup', handleEnd);
+                        document.removeEventListener('touchend', handleEnd);
+                        this.dragState.isDragging = false;
+                    };
+
+                    document.addEventListener('mousemove', handleMove);
+                    document.addEventListener('touchmove', handleMove);
+                    document.addEventListener('mouseup', handleEnd);
+                    document.addEventListener('touchend', handleEnd);
+                },
+
+                handleMove(event) {
+                    if (!this.dragState.isDragging) return;
+
+                    const currentY = event.type === 'touchmove' ?
+                        event.touches[0].clientY : event.clientY;
+
+                    const deltaY = currentY - this.dragState.initialY;
+                    const sensitivity = config.sensitivity || 1.5;
+                    const valueDelta = Math.round(-deltaY / sensitivity);
+
+                    const minValue = config.minValue || 0;
+                    const maxValue = config.maxValue || 127;
+                    const newValue = Math.max(minValue, Math.min(maxValue, this.dragState.startValue + valueDelta));
+
+                    if (this.knobData.value !== newValue) {
+                        this.setValue(newValue);
+                    }
+                },
+
+                setValue(value) {
+                    this.knobData.value = value;
+
+                    // Calculate angle based on knob type
+                    if (config.knobType === 'lfoAmount') {
+                        this.knobData.angle = lfoAmountToAngle(value);
+                    } else {
+                        this.knobData.angle = midiToAngle(value);
+                    }
+
+                    // Call onChange callback if provided
+                    if (config.onChange) {
+                        config.onChange(value);
+                    }
+                }
+            }));
+        });
 
         // MIDI Controller module
         const createMidiController = () => {
@@ -451,6 +603,9 @@
                 if (!navigator.bluetooth) {
                     throw new Error('Web Bluetooth API not supported');
                 }
+
+                const MIDI_SERVICE_UUID = '03b80e5a-ede8-4b33-a751-6ce34ec4c700';
+                const MIDI_IO_CHARACTERISTIC_UUID = '7772e5db-3868-4112-a1a9-f2669d106bf3';
 
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
                     filters: [{ services: [MIDI_SERVICE_UUID], name: 'TX-6' }]
@@ -558,24 +713,21 @@
                 const height = canvas.height;
                 const centerY = height / 2;
 
-                // Clear canvas
                 ctx.clearRect(0, 0, width, height);
 
-                // Get current LFO settings
                 const currentLfo = this.globalLfos[this.currentLfoIndex];
                 const shape = currentLfo.shape;
                 const amount = currentLfo.amount - 50; // Convert to -50 to +50
-                // Scale amplitude with proper margins to keep waveform within bounds
-                const maxAmplitude = centerY - 20; // Leave 20px margin from edges
+                const maxAmplitude = centerY - 20;
                 const amplitude = Math.abs(amount) / 50 * maxAmplitude;
 
                 // Calculate frequency - convert rate (0-127) to Hz: 0.1-30Hz
                 const hz = 0.1 + (currentLfo.rate / 127) * 29.9;
 
                 // Calculate how many cycles to show based on frequency
-                // Show 2 seconds worth of waveform
-                const timeSpan = 2; // seconds
-                const cycles = Math.max(0.5, hz * timeSpan);
+                // Show 1 bar worth of waveform
+                const timeSpan = 60 / this.bpm * 4;
+                const cycles = hz * timeSpan;
 
                 // Draw center line
                 ctx.strokeStyle = 'rgba(80, 81, 79, 0.3)';
@@ -640,8 +792,6 @@
                 }
 
                 ctx.stroke();
-
-
             },
 
             globalLfos: [
@@ -976,63 +1126,8 @@
                 }
             },
 
-            startKnobDrag(knobType, event) {
-                event.preventDefault();
-
-                // Double tap to reset EQ knob to center
-                if (knobType === 'eq') {
-                    const now = Date.now();
-                    if (this.lastTapTime && (now - this.lastTapTime) < 300) {
-                        this.setKnobValue('eq', 64);
-                        this.handleEqChange(64);
-                        this.lastTapTime = 0;
-                        return;
-                    }
-                    this.lastTapTime = now;
-                }
-
-                this.activeKnob = knobType;
-                this.dragState.startValue = this.knobs[knobType].value;
-                this.dragState.initialY = event.type === 'touchstart' ?
-                    event.touches[0].clientY : event.clientY;
-
-                const handleMove = (e) => this.handleKnobMove(e);
-                const handleEnd = () => {
-                    document.removeEventListener('mousemove', handleMove);
-                    document.removeEventListener('touchmove', handleMove);
-                    document.removeEventListener('mouseup', handleEnd);
-                    document.removeEventListener('touchend', handleEnd);
-                    this.activeKnob = null;
-                };
-
-                document.addEventListener('mousemove', handleMove);
-                document.addEventListener('touchmove', handleMove);
-                document.addEventListener('mouseup', handleEnd);
-                document.addEventListener('touchend', handleEnd);
-            },
-
-            handleKnobMove(event) {
-                if (!this.activeKnob) return;
-
-                const currentY = event.type === 'touchmove' ?
-                    event.touches[0].clientY : event.clientY;
-
-                const deltaY = currentY - this.dragState.initialY;
-                const sensitivity = 1.5;
-                const valueDelta = Math.round(-deltaY / sensitivity);
-                const newValue = Math.max(0, Math.min(127, this.dragState.startValue + valueDelta));
-
-                if (this.knobs[this.activeKnob].value !== newValue) {
-                    this.setKnobValue(this.activeKnob, newValue);
-                    this.handleKnobChange(this.activeKnob, newValue);
-                }
-            },
-
             handleKnobChange(knobType, value) {
                 switch (knobType) {
-                    case 'eq':
-                        this.handleEqChange(value);
-                        break;
                     case 'masterVolume':
                         this.midi.sendCC(CHANNELS.MASTER, CC.VOLUME, value);
                         break;
@@ -1161,27 +1256,6 @@
                 }
             },
 
-            handleLfoAmountTouchStart(event) {
-                const now = new Date().getTime();
-                const DOUBLE_TAP_DELAY = 300; // ms
-
-                if ((now - this.lastTapTime) < DOUBLE_TAP_DELAY) {
-                    event.preventDefault(); // prevent drag from starting
-                    this.resetLfoAmount();
-                    this.lastTapTime = 0; // reset tap time to prevent triple tap issues
-                } else {
-                    this.lastTapTime = now;
-                    this.startKnobDrag('lfoAmount', event);
-                }
-            },
-
-            resetLfoAmount() {
-                this.globalLfos[this.currentLfoIndex].amount = 50;
-                this.knobs.lfoAmount.value = 50;
-                this.knobs.lfoAmount.angle = lfoAmountToAngle(50);
-                this.$nextTick(() => this.drawLfoWaveform());
-            },
-
             handleFxEngineChange() {
                 const value = parseInt(this.fx.channels[this.fx.currentChannel].engine);
                 this.midi.sendCC(this.fx.currentChannel, CC.FX_ENGINE, value);
@@ -1306,7 +1380,6 @@
 
             get sliderOutputValue() {
                 const key = `${this.currentTrack}-${this.currentSliderMode}`;
-                // Return LFO-modulated value if available and LFO is running, otherwise return user value
                 if (this.startStopActive && this.lfoOutputValues[key] !== undefined) {
                     return this.lfoOutputValues[key];
                 }
@@ -1314,23 +1387,20 @@
             },
 
             get eqGhostAngle() {
-                // Show ghost indicator position for filter LFO modulation
-                const filterKey = `${this.currentTrack}-74`; // CC 74 is filter
+                const filterKey = `${this.currentTrack}-74`;
                 if (this.startStopActive && this.lfoOutputValues[filterKey] !== undefined) {
                     return midiToAngle(this.lfoOutputValues[filterKey]);
                 }
-                return this.knobs.eq.angle; // Fallback to current EQ angle
+                return this.knobs.eq.angle;
             },
 
             get showEqGhost() {
-                // Show ghost indicator only when any LFO assigned to current track targets FLT, LFO is running, AND EQ mode is FLT
                 const assignedLfos = this.globalLfos.filter(lfo => lfo.assignedTrack === this.currentTrack);
                 const hasFilterLfo = assignedLfos.some(lfo => lfo.target === 'flt');
                 return hasFilterLfo && this.startStopActive && this.currentEqMode === 74;
             }
         });
 
-        // Service Worker registration
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('service-worker.js');
         }
