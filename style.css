@@ -745,18 +745,18 @@ header {
     display: none;
     flex-direction: row-reverse;
     gap: 1.5rem;
-    top: -0.5rem;
+    top: 3rem;
     left: 0;
     right: 5rem;
     bottom: 0;
     pointer-events: none;
     transform-origin: bottom right;
+    padding: 1rem;
 }
 
 .lfo-overlay {
     right: 0 !important;
     bottom: unset;
-    padding-bottom: 1rem;
     width: 100%;
     max-width: none;
 }
