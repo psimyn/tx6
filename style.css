@@ -108,20 +108,6 @@ h1 {
     flex: 0 0 auto;
 }
 
-.secondary-knobs {
-    display: grid;
-    grid-template-columns: auto auto;
-    align-items: end;
-    gap: 1.5rem;
-    margin-right: 1rem;
-    justify-items: center;
-}
-
-.secondary-knobs .knob-wrapper .knob {
-    width: 2.5rem;
-    height: 2.5rem;
-}
-
 .knob-wrapper {
     display: flex;
     flex-direction: column;
@@ -150,8 +136,11 @@ h1 {
     touch-action: none;
     cursor: pointer;
     overflow: visible;
-    width: 4rem;
-    height: 4rem;
+    width: 30vw;
+    aspect-ratio: 1;
+    min-width: 4rem;
+    min-height: 4rem;
+    max-width: 6rem;
 }
 
 .rate-buttons {
@@ -209,11 +198,6 @@ h1 {
     outline: none;
     border-color: var(--button-color);
     box-shadow: 0 0 0 1px var(--button-color);
-}
-
-#eq-knob {
-    width: 5rem;
-    height: 5rem;
 }
 
 .main-controls {
@@ -627,6 +611,8 @@ header {
     font-weight: 500;
     min-width: 4rem;
     aspect-ratio: 1;
+    max-width: 6rem;
+    width: 30vw;
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.2);
     position: relative;
     align-self: flex-start;
