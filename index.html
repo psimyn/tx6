@@ -16,6 +16,7 @@
 </head>
 
 <body x-data="tx6Controller()" x-init="init()">
+    <div class="knob-container">
     <header>
         <div class="status" x-text="status"></div>
         <div class="connection-buttons">
@@ -34,8 +35,6 @@
             </template>
         </div>
     </header>
-
-    <div class="knob-container">
         <div class="knob-wrapper">
             <select x-model="currentSliderMode" @change="selectSliderMode($event.target.value)" class="mode-select">
                 <template x-for="mode in sliderModes" :key="mode.value">
@@ -163,8 +162,7 @@
                         </template>
                     </select>
     
-                        <select id="lfo-target" x-model="globalLfos[currentLfoIndex].target"
-                            class="fx-engine-select">
+                        <select id="lfo-target" x-model="globalLfos[currentLfoIndex].target" class="fx-engine-select">
                             <option value="vol">VOL</option>
                             <option value="fx1">FX1</option>
                             <option value="cmp">CMP</option>
@@ -175,8 +173,7 @@
                 <!-- Canvas with shape selector on the left -->
                 <div style="display:flex;align-items:center;gap:1rem;position:relative;">
                     <select id="lfo-shape" x-model="globalLfos[currentLfoIndex].shape" class="fx-engine-select"
-                        @change="$nextTick(() => drawLfoWaveform())"
-                        style="writing-mode:horizontal-tb;">
+                        @change="$nextTick(() => drawLfoWaveform())" style="writing-mode:horizontal-tb;">
                         <option value="sine">Sine</option>
                         <option value="triangle">Triangle</option>
                         <option value="square">Square</option>
@@ -202,12 +199,18 @@
                             <span class="knob-label">Hz</span>
                         </div>
                         <div class="rate-buttons">
-                            <button @click="setLfoRateFromBpm(0.25)" class="rate-button" :class="{ 'active': isRateButtonActive(0.25) }">1</button>
-                            <button @click="setLfoRateFromBpm(0.5)" class="rate-button" :class="{ 'active': isRateButtonActive(0.5) }">½</button>
-                            <button @click="setLfoRateFromBpm(0.333)" class="rate-button" :class="{ 'active': isRateButtonActive(0.333) }">⅓</button>
-                            <button @click="setLfoRateFromBpm(1)" class="rate-button" :class="{ 'active': isRateButtonActive(1) }">¼</button>
-                            <button @click="setLfoRateFromBpm(2)" class="rate-button" :class="{ 'active': isRateButtonActive(2) }">⅛</button>
-                            <button @click="setLfoRateFromBpm(4)" class="rate-button" :class="{ 'active': isRateButtonActive(4) }">1/16</button>
+                            <button @click="setLfoRateFromBpm(0.25)" class="rate-button"
+                                :class="{ 'active': isRateButtonActive(0.25) }">1</button>
+                            <button @click="setLfoRateFromBpm(0.5)" class="rate-button"
+                                :class="{ 'active': isRateButtonActive(0.5) }">½</button>
+                            <button @click="setLfoRateFromBpm(0.333)" class="rate-button"
+                                :class="{ 'active': isRateButtonActive(0.333) }">⅓</button>
+                            <button @click="setLfoRateFromBpm(1)" class="rate-button"
+                                :class="{ 'active': isRateButtonActive(1) }">¼</button>
+                            <button @click="setLfoRateFromBpm(2)" class="rate-button"
+                                :class="{ 'active': isRateButtonActive(2) }">⅛</button>
+                            <button @click="setLfoRateFromBpm(4)" class="rate-button"
+                                :class="{ 'active': isRateButtonActive(4) }">1/16</button>
                         </div>
                     </div>
                     <div class="knob-wrapper">
