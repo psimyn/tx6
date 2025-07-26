@@ -21,10 +21,10 @@
             <div class="status" x-text="status"></div>
             <div class="connection-buttons">
                 <button @click="connect('ble')" class="connect-btn" x-show="!isConnected" :disabled="connecting">
-                    <i class="fas fa-bluetooth"></i> Connect Bluetooth
+                    Connect Bluetooth
                 </button>
                 <button @click="connect('usb')" class="connect-btn" x-show="!isConnected" :disabled="connecting">
-                    <i class="fas fa-usb"></i> Connect USB
+                    Connect USB
                 </button>
             </div>
             <div class="track-selector">
