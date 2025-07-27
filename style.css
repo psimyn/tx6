@@ -905,8 +905,8 @@ header {
 
 .control-buttons {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: 1rem;
     align-items: center;
 }
 
