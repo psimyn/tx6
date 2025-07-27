@@ -290,6 +290,70 @@
 
             </div>
         </div>
+
+        <div class="fx-settings-overlay synth-overlay" :class="{ active: settingsView === 'synth' }" style="z-index: 20;">
+            <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1rem;">
+                <div class="synth-controls">
+                    <div class="synth-input-wrapper">
+                        <label class="knob-label">SEQ</label>
+                        <input type="number" min="0" max="29" x-model="synthSettings.seq" @input="handleSeqChange()" 
+                               class="seq-input" placeholder="0-29">
+                    </div>
+                    
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;justify-items:center;">
+                        <div class="knob-wrapper">
+                            <label class="knob-label">WAVE</label>
+                            <select x-model="synthSettings.waveform" @change="handleWaveformChange()" class="fx-engine-select">
+                                <template x-for="option in waveformOptions" :key="option.value">
+                                    <option :value="option.value" x-text="option.label"></option>
+                                </template>
+                            </select>
+                        </div>
+                        
+                        <div class="knob-wrapper">
+                            <label class="knob-label">FREQ</label>
+                            <div x-data="knob({
+                                knobType: 'synthFreq',
+                                minValue: 0,
+                                maxValue: 127,
+                                sensitivity: 1.5,
+                                initialValue: knobs.synthFreq.value,
+                                initialAngle: knobs.synthFreq.angle,
+                                onChange: (value) => { handleKnobChange('synthFreq', value); setKnobValue('synthFreq', value); }
+                            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
+                                <div class="knob-indicator indicator-small"
+                                    :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`"></div>
+                            </div>
+                            <div class="value-display">
+                                <span class="knob-value" x-text="synthFreqDisplayValue"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="knob-wrapper">
+                            <label class="knob-label">LEN</label>
+                            <div x-data="knob({
+                                knobType: 'synthLen',
+                                minValue: 0,
+                                maxValue: 127,
+                                sensitivity: 1.5,
+                                initialValue: knobs.synthLen.value,
+                                initialAngle: knobs.synthLen.angle,
+                                onChange: (value) => { handleKnobChange('synthLen', value); setKnobValue('synthLen', value); }
+                            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
+                                <div class="knob-indicator indicator-small"
+                                    :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`"></div>
+                            </div>
+                            <div class="value-display">
+                                <span class="knob-value" x-text="Math.floor(knobs.synthLen.value * 100 / 127)"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button @click="settingsView = null" class="overlay-close-btn" aria-label="Close synth settings">BACK</button>
+            </div>
+        </div>
+
         <h2 class="master-title">Master</h2>
         <div class="knob-wrapper">
             <div>
@@ -308,10 +372,16 @@
             </svg>
         </button>
 
-        <button @click="toggleLfoView()" class="fx-settings-button" :class="{ active: settingsView === 'lfo' }"
-            aria-label="LFO settings">
-            <span>LFO</span>
-        </button>
+        <div class="control-buttons">
+            <button @click="toggleLfoView()" class="fx-settings-button" :class="{ active: settingsView === 'lfo' }"
+                aria-label="LFO settings">
+                <span>LFO</span>
+            </button>
+            <button @click="toggleSynthView()" class="fx-settings-button" :class="{ active: settingsView === 'synth' }"
+                aria-label="Synth settings">
+                <span>SYN</span>
+            </button>
+        </div>
 
         <div class="knob-wrapper">
             <div x-data="knob({
@@ -691,7 +761,9 @@
                 fxReturn: { value: 0, angle: -150 },
                 lfoRate: { value: 64, angle: 0 },
                 lfoAmount: { value: 0, angle: -150 },
-                lfoPhase: { value: 0, angle: -150 }
+                lfoPhase: { value: 0, angle: -150 },
+                synthFreq: { value: 0, angle: -150 },
+                synthLen: { value: 0, angle: -150 }
             },
 
             toggleLfoView() {
@@ -702,6 +774,21 @@
                     this.switchToTrackForLfo(currentLfo.assignedTrack);
                     this.$nextTick(() => this.drawLfoWaveform());
                 }
+            },
+
+            toggleSynthView() {
+                this.settingsView = this.settingsView === 'synth' ? null : 'synth';
+            },
+
+            handleSeqChange() {
+		const sequenceOptionsLength = 29; // 22 + RND + U1-6
+                const value = Math.floor(127 * this.synthSettings.seq / sequenceOptionsLength);
+                this.midi.sendCC(this.currentTrack, 14, value);
+            },
+
+            handleWaveformChange() {
+                const value = parseInt(this.synthSettings.waveform);
+                this.midi.sendCC(this.currentTrack, 3, value);
             },
 
             drawLfoWaveform() {
@@ -834,7 +921,41 @@
             activeKnob: null,
             dragState: { startValue: 0, initialY: 0, lastBpmDelta: 0 },
             lastTapTime: 0,
-            settingsView: null, // 'fx', 'lfo', or null
+            settingsView: null, // 'fx', 'lfo', 'synth', or null
+
+            // Synth settings
+            synthSettings: {
+                seq: '',
+                waveform: '0'
+            },
+
+            // Waveform options
+            waveformOptions: [
+                { value: 0, label: 'SIN', type: 'waveform' },
+                { value: 14, label: 'TRI', type: 'waveform' },
+                { value: 28, label: 'SQR', type: 'waveform' },
+                { value: 42, label: 'SAW', type: 'waveform' },
+                { value: 56, label: 'KICK', type: 'drum' },
+                { value: 70, label: 'SNARE', type: 'drum' },
+                { value: 84, label: 'CLAP', type: 'drum' },
+                { value: 98, label: 'HIHAT', type: 'drum' },
+                { value: 112, label: 'SAMPLE', type: 'sample' },
+                { value: 127, label: 'MIDI', type: 'midi' }
+            ],
+
+            // Note mapping from C0 to E8 (128 MIDI notes)
+            noteNames: [
+                'C0', 'C#0', 'D0', 'D#0', 'E0', 'F0', 'F#0', 'G0', 'G#0', 'A0', 'A#0', 'B0',
+                'C1', 'C#1', 'D1', 'D#1', 'E1', 'F1', 'F#1', 'G1', 'G#1', 'A1', 'A#1', 'B1',
+                'C2', 'C#2', 'D2', 'D#2', 'E2', 'F2', 'F#2', 'G2', 'G#2', 'A2', 'A#2', 'B2',
+                'C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3',
+                'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4',
+                'C5', 'C#5', 'D5', 'D#5', 'E5', 'F5', 'F#5', 'G5', 'G#5', 'A5', 'A#5', 'B5',
+                'C6', 'C#6', 'D6', 'D#6', 'E6', 'F6', 'F#6', 'G6', 'G#6', 'A6', 'A#6', 'B6',
+                'C7', 'C#7', 'D7', 'D#7', 'E7', 'F7', 'F#7', 'G7', 'G#7', 'A7', 'A#7', 'B7',
+                'C8', 'C#8', 'D8', 'D#8', 'E8', 'F8', 'F#8', 'G8', 'G#8', 'A8', 'A#8', 'B8',
+                'C9', 'C#9', 'D9', 'D#9', 'E9', 'F9', 'F#9', 'G9'
+            ],
 
             // Track values storage
             trackValues: {},
@@ -1166,6 +1287,12 @@
                         this.globalLfos[this.currentLfoIndex].phase = value;
                         this.$nextTick(() => this.drawLfoWaveform());
                         break;
+                    case 'synthFreq':
+                        this.midi.sendCC(this.currentTrack, 89, value);
+                        break;
+                    case 'synthLen':
+                        this.midi.sendCC(this.currentTrack, 90, value);
+                        break;
                 }
             },
 
@@ -1398,6 +1525,29 @@
                 const assignedLfos = this.globalLfos.filter(lfo => lfo.assignedTrack === this.currentTrack);
                 const hasFilterLfo = assignedLfos.some(lfo => lfo.target === 'flt');
                 return hasFilterLfo && this.startStopActive && this.currentEqMode === 74;
+            },
+
+            get synthFreqDisplayValue() {
+                const currentWaveform = this.waveformOptions.find(w => w.value == this.synthSettings.waveform);
+                const freqValue = this.knobs.synthFreq.value;
+                
+                // For waveforms, show note name and frequency
+                if (currentWaveform && currentWaveform.type === 'waveform') {
+                    const noteIndex = Math.floor(freqValue * 127 / 127); // Map 0-127 to note index
+                    const noteName = this.noteNames[noteIndex] || 'C0';
+                    const frequency = this.midiNoteToFrequency(noteIndex);
+                    return `${noteName}\n${frequency}Hz`;
+                }
+                
+                // For drums and others, show percentage
+                return Math.floor(freqValue * 100 / 127);
+            },
+
+            midiNoteToFrequency(midiNote) {
+                // A4 (MIDI note 69) = 880 Hz (doubled from standard 440 Hz)
+                // Formula: f = 880 * 2^((n-69)/12)
+                const frequency = 880 * Math.pow(2, (midiNote - 69) / 12);
+                return frequency < 100 ? frequency.toFixed(1) : Math.round(frequency);
             }
         });
 

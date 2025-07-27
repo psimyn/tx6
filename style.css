@@ -185,6 +185,12 @@ h1 {
 
 .bpm-input {
     width: 60px;
+}
+
+.seq-input {
+}
+
+input {
     background-color: var(--knob-color);
     border: 1px solid var(--knob-border);
     border-radius: 4px;
@@ -194,7 +200,7 @@ h1 {
     color: var(--text-color);
 }
 
-.bpm-input:focus {
+input:focus {
     outline: none;
     border-color: var(--button-color);
     box-shadow: 0 0 0 1px var(--button-color);
@@ -237,6 +243,7 @@ h1 {
     transform-origin: center;
     border-radius: 1.5rem;
     margin: 0;
+    padding: 0;
 }
 
 .volume-slider input[type="range"]::-webkit-slider-thumb {
@@ -895,3 +902,41 @@ header {
 .gap-1 {
     gap: 1rem;
 }
+
+.control-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.synth-overlay {
+    right: 0 !important;
+    bottom: unset;
+    width: 100%;
+    max-width: none;
+}
+
+.synth-overlay > div {
+    width: 100%;
+    max-width: 100%;
+}
+
+.synth-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.synth-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.seq-input {
+    width: 4em;
+}
+
