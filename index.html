@@ -578,8 +578,13 @@
             let midiCharacteristic = null;
             let midiAccess = null;
             let midiOutput = null;
+            let midiInput = null;
             let isSending = false;
             let sendQueue = [];
+            let clockListeners = [];
+            let lastClockTime = 0;
+            let clockCount = 0;
+            let isReceivingClock = false;
 
             const timestampGenerator = () => {
                 let localTime = performance.now() & 8191;
@@ -671,6 +676,84 @@
                 return sendMidiData([message]);
             };
 
+            // Clock signal handling
+            const addClockListener = (callback) => {
+                clockListeners.push(callback);
+            };
+
+            const removeClockListener = (callback) => {
+                const index = clockListeners.indexOf(callback);
+                if (index > -1) {
+                    clockListeners.splice(index, 1);
+                }
+            };
+
+            const processMidiMessage = (data) => {
+                const message = data[0];
+                
+                if (message === 0xF8) {
+                    const now = performance.now();
+                    clockCount++;
+                    
+                    if (!isReceivingClock) {
+                        isReceivingClock = true;
+                    }
+                    
+                    if (clockCount % 24 === 0 && lastClockTime > 0) {
+                        const timeDiff = now - lastClockTime;
+                        const bpm = 60000 / timeDiff;
+                        
+                        clockListeners.forEach(callback => {
+                            try {
+                                callback({
+                                    type: 'clock',
+                                    bpm: bpm,
+                                    clockCount: clockCount,
+                                    timestamp: now
+                                });
+                            } catch (error) {
+                                console.error('Error in clock listener:', error);
+                            }
+                        });
+                    }
+                    
+                    if (clockCount % 24 === 0) {
+                        lastClockTime = now;
+                    }
+                }
+                else if (message === 0xFA) {
+                    clockCount = 0;
+                    isReceivingClock = true;
+                    clockListeners.forEach(callback => {
+                        try {
+                            callback({ type: 'start', timestamp: performance.now() });
+                        } catch (error) {
+                            console.error('Error in clock listener:', error);
+                        }
+                    });
+                }
+                else if (message === 0xFC) {
+                    isReceivingClock = false;
+                    clockListeners.forEach(callback => {
+                        try {
+                            callback({ type: 'stop', timestamp: performance.now() });
+                        } catch (error) {
+                            console.error('Error in clock listener:', error);
+                        }
+                    });
+                }
+                else if (message === 0xFB) {
+                    isReceivingClock = true;
+                    clockListeners.forEach(callback => {
+                        try {
+                            callback({ type: 'continue', timestamp: performance.now() });
+                        } catch (error) {
+                            console.error('Error in clock listener:', error);
+                        }
+                    });
+                }
+            };
+
             const connectBle = async () => {
                 if (!navigator.bluetooth) {
                     throw new Error('Web Bluetooth API not supported');
@@ -689,6 +772,26 @@
                 connectionType = 'ble';
 
                 await midiCharacteristic.startNotifications();
+                
+                // Listen for incoming MIDI messages
+                midiCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+                    const value = event.target.value;
+                    const data = new Uint8Array(value.buffer);
+                    
+                    // Decode BLE MIDI message
+                    let midiData = [];
+                    for (let i = 1; i < data.length; i++) {
+                        // Skip timestamp bytes (have MSB set)
+                        if ((data[i] & 0x80) === 0) {
+                            midiData.push(data[i]);
+                        }
+                    }
+                    
+                    if (midiData.length > 0) {
+                        processMidiMessage(midiData);
+                    }
+                });
+                
                 return bluetoothDevice;
             };
 
@@ -699,6 +802,7 @@
 
                 midiAccess = await navigator.requestMIDIAccess({ sysex: true });
                 const outputs = Array.from(midiAccess.outputs.values());
+                const inputs = Array.from(midiAccess.inputs.values());
 
                 if (outputs.length === 0) {
                     throw new Error('No MIDI output devices found');
@@ -713,11 +817,33 @@
                     throw new Error('TX-6 MIDI device not found');
                 }
 
+                // Set up MIDI input for listening to clock signals
+                midiInput = inputs.find(input =>
+                    input.name && input.name.toLowerCase().includes('tx-6')
+                );
+
+                if (midiInput) {
+                    midiInput.onmidimessage = (event) => {
+                        processMidiMessage(event.data);
+                    };
+                    console.log('TX-6 MIDI input connected for clock listening');
+                } else {
+                    console.warn('TX-6 MIDI input not found - clock listening unavailable');
+                }
+
                 connectionType = 'usb';
                 return midiOutput;
             };
 
-            return { sendCC, sendSystemRealTime, connectBle, connectUsb };
+            return { 
+                sendCC, 
+                sendSystemRealTime, 
+                connectBle, 
+                connectUsb, 
+                addClockListener, 
+                removeClockListener,
+                getClockStatus: () => ({ isReceivingClock, clockCount })
+            };
         };
 
         // Main Alpine.js component
@@ -726,6 +852,13 @@
             status: '',
             isConnected: false,
             connecting: false,
+
+            clockStatus: {
+                isReceiving: false,
+                bpm: 0,
+                clockCount: 0,
+                lastUpdate: 0
+            },
 
             // Track management
             tracks: Array(6).fill(null).map((_, i) => ({ id: i, name: `T${i + 1}` })),
@@ -1009,6 +1142,27 @@
                 this.updateLfoKnobs();
                 this.lfoStartTime = performance.now() / 1000; // Start time in seconds
                 this.$nextTick(() => this.drawLfoWaveform());
+                
+                this.midi.addClockListener((clockData) => {
+                    this.clockStatus.isReceiving = true;
+                    this.clockStatus.lastUpdate = clockData.timestamp;
+                    
+                    if (clockData.type === 'clock') {
+                        const detectedBpm = Math.round(clockData.bpm * 10) / 10;
+                        this.bpm = Math.round(detectedBpm);
+                        this.clockStatus.bpm = detectedBpm;
+                        this.clockStatus.clockCount = clockData.clockCount;
+                        this.startStopActive = true;
+                    } else if (clockData.type === 'start') {
+                        this.startStopActive = true;
+                        this.clockStatus.clockCount = 0;
+                    } else if (clockData.type === 'stop') {
+                        this.startStopActive = false;
+                        this.clockStatus.isReceiving = false;
+                    } else if (clockData.type === 'continue') {
+                        this.startStopActive = true;
+                    }
+                });
             },
 
             runLfo(trackIdx, dt) {
