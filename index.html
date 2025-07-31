@@ -225,8 +225,8 @@
                         <div x-data="knob({
                             knobType: 'lfoRate',
                             minValue: 0,
-                            maxValue: 127,
-                            sensitivity: 1.5,
+                            maxValue: 3000,
+                            sensitivity: 0.4,
                             initialValue: knobs.lfoRate.value,
                             initialAngle: knobs.lfoRate.angle,
                             onChange: (value) => { handleKnobChange('lfoRate', value); setKnobValue('lfoRate', value); }
@@ -236,7 +236,7 @@
                         </div>
                         <div class="value-display">
                             <span class="knob-value"
-                                x-text="(0.1 + (globalLfos[currentLfoIndex].rate / 127) * 29.9).toFixed(2)"></span>
+                                x-text="(globalLfos[currentLfoIndex].rate / 100).toFixed(2)"></span>
                             <span class="knob-label">Hz</span>
                         </div>
                         <div class="rate-buttons">
@@ -244,8 +244,8 @@
                                 :class="{ 'active': isRateButtonActive(0.25) }">1</button>
                             <button @click="setLfoRateFromBpm(0.5)" class="rate-button"
                                 :class="{ 'active': isRateButtonActive(0.5) }">½</button>
-                            <button @click="setLfoRateFromBpm(0.333)" class="rate-button"
-                                :class="{ 'active': isRateButtonActive(0.333) }">⅓</button>
+                            <button @click="setLfoRateFromBpm(1/3)" class="rate-button"
+                                :class="{ 'active': isRateButtonActive(1/3) }">⅓</button>
                             <button @click="setLfoRateFromBpm(1)" class="rate-button"
                                 :class="{ 'active': isRateButtonActive(1) }">¼</button>
                             <button @click="setLfoRateFromBpm(2)" class="rate-button"
@@ -478,6 +478,7 @@
 
         // Utility functions
         const midiToAngle = (value) => -150 + (value / 127) * 300;
+        const lfoRateToAngle = (value) => -150 + (value / 3000) * 300; // 0-3000 range for high resolution LFO rate
         const lfoAmountToAngle = (value) => -150 + (value / 100) * 300; // 0-100 range, 50 = center (0 degrees)
         const midiToEqDisplay = (value) => {
             const dbValue = Math.round((value - 64) * (18 / 64));
@@ -559,6 +560,8 @@
                     // Calculate angle based on knob type
                     if (config.knobType === 'lfoAmount') {
                         this.knobData.angle = lfoAmountToAngle(value);
+                    } else if (config.knobType === 'lfoRate') {
+                        this.knobData.angle = lfoRateToAngle(value);
                     } else {
                         this.knobData.angle = midiToAngle(value);
                     }
@@ -1259,7 +1262,7 @@
                 // Sync LFO knobs to currently selected global LFO
                 const currentLfo = this.globalLfos[this.currentLfoIndex];
                 this.knobs.lfoRate.value = currentLfo.rate;
-                this.knobs.lfoRate.angle = midiToAngle(currentLfo.rate);
+                this.knobs.lfoRate.angle = lfoRateToAngle(currentLfo.rate);
                 this.knobs.lfoAmount.value = currentLfo.amount;
                 this.knobs.lfoAmount.angle = lfoAmountToAngle(currentLfo.amount);
                 this.knobs.lfoPhase.value = currentLfo.phase;
@@ -1419,6 +1422,9 @@
                     value = Math.max(0, Math.min(100, value));
                     this.knobs[knobType].value = value;
                     this.knobs[knobType].angle = lfoAmountToAngle(value);
+                } else if (knobType === 'lfoRate') {
+                    this.knobs[knobType].value = value;
+                    this.knobs[knobType].angle = lfoRateToAngle(value);
                 } else {
                     this.knobs[knobType].value = value;
                     this.knobs[knobType].angle = midiToAngle(value);
@@ -1582,19 +1588,19 @@
                 const noteDuration = quarterNoteDuration / multiplier;
                 const targetHz = 1 / noteDuration;
 
-                // Convert Hz to our 0-127 scale
-                // Formula: hz = 0.1 + (value / 127) * 29.9
-                // Reversed: value = ((hz - 0.1) / 29.9) * 127
-                let rateValue = ((targetHz - 0.1) / 29.9) * 127;
+                // Convert Hz to our 0-3000 scale (0-30Hz range)
+                // Formula: hz = value / 100 (where value is 0-3000)
+                // Reversed: value = hz * 100
+                let rateValue = targetHz * 100;
 
-                // Clamp the value between 0 and 127
-                rateValue = Math.max(0, Math.min(127, Math.round(rateValue)));
+                // Clamp the value between 0 and 3000
+                rateValue = Math.max(0, Math.min(3000, Math.round(rateValue)));
 
                 this.globalLfos[this.currentLfoIndex].rate = rateValue;
 
                 // Update the knob visuals
                 this.knobs.lfoRate.value = rateValue;
-                this.knobs.lfoRate.angle = midiToAngle(rateValue);
+                this.knobs.lfoRate.angle = lfoRateToAngle(rateValue);
 
                 this.$nextTick(() => this.drawLfoWaveform());
             },
@@ -1604,7 +1610,7 @@
                 const quarterNoteDuration = 60 / this.bpm;
                 const noteDuration = quarterNoteDuration / multiplier;
                 const targetHz = 1 / noteDuration;
-                const expectedRateValue = Math.round(((targetHz - 0.1) / 29.9) * 127);
+                const expectedRateValue = Math.round(targetHz * 100);
 
                 // Check if current LFO rate matches exactly (no tolerance for loose matching)
                 const currentRate = this.globalLfos[this.currentLfoIndex].rate;
