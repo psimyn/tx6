@@ -64,13 +64,13 @@
                     minValue: 0, 
                     maxValue: 127, 
                     sensitivity: 1.5, 
-                    initialValue: knobs.eq.value,
-                    initialAngle: knobs.eq.angle,
                     doubleClickReset: 64, 
                     onChange: (value) => { handleEqChange(value); setKnobValue('eq', value); } 
-                })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
+                })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)"
+                x-init="knobData.value = knobs.eq.value"
+                x-effect="knobData.value = knobs.eq.value">
                     <div class="knob-indicator indicator-small"
-                        :style="`background: ${eqIndicatorColor}; transform: translateX(-50%) rotate(${knobData.angle}deg)`">
+                        :style="`background: ${eqIndicatorColor}; transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                     </div>
                     <div class="knob-indicator indicator-small knob-ghost" x-show="showEqGhost"
                         :style="`background: var(--accent-color-blue); opacity: 0.3; transform: translateX(-50%) rotate(${eqGhostAngle}deg)`">
@@ -129,12 +129,12 @@
                         minValue: 0,
                         maxValue: 127,
                         sensitivity: 1.5,
-                        initialValue: knobs.fxReturn.value,
-                        initialAngle: knobs.fxReturn.angle,
                         onChange: (value) => { handleKnobChange('fxReturn', value); setKnobValue('fxReturn', value); }
-                    })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
+                    })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)"
+                    x-init="knobData.value = knobs.fxReturn.value"
+                    x-effect="knobData.value = knobs.fxReturn.value">
                         <div class="knob-indicator indicator-small"
-                            :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`">
+                            :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                         </div>
                     </div>
                     <div class="value-display">
@@ -149,12 +149,12 @@
                         minValue: 0,
                         maxValue: 127,
                         sensitivity: 1.5,
-                        initialValue: knobs.fxParam1.value,
-                        initialAngle: knobs.fxParam1.angle,
                         onChange: (value) => { handleKnobChange('fxParam1', value); setKnobValue('fxParam1', value); }
-                    })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
+                    })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)"
+                    x-init="knobData.value = knobs.fxParam1.value"
+                    x-effect="knobData.value = knobs.fxParam1.value">
                         <div class="knob-indicator indicator-small"
-                            :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`">
+                            :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                         </div>
                     </div>
                     <div class="value-display">
@@ -168,12 +168,12 @@
                         minValue: 0,
                         maxValue: 127,
                         sensitivity: 1.5,
-                        initialValue: knobs.fxParam2.value,
-                        initialAngle: knobs.fxParam2.angle,
                         onChange: (value) => { handleKnobChange('fxParam2', value); setKnobValue('fxParam2', value); }
-                    })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
+                    })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)"
+                    x-init="knobData.value = knobs.fxParam2.value"
+                    x-effect="knobData.value = knobs.fxParam2.value">
                         <div class="knob-indicator indicator-small"
-                            :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`">
+                            :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                         </div>
                     </div>
                     <div class="value-display">
@@ -227,12 +227,12 @@
                             minValue: 0,
                             maxValue: 3000,
                             sensitivity: 0.4,
-                            initialValue: knobs.lfoRate.value,
-                            initialAngle: knobs.lfoRate.angle,
                             onChange: (value) => { handleKnobChange('lfoRate', value); setKnobValue('lfoRate', value); }
-                        })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
+                        })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)"
+                        x-init="knobData.value = globalLfos[currentLfoIndex].rate"
+                        x-effect="knobData.value = globalLfos[currentLfoIndex].rate">
                             <div class="knob-indicator indicator-small"
-                                :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`"></div>
+                                :style="`transform: translateX(-50%) rotate(${lfoRateToAngle(knobData.value)}deg)`"></div>
                         </div>
                         <div class="value-display">
                             <span class="knob-value"
@@ -261,13 +261,13 @@
                             minValue: 0,
                             maxValue: 100,
                             sensitivity: 1.5,
-                            initialValue: knobs.lfoAmount.value,
-                            initialAngle: knobs.lfoAmount.angle,
                             doubleClickReset: 50,
                             onChange: (value) => { handleKnobChange('lfoAmount', value); setKnobValue('lfoAmount', value); }
-                        })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
+                        })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)"
+                        x-init="knobData.value = globalLfos[currentLfoIndex].amount"
+                        x-effect="knobData.value = globalLfos[currentLfoIndex].amount">
                             <div class="knob-indicator indicator-small"
-                                :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`"></div>
+                                :style="`transform: translateX(-50%) rotate(${lfoAmountToAngle(knobData.value)}deg)`"></div>
                         </div>
                         <div class="value-display">
                             <span class="knob-value" x-text="(knobs.lfoAmount.value - 50)"></span>
@@ -280,12 +280,12 @@
                             minValue: 0,
                             maxValue: 127,
                             sensitivity: 1.5,
-                            initialValue: knobs.lfoPhase.value,
-                            initialAngle: knobs.lfoPhase.angle,
                             onChange: (value) => { handleKnobChange('lfoPhase', value); setKnobValue('lfoPhase', value); }
-                        })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
+                        })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)"
+                        x-init="knobData.value = globalLfos[currentLfoIndex].phase"
+                        x-effect="knobData.value = globalLfos[currentLfoIndex].phase">
                             <div class="knob-indicator indicator-small"
-                                :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`"></div>
+                                :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`"></div>
                         </div>
                         <div class="value-display">
                             <span class="knob-value" x-text="Math.floor(knobs.lfoPhase.value * 360 / 127)"></span>°
@@ -325,12 +325,12 @@
                                 minValue: 0,
                                 maxValue: 127,
                                 sensitivity: 1.5,
-                                initialValue: knobs.synthFreq.value,
-                                initialAngle: knobs.synthFreq.angle,
                                 onChange: (value) => { handleKnobChange('synthFreq', value); setKnobValue('synthFreq', value); }
-                            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
+                            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)"
+                            x-init="knobData.value = knobs.synthFreq.value"
+                            x-effect="knobData.value = knobs.synthFreq.value">
                                 <div class="knob-indicator indicator-small"
-                                    :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`"></div>
+                                    :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`"></div>
                             </div>
                             <div class="value-display">
                                 <span class="knob-value" x-text="synthFreqDisplayValue"></span>
@@ -344,12 +344,12 @@
                                 minValue: 0,
                                 maxValue: 127,
                                 sensitivity: 1.5,
-                                initialValue: knobs.synthLen.value,
-                                initialAngle: knobs.synthLen.angle,
                                 onChange: (value) => { handleKnobChange('synthLen', value); setKnobValue('synthLen', value); }
-                            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
+                            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)"
+                            x-init="knobData.value = knobs.synthLen.value"
+                            x-effect="knobData.value = knobs.synthLen.value">
                                 <div class="knob-indicator indicator-small"
-                                    :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`"></div>
+                                    :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`"></div>
                             </div>
                             <div class="value-display">
                                 <span class="knob-value" x-text="Math.floor(knobs.synthLen.value * 100 / 127)"></span>
@@ -391,12 +391,12 @@
                 minValue: 0,
                 maxValue: 127,
                 sensitivity: 1.5,
-                initialValue: knobs.masterAux.value,
-                initialAngle: knobs.masterAux.angle,
                 onChange: (value) => { handleKnobChange('masterAux', value); setKnobValue('masterAux', value); }
-            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
+            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)"
+            x-init="knobData.value = knobs.masterAux.value"
+            x-effect="knobData.value = knobs.masterAux.value">
                 <div class="knob-indicator indicator-small"
-                    :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`">
+                    :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                 </div>
             </div>
             <div class="value-display">
@@ -411,12 +411,12 @@
                 minValue: 0,
                 maxValue: 127,
                 sensitivity: 1.5,
-                initialValue: knobs.masterCue.value,
-                initialAngle: knobs.masterCue.angle,
                 onChange: (value) => { handleKnobChange('masterCue', value); setKnobValue('masterCue', value); }
-            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
+            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)"
+            x-init="knobData.value = knobs.masterCue.value"
+            x-effect="knobData.value = knobs.masterCue.value">
                 <div class="knob-indicator indicator-small"
-                    :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`">
+                    :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                 </div>
             </div>
             <div class="value-display">
@@ -431,12 +431,12 @@
                 minValue: 0,
                 maxValue: 127,
                 sensitivity: 1.5,
-                initialValue: knobs.masterVolume.value,
-                initialAngle: knobs.masterVolume.angle,
                 onChange: (value) => { handleKnobChange('masterVolume', value); setKnobValue('masterVolume', value); }
-            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)">
+            })" class="knob" @mousedown="startDrag($event)" @touchstart="startDrag($event)"
+            x-init="knobData.value = knobs.masterVolume.value"
+            x-effect="knobData.value = knobs.masterVolume.value">
                 <div class="knob-indicator indicator-small"
-                    :style="`transform: translateX(-50%) rotate(${knobData.angle}deg)`">
+                    :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                 </div>
             </div>
             <div class="value-display">
@@ -522,8 +522,7 @@
             // Alpine.js Knob Component
             Alpine.data('knob', (config) => ({
                 knobData: {
-                    value: config.initialValue || (config.knobType === 'eq' ? 64 : 0),
-                    angle: config.initialAngle || (config.knobType === 'eq' ? 0 : -150)
+                    value: 0
                 },
                 dragState: {
                     isDragging: false,
@@ -588,15 +587,6 @@
 
                 setValue(value) {
                     this.knobData.value = value;
-
-                    // Calculate angle based on knob type
-                    if (config.knobType === 'lfoAmount') {
-                        this.knobData.angle = lfoAmountToAngle(value);
-                    } else if (config.knobType === 'lfoRate') {
-                        this.knobData.angle = lfoRateToAngle(value);
-                    } else {
-                        this.knobData.angle = midiToAngle(value);
-                    }
 
                     // Call onChange callback if provided
                     if (config.onChange) {
@@ -921,19 +911,19 @@
 
             // Knobs state
             knobs: {
-                eq: { value: 64, angle: 0 },
-                masterVolume: { value: 0, angle: -150 },
-                masterAux: { value: 0, angle: -150 },
-                masterCue: { value: 0, angle: -150 },
+                eq: { value: 64 },
+                masterVolume: { value: 0 },
+                masterAux: { value: 0 },
+                masterCue: { value: 0 },
 
-                fxParam1: { value: 0, angle: -150 },
-                fxParam2: { value: 0, angle: -150 },
-                fxReturn: { value: 0, angle: -150 },
-                lfoRate: { value: 64, angle: 0 },
-                lfoAmount: { value: 0, angle: -150 },
-                lfoPhase: { value: 0, angle: -150 },
-                synthFreq: { value: 0, angle: -150 },
-                synthLen: { value: 0, angle: -150 }
+                fxParam1: { value: 0 },
+                fxParam2: { value: 0 },
+                fxReturn: { value: 0 },
+                lfoRate: { value: 64 },
+                lfoAmount: { value: 0 },
+                lfoPhase: { value: 0 },
+                synthFreq: { value: 0 },
+                synthLen: { value: 0 }
             },
 
             toggleLfoView() {
@@ -1294,11 +1284,8 @@
                 // Sync LFO knobs to currently selected global LFO
                 const currentLfo = this.globalLfos[this.currentLfoIndex];
                 this.knobs.lfoRate.value = currentLfo.rate;
-                this.knobs.lfoRate.angle = lfoRateToAngle(currentLfo.rate);
                 this.knobs.lfoAmount.value = currentLfo.amount;
-                this.knobs.lfoAmount.angle = lfoAmountToAngle(currentLfo.amount);
                 this.knobs.lfoPhase.value = currentLfo.phase;
-                this.knobs.lfoPhase.angle = midiToAngle(currentLfo.phase);
 
                 // Switch track selector to the track assigned to this LFO (without triggering LFO assignment)
                 this.switchToTrackForLfo(currentLfo.assignedTrack);
@@ -1430,9 +1417,6 @@
                 // Update the knob's visual state and send MIDI CC
                 this.setKnobValue('eq', value);
                 this.handleKnobChange('eq', value);
-
-                // Force UI update for the knob indicator
-                this.knobs.eq.angle = midiToAngle(value);
             },
 
             handleSliderChange() {
@@ -1453,13 +1437,10 @@
                     // Clamp to 0-100, center is 50
                     value = Math.max(0, Math.min(100, value));
                     this.knobs[knobType].value = value;
-                    this.knobs[knobType].angle = lfoAmountToAngle(value);
                 } else if (knobType === 'lfoRate') {
                     this.knobs[knobType].value = value;
-                    this.knobs[knobType].angle = lfoRateToAngle(value);
                 } else {
                     this.knobs[knobType].value = value;
-                    this.knobs[knobType].angle = midiToAngle(value);
                 }
                 // Sync LFO knob values to currently selected global LFO
                 if (knobType === 'lfoRate') {
@@ -1632,7 +1613,6 @@
 
                 // Update the knob visuals
                 this.knobs.lfoRate.value = rateValue;
-                this.knobs.lfoRate.angle = lfoRateToAngle(rateValue);
 
                 this.$nextTick(() => this.drawLfoWaveform());
             },
