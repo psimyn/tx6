@@ -188,6 +188,22 @@ h1 {
 }
 
 .seq-input {
+    width: 60px;
+}
+
+.seq-preview-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.seq-preview-cell {
+    border-radius: 1px;
+    transition: background-color 0.1s ease;
+}
+
+.seq-preview-cell.active {
+    background-color: var(--accent-color-blue) !important;
 }
 
 input {
@@ -931,7 +947,6 @@ header {
 
 .synth-input-wrapper {
     display: flex;
-    flex-direction: column;
     align-items: center;
     gap: 0.5rem;
 }

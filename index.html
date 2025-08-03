@@ -302,10 +302,24 @@
         <div class="fx-settings-overlay synth-overlay" :class="{ active: settingsView === 'synth' }" style="z-index: 20;">
             <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1rem;">
                 <div class="synth-controls">
-                    <div class="synth-input-wrapper">
-                        <label class="knob-label">SEQ</label>
-                        <input type="number" min="0" max="29" x-model="synthSettings.seq" @input="handleSeqChange()" 
-                               class="seq-input" placeholder="0-29">
+                    <div class="synth-input-wrapper" style="display: flex; align-items: center; gap: 1rem;">
+                        <div>
+                            <label class="knob-label">SEQ</label>
+                            <input type="number" min="0" max="29" x-model="synthSettings.seq" @input="handleSeqChange()" 
+                                   class="seq-input" placeholder="0-29">
+                        </div>
+                        <div class="seq-preview-grid" x-show="synthSettings.seq !== null && synthSettings.seq !== ''">
+                            <template x-for="(row, rowIndex) in 2" :key="rowIndex">
+                                <div class="seq-preview-row" style="display: flex; gap: 2px;">
+                                    <template x-for="(col, colIndex) in 8" :key="colIndex">
+                                        <div class="seq-preview-cell" 
+                                             :class="{ 'active': getSeqPreviewCell(rowIndex, colIndex) }"
+                                             style="width: 8px; height: 8px; border: 1px solid var(--knob-border); background: var(--background-color);">
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                     
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;justify-items:center;">
@@ -949,6 +963,25 @@
             handleWaveformChange() {
                 const value = parseInt(this.synthSettings.waveform);
                 this.midi.sendCC(this.currentTrack, 3, value);
+            },
+
+            getSeqPreviewCell(rowIndex, colIndex) {
+                // Get the sequence pattern from the seqs array
+                const seqIndex = parseInt(this.synthSettings.seq);
+                if (seqIndex < 0 || seqIndex >= seqs.length) return false;
+                
+                const pattern = seqs[seqIndex];
+                
+                // Handle special cases (RND, U1-U6)
+                if (typeof pattern === 'string' && pattern.length < 16) {
+                    return false; // Don't show preview for special sequences
+                }
+                
+                // Calculate the step index from row and column (0-15)
+                const stepIndex = rowIndex * 8 + colIndex;
+                
+                // Return true if the character at this position is '1'
+                return pattern[stepIndex] === '1';
             },
 
             drawLfoWaveform() {
