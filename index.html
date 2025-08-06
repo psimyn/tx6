@@ -972,7 +972,7 @@
             getSeqPreviewCell(rowIndex, colIndex) {
                 // Get the sequence pattern from the seqs array
                 const seqIndex = parseInt(this.synthSettings.seq);
-                if (seqIndex < 0 || seqIndex >= seqs.length) return false;
+                if (seqIndex < 0 || seqIndex >= seqs.length || isNaN(seqIndex)) return false;
                 
                 const pattern = seqs[seqIndex];
                 
@@ -1156,7 +1156,7 @@
 
             // Synth settings
             synthSettings: {
-                seq: '',
+                seq: '0',
                 waveform: '0'
             },
 
