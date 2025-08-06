@@ -801,8 +801,12 @@
                 const MIDI_SERVICE_UUID = '03b80e5a-ede8-4b33-a751-6ce34ec4c700';
                 const MIDI_IO_CHARACTERISTIC_UUID = '7772e5db-3868-4112-a1a9-f2669d106bf3';
 
+                // Show TX-6 first (preferred), then other MIDI devices
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [MIDI_SERVICE_UUID], name: 'TX-6' }]
+                    filters: [
+                        { services: [MIDI_SERVICE_UUID], namePrefix: 'TX-6' },
+                        { services: [MIDI_SERVICE_UUID] }
+                    ]
                 });
 
                 const server = await bluetoothDevice.gatt.connect();
