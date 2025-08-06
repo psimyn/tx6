@@ -43,7 +43,7 @@
                 <option value="93">CMP</option>
             </select>
             <div class="volume-slider">
-                <input type="range" min="0" max="127" x-model="sliderValue" @input="handleSliderChange">
+                <input type="range" min="0" max="127" :value="sliderValue" @input="handleSliderChange($event)">
                 <input type="range" min="0" max="127" x-model="sliderOutputValue" class="slider-overlay" readonly
                     tabindex="-1">
             </div>
@@ -544,14 +544,25 @@
         // Main Alpine.js component
         window.tx6Controller = () => ({
             // State
-            status: '', isConnected: false, connecting: false,
+            status: '',
+            isConnected: false,
+            connecting: false,
             clockStatus: { isReceiving: false, bpm: 0, clockCount: 0, lastUpdate: 0 },
-            currentTrack: 0, sliderValue: 0, lfoOutputValues: {},
-            currentSliderMode: 7, currentEqMode: 74,
+            currentTrack: 0,
+
+            lfoOutputValues: {},
+            currentSliderMode: 7,
+            currentEqMode: 74,
             bpm: parseInt(localStorage.getItem('tx6-bpm')) || 100,
-            startStopActive: false, isFullscreen: false, settingsView: null,
-            currentLfoIndex: 0, lfoPhases: Array(10).fill(0), lfoStartTime: null,
-            lastTapTime: 0, trackValues: {}, midi: null,
+            startStopActive: false,
+            isFullscreen: false,
+            settingsView: null,
+            currentLfoIndex: 0,
+            lfoPhases: Array(10).fill(0),
+            lfoStartTime: null,
+            lastTapTime: 0,
+            trackValues: {},
+            midi: null,
 
             // Consolidated knob configurations - must be a getter to maintain context
             get knobConfigs() {
@@ -733,12 +744,9 @@
             },
 
             selectTrack(trackIndex) {
-                if (this.settingsView === 'lfo') {
+                if (this.currentLfoIndex !== null) {
                     this.globalLfos[this.currentLfoIndex].assignedTrack = trackIndex;
                 }
-
-                const oldKey = `${this.currentTrack}-${this.currentSliderMode}`;
-                this.trackValues[oldKey] = this.sliderValue;
 
                 const currentLfo = this.globalLfos[this.currentLfoIndex];
                 currentLfo.rate = this.knobs.lfoRate.value;
@@ -747,26 +755,15 @@
 
                 this.currentTrack = trackIndex;
 
-                const newKey = `${this.currentTrack}-${this.currentSliderMode}`;
-                const userValue = this.trackValues[newKey] || 0;
-                this.sliderValue = userValue;
-
-                if (this.lfoOutputValues[newKey] !== undefined && !this.startStopActive) {
-                    delete this.lfoOutputValues[newKey];
+                const key = `${this.currentTrack}-${this.currentSliderMode}`;
+                if (this.lfoOutputValues[key] !== undefined && !this.startStopActive) {
+                    delete this.lfoOutputValues[key];
                 }
             },
 
             selectSliderMode(ccNumber) {
-                const oldKey = `${this.currentTrack}-${this.currentSliderMode}`;
-                this.trackValues[oldKey] = this.sliderValue;
-
                 this.currentSliderMode = Number(ccNumber);
-
-                const newKey = `${this.currentTrack}-${ccNumber}`;
-                const newValue = this.trackValues[newKey] !== undefined ? this.trackValues[newKey] : 0;
-
-                this.sliderValue = newValue;
-                this.midi.sendCC(this.currentTrack, this.currentSliderMode, newValue);
+                this.midi.sendCC(this.currentTrack, this.currentSliderMode, this.sliderValue);
             },
 
             selectEqMode(ccNumber) {
@@ -782,10 +779,11 @@
                 this.handleKnobChange('eq', value);
             },
 
-            handleSliderChange() {
+            handleSliderChange(event) {
                 const key = `${this.currentTrack}-${this.currentSliderMode}`;
-                this.trackValues[key] = this.sliderValue;
-                this.midi.sendCC(this.currentTrack, this.currentSliderMode, this.sliderValue);
+                const value = Number(event.target.value);
+                this.trackValues[key] = value;
+                this.midi.sendCC(this.currentTrack, this.currentSliderMode, value);
 
                 if (this.lfoOutputValues[key] !== undefined) {
                     delete this.lfoOutputValues[key];
@@ -980,9 +978,6 @@
             },
 
             switchToTrackForLfo(trackIndex) {
-                const oldKey = `${this.currentTrack}-${this.currentSliderMode}`;
-                this.trackValues[oldKey] = this.sliderValue;
-
                 const currentLfo = this.globalLfos[this.currentLfoIndex];
                 currentLfo.rate = this.knobs.lfoRate.value;
                 currentLfo.amount = this.knobs.lfoAmount.value;
@@ -990,12 +985,9 @@
 
                 this.currentTrack = trackIndex;
 
-                const newKey = `${this.currentTrack}-${this.currentSliderMode}`;
-                const userValue = this.trackValues[newKey] || 0;
-                this.sliderValue = userValue;
-
-                if (this.lfoOutputValues[newKey] !== undefined && !this.startStopActive) {
-                    delete this.lfoOutputValues[newKey];
+                const key = `${this.currentTrack}-${this.currentSliderMode}`;
+                if (this.lfoOutputValues[key] !== undefined && !this.startStopActive) {
+                    delete this.lfoOutputValues[key];
                 }
             },
 
@@ -1168,6 +1160,11 @@
                 const channelData = this.fx.channels[this.fx.currentChannel];
                 const currentType = channelData.types[Math.floor(this.fx.channels[this.fx.currentChannel].engine / (128 / channelData.types.length))];
                 return ['FLT'].includes(currentType);
+            },
+
+            get sliderValue() {
+                const key = `${this.currentTrack}-${this.currentSliderMode}`;
+                return this.trackValues[key] || 0;
             },
 
             get sliderOutputValue() {

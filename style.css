@@ -751,6 +751,7 @@ header {
 .fx-settings-overlay {
     position: absolute;
     background-color: var(--bg-color);
+    box-shadow: 0 18px 44px -32px, 0 12px 24px -16px;
     z-index: 10;
     display: none;
     flex-direction: row-reverse;
