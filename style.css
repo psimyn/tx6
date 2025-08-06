@@ -375,7 +375,7 @@ input:focus {
     margin-left: 2rem;
 }
 
-#lfo-shape {
+.lfo-shape {
     position: absolute;
     transform: rotate(-90deg) translate(-100%, 0);
     transform-origin: top left;
