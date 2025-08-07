@@ -61,7 +61,7 @@
                     <option value="87">LOW</option>
                 </select>
                 <div x-data="knob(knobConfigs.eq)" class="knob" @mousedown="startDrag($event)"
-                    @touchstart="startDrag($event)" x-init="knobData.value = knobs.eq.value">
+                    @touchstart="startDrag($event)" x-init="knobData.value = knobs.eq.value" x-effect="knobData.value = knobs.eq.value">
                     <div class="knob-indicator indicator-small"
                         :style="`background: ${eqIndicatorColor}; transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                     </div>
@@ -137,6 +137,11 @@
                             <option value="fx1">FX1</option>
                             <option value="cmp">CMP</option>
                             <option value="flt">FLT</option>
+                        </select>
+                        <select x-model="globalLfos[currentLfoIndex].assignedTrack" class="fx-engine-select">
+                            <template x-for="i in 6">
+                                <option :value="i-1" x-text="`T${i}`"></option>
+                            </template>
                         </select>
                     </div>
                 </div>
@@ -522,7 +527,6 @@
                 midiInput = inputs.find(input => input.name?.toLowerCase().includes('tx-6'));
                 if (midiInput) {
                     midiInput.onmidimessage = (event) => processMidiMessage(event.data);
-                    console.log('TX-6 MIDI input connected for clock listening');
                 }
 
                 connectionType = 'usb';
@@ -637,11 +641,6 @@
             // Helper methods
             toggleView(view) {
                 this.settingsView = this.settingsView === view ? null : view;
-                if (view === 'lfo' && this.settingsView === 'lfo') {
-                    const currentLfo = this.globalLfos[this.currentLfoIndex];
-                    this.switchToTrackForLfo(currentLfo.assignedTrack);
-                    this.$nextTick(() => this.drawLfoWaveform());
-                }
             },
 
             getKnobAngle(type, value) {
@@ -926,7 +925,7 @@
             },
 
             runLfo(trackIdx, dt) {
-                const assignedLfos = this.globalLfos.filter(lfo => lfo.assignedTrack === trackIdx);
+                const assignedLfos = this.globalLfos.filter(lfo => Number(lfo.assignedTrack) === trackIdx);
                 const currentTime = performance.now() / 1000;
                 const elapsedTime = currentTime - this.lfoStartTime;
 
@@ -979,17 +978,7 @@
                 this.knobs.lfoAmount.value = currentLfo.amount;
                 this.knobs.lfoPhase.value = currentLfo.phase;
 
-                this.switchToTrackForLfo(currentLfo.assignedTrack);
                 this.$nextTick(() => this.drawLfoWaveform());
-            },
-
-            switchToTrackForLfo(trackIndex) {
-                const currentLfo = this.globalLfos[this.currentLfoIndex];
-                currentLfo.rate = this.knobs.lfoRate.value;
-                currentLfo.amount = this.knobs.lfoAmount.value;
-                currentLfo.phase = this.knobs.lfoPhase.value;
-
-                this.currentTrack = trackIndex;
             },
 
             drawLfoWaveform() {
@@ -1180,7 +1169,7 @@
                 };
                 
                 const assignedLfos = this.globalLfos.filter(lfo => 
-                    lfo.assignedTrack === this.currentTrack && 
+                    Number(lfo.assignedTrack) === Number(this.currentTrack) && 
                     targets[lfo.target] === this.currentSliderMode
                 );
                 const hasTargetedLfo = assignedLfos.length > 0;
