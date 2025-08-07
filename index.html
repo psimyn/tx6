@@ -608,7 +608,7 @@
                 rate: 1.0,
                 amount: 50,
                 phase: 0,
-                assignedTrack: i < 5 ? i : 0
+                assignedTrack: 0 //i < 5 ? i : 0
             })),
 
             // FX state
@@ -693,7 +693,7 @@
                 this.lfoStartTime = performance.now() / 1000;
                 this.$nextTick(() => this.drawLfoWaveform());
 
-                this.midi.addClockListener((clockData) => {
+                this.midi.addClockListener(async (clockData) => {
                     this.clockStatus.isReceiving = true;
                     this.clockStatus.lastUpdate = clockData.timestamp;
 
@@ -702,14 +702,24 @@
                         this.bpm = Math.round(detectedBpm);
                         this.clockStatus.bpm = detectedBpm;
                         this.clockStatus.clockCount = clockData.clockCount;
+                        
+                        // Start timing system if not already active
+                        if (!this.startStopActive) {
+                            await this.startTimingSystem(false); // false = don't send MIDI clock
+                        }
                         this.startStopActive = true;
                     } else if (clockData.type === 'start') {
+                        await this.startTimingSystem(false); // false = don't send MIDI clock
                         this.startStopActive = true;
                         this.clockStatus.clockCount = 0;
                     } else if (clockData.type === 'stop') {
+                        this.stopTimingSystem();
                         this.startStopActive = false;
                         this.clockStatus.isReceiving = false;
                     } else if (clockData.type === 'continue') {
+                        if (!this.startStopActive) {
+                            await this.startTimingSystem(false); // false = don't send MIDI clock
+                        }
                         this.startStopActive = true;
                     }
                 });
@@ -744,10 +754,6 @@
             },
 
             selectTrack(trackIndex) {
-                if (this.currentLfoIndex !== null) {
-                    this.globalLfos[this.currentLfoIndex].assignedTrack = trackIndex;
-                }
-
                 const currentLfo = this.globalLfos[this.currentLfoIndex];
                 currentLfo.rate = this.knobs.lfoRate.value;
                 currentLfo.amount = this.knobs.lfoAmount.value;
@@ -755,10 +761,6 @@
 
                 this.currentTrack = trackIndex;
 
-                const key = `${this.currentTrack}-${this.currentSliderMode}`;
-                if (this.lfoOutputValues[key] !== undefined && !this.startStopActive) {
-                    delete this.lfoOutputValues[key];
-                }
             },
 
             selectSliderMode(ccNumber) {
@@ -832,48 +834,58 @@
                 }
             },
 
+            async startTimingSystem(sendMidiClock = true) {
+                if (!this.audioContext) {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+
+                if (this.audioContext.state === 'suspended') {
+                    await this.audioContext.resume();
+                }
+
+                try {
+                    if (!this.timingWorklet) {
+                        await this.audioContext.audioWorklet.addModule('./timing-processor.js');
+                        this.timingWorklet = new AudioWorkletNode(this.audioContext, 'timing-processor');
+
+                        this.timingWorklet.port.onmessage = (event) => {
+                            const { type, deltaTime } = event.data;
+
+                            const actions = {
+                                midiStart: () => sendMidiClock && this.midi.sendSystemRealTime(0xFA),
+                                midiStop: () => sendMidiClock && this.midi.sendSystemRealTime(0xFC),
+                                midiClock: () => sendMidiClock && this.midi.sendSystemRealTime(0xF8),
+                                lfoUpdate: () => {
+                                    for (let i = 0; i < 6; i++) this.runLfo(i, deltaTime);
+                                }
+                            };
+
+                            if (actions[type]) actions[type]();
+                        };
+                    }
+
+                    this.timingWorklet.port.postMessage({
+                        type: 'start',
+                        data: { bpm: this.bpm, currentTime: this.audioContext.currentTime }
+                    });
+
+                } catch (error) {
+                    console.error('AudioWorklet not supported', error);
+                }
+            },
+
+            stopTimingSystem() {
+                if (this.timingWorklet) {
+                    this.timingWorklet.port.postMessage({ type: 'stop' });
+                }
+            },
+
             async togglePlay() {
                 this.startStopActive = !this.startStopActive;
                 if (this.startStopActive) {
-                    if (!this.audioContext) {
-                        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    }
-
-                    if (this.audioContext.state === 'suspended') {
-                        await this.audioContext.resume();
-                    }
-
-                    try {
-                        if (!this.timingWorklet) {
-                            await this.audioContext.audioWorklet.addModule('./timing-processor.js');
-                            this.timingWorklet = new AudioWorkletNode(this.audioContext, 'timing-processor');
-
-                            this.timingWorklet.port.onmessage = (event) => {
-                                const { type, deltaTime } = event.data;
-
-                                const actions = {
-                                    midiStart: () => this.midi.sendSystemRealTime(0xFA),
-                                    midiStop: () => this.midi.sendSystemRealTime(0xFC),
-                                    midiClock: () => this.midi.sendSystemRealTime(0xF8),
-                                    lfoUpdate: () => {
-                                        for (let i = 0; i < 6; i++) this.runLfo(i, deltaTime);
-                                    }
-                                };
-
-                                if (actions[type]) actions[type]();
-                            };
-                        }
-
-                        this.timingWorklet.port.postMessage({
-                            type: 'start',
-                            data: { bpm: this.bpm, currentTime: this.audioContext.currentTime }
-                        });
-
-                    } catch (error) {
-                        console.error('AudioWorklet not supported', error);
-                    }
-                } else if (this.timingWorklet) {
-                    this.timingWorklet.port.postMessage({ type: 'stop' });
+                    await this.startTimingSystem(true); // true = send MIDI clock
+                } else {
+                    this.stopTimingSystem();
                 }
             },
 
@@ -929,7 +941,8 @@
                     const globalLfoIndex = this.globalLfos.indexOf(lfo);
                     if (lfo.amount === 50) return;
 
-                    const hz = 0.1 + (lfo.rate / 127) * 29.9;
+                    const hz = lfo.rate / 100;
+
                     const absolutePhase = (2 * Math.PI * hz * elapsedTime) % (2 * Math.PI);
                     this.lfoPhases[globalLfoIndex] = absolutePhase;
 
@@ -1008,7 +1021,7 @@
                 const maxAmplitude = centerY - 20;
                 const amplitude = Math.abs(amount) / 50 * maxAmplitude;
 
-                const hz = 0.1 + (currentLfo.rate / 127) * 29.9;
+                const hz = currentLfo.rate / 100;
                 const timeSpan = 60 / this.bpm * 4;
                 const cycles = hz * timeSpan;
 
@@ -1169,7 +1182,22 @@
 
             get sliderOutputValue() {
                 const key = `${this.currentTrack}-${this.currentSliderMode}`;
-                return (this.startStopActive && this.lfoOutputValues[key] !== undefined) ?
+                
+                // Check if there's an LFO assigned to current track that targets current slider mode
+                const targets = {
+                    vol: 7,
+                    fx1: 91, 
+                    cmp: 93,
+                    flt: 74
+                };
+                
+                const assignedLfos = this.globalLfos.filter(lfo => 
+                    lfo.assignedTrack === this.currentTrack && 
+                    targets[lfo.target] === this.currentSliderMode
+                );
+                const hasTargetedLfo = assignedLfos.length > 0;
+                
+                return (this.startStopActive && hasTargetedLfo && this.lfoOutputValues[key] !== undefined) ?
                     this.lfoOutputValues[key] : this.sliderValue;
             },
 
@@ -1181,6 +1209,7 @@
 
             get showEqGhost() {
                 const assignedLfos = this.globalLfos.filter(lfo => lfo.assignedTrack === this.currentTrack);
+                
                 const hasFilterLfo = assignedLfos.some(lfo => lfo.target === 'flt');
                 return hasFilterLfo && this.startStopActive && this.currentEqMode === 74;
             },
