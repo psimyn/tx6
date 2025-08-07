@@ -803,15 +803,9 @@ header {
 
 @keyframes expandOverlay {
     0% {
-        transform: scaleX(0.1) scaleY(0.9);
         opacity: 0;
     }
-    60% {
-        transform: scaleX(0.7) scaleY(1);
-        opacity: 0.6;
-    }
     100% {
-        transform: scaleX(1) scaleY(1);
         opacity: 1;
     }
 }

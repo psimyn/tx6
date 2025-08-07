@@ -61,13 +61,9 @@
                     <option value="87">LOW</option>
                 </select>
                 <div x-data="knob(knobConfigs.eq)" class="knob" @mousedown="startDrag($event)"
-                    @touchstart="startDrag($event)" x-init="knobData.value = knobs.eq.value"
-                    x-effect="knobData.value = knobs.eq.value">
+                    @touchstart="startDrag($event)" x-init="knobData.value = knobs.eq.value">
                     <div class="knob-indicator indicator-small"
                         :style="`background: ${eqIndicatorColor}; transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
-                    </div>
-                    <div class="knob-indicator indicator-small knob-ghost" x-show="showEqGhost"
-                        :style="`background: var(--accent-color-blue); opacity: 0.3; transform: translateX(-50%) rotate(${eqGhostAngle}deg)`">
                     </div>
                 </div>
                 <div class="value-display">
@@ -787,9 +783,6 @@
                 this.trackValues[key] = value;
                 this.midi.sendCC(this.currentTrack, this.currentSliderMode, value);
 
-                if (this.lfoOutputValues[key] !== undefined) {
-                    delete this.lfoOutputValues[key];
-                }
             },
 
             setKnobValue(knobType, value) {
@@ -997,11 +990,6 @@
                 currentLfo.phase = this.knobs.lfoPhase.value;
 
                 this.currentTrack = trackIndex;
-
-                const key = `${this.currentTrack}-${this.currentSliderMode}`;
-                if (this.lfoOutputValues[key] !== undefined && !this.startStopActive) {
-                    delete this.lfoOutputValues[key];
-                }
             },
 
             drawLfoWaveform() {
@@ -1199,19 +1187,6 @@
                 
                 return (this.startStopActive && hasTargetedLfo && this.lfoOutputValues[key] !== undefined) ?
                     this.lfoOutputValues[key] : this.sliderValue;
-            },
-
-            get eqGhostAngle() {
-                const filterKey = `${this.currentTrack}-74`;
-                return (this.startStopActive && this.lfoOutputValues[filterKey] !== undefined) ?
-                    midiToAngle(this.lfoOutputValues[filterKey]) : this.knobs.eq.angle;
-            },
-
-            get showEqGhost() {
-                const assignedLfos = this.globalLfos.filter(lfo => lfo.assignedTrack === this.currentTrack);
-                
-                const hasFilterLfo = assignedLfos.some(lfo => lfo.target === 'flt');
-                return hasFilterLfo && this.startStopActive && this.currentEqMode === 74;
             },
 
             get synthFreqDisplayValue() {
