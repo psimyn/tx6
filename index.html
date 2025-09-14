@@ -18,7 +18,7 @@
 <body x-data="tx6Controller()" x-init="init()">
     <div class="knob-container">
         <header>
-            <div class="status" x-text="status"></div>
+            <div class="status" x-show="status" x-text="status"></div>
             <div class="connection-buttons">
                 <template x-for="type in ['ble', 'usb']">
                     <button @click="connect(type)" class="connect-btn" x-show="!isConnected" :disabled="connecting"
@@ -486,12 +486,29 @@
                 const MIDI_SERVICE_UUID = '03b80e5a-ede8-4b33-a751-6ce34ec4c700';
                 const MIDI_IO_CHARACTERISTIC_UUID = '7772e5db-3868-4112-a1a9-f2669d106bf3';
 
-                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                // Try to connect to TX-6 first, but allow other MIDI BLE devices
+                let requestOptions = {
                     filters: [
                         { services: [MIDI_SERVICE_UUID], namePrefix: 'TX-6' },
-                        { services: [MIDI_SERVICE_UUID] }
-                    ]
-                });
+                        { services: [MIDI_SERVICE_UUID], name: 'TX-6' }
+                    ],
+                    optionalServices: [MIDI_SERVICE_UUID]
+                };
+
+                try {
+                    bluetoothDevice = await navigator.bluetooth.requestDevice(requestOptions);
+                } catch (error) {
+                    // If TX-6 not found, allow selection of any MIDI BLE device
+                    try {
+                        requestOptions = {
+                            filters: [{ services: [MIDI_SERVICE_UUID] }],
+                            optionalServices: [MIDI_SERVICE_UUID]
+                        };
+                        bluetoothDevice = await navigator.bluetooth.requestDevice(requestOptions);
+                    } catch (secondError) {
+                        throw new Error('No MIDI BLE devices found or user cancelled selection');
+                    }
+                }
 
                 const server = await bluetoothDevice.gatt.connect();
                 const service = await server.getPrimaryService(MIDI_SERVICE_UUID);
@@ -521,8 +538,28 @@
 
                 if (outputs.length === 0) throw new Error('No MIDI output devices found');
 
-                midiOutput = outputs.find(output => output.name?.toLowerCase().includes('tx-6'));
-                if (!midiOutput) throw new Error('TX-6 MIDI device not found');
+                // Prefer TX-6 but allow selection from available devices
+                let preferredOutput = outputs.find(output =>
+                    output.name && output.name.toLowerCase().includes('tx-6')
+                );
+
+                if (preferredOutput) {
+                    midiOutput = preferredOutput;
+                } else if (outputs.length === 1) {
+                    // If only one device, use it
+                    midiOutput = outputs[0];
+                } else {
+                    // Multiple devices available, let user choose
+                    const deviceNames = outputs.map((output, index) => `${index + 1}. ${output.name || 'Unknown Device'}`);
+                    const choice = prompt(`Multiple MIDI devices found. Choose one:\n${deviceNames.join('\n')}\n\nEnter number (1-${outputs.length}):`);
+                    
+                    const choiceIndex = parseInt(choice) - 1;
+                    if (isNaN(choiceIndex) || choiceIndex < 0 || choiceIndex >= outputs.length) {
+                        throw new Error('Invalid device selection');
+                    }
+                    
+                    midiOutput = outputs[choiceIndex];
+                }
 
                 midiInput = inputs.find(input => input.name?.toLowerCase().includes('tx-6'));
                 if (midiInput) {
@@ -742,7 +779,7 @@
                     setTimeout(() => this.status = '', 2000);
                 } catch (error) {
                     this.status = `Connection failed: ${error.message}`;
-                    setTimeout(() => this.status = '', 3000);
+                    setTimeout(() => this.status = '', 5000);
                 } finally {
                     this.connecting = false;
                 }
