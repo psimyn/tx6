@@ -394,6 +394,8 @@
             let lastClockTime = 0;
             let clockCount = 0;
             let isReceivingClock = false;
+            let bpmHistory = [];
+            const BPM_HISTORY_SIZE = 4;
 
             const timestampGenerator = () => {
                 let localTime = performance.now() & 8191;
@@ -461,18 +463,40 @@
                     clockCount++;
                     if (!isReceivingClock) isReceivingClock = true;
 
-                    if (clockCount % 24 === 0 && lastClockTime > 0) {
-                        const bpm = 60000 / (now - lastClockTime);
-                        clockListeners.forEach(cb => {
-                            try { cb({ type: 'clock', bpm, clockCount, timestamp: now }); }
-                            catch (e) { console.error('Error in clock listener:', e); }
-                        });
+                    // Only notify listeners every 24 clocks (one quarter note)
+                    if (clockCount % 24 === 0) {
+                        if (lastClockTime > 0) {
+                            const instantBpm = 60000 / (now - lastClockTime);
+                            
+                            // Add to history for averaging
+                            bpmHistory.push(instantBpm);
+                            if (bpmHistory.length > BPM_HISTORY_SIZE) {
+                                bpmHistory.shift();
+                            }
+                            
+                            // Only send BPM after we have at least 2 readings (skip first unstable reading)
+                            if (bpmHistory.length >= 2) {
+                                // Calculate average BPM from history
+                                const avgBpm = bpmHistory.reduce((sum, val) => sum + val, 0) / bpmHistory.length;
+                                clockListeners.forEach(cb => {
+                                    try { cb({ type: 'clock', bpm: avgBpm, clockCount, timestamp: now }); }
+                                    catch (e) { console.error('Error in clock listener:', e); }
+                                });
+                            }
+                        }
+                        lastClockTime = now;
                     }
-                    if (clockCount % 24 === 0) lastClockTime = now;
                 } else if ([0xFA, 0xFB, 0xFC].includes(message)) {
                     const types = { 0xFA: 'start', 0xFB: 'continue', 0xFC: 'stop' };
-                    if (message === 0xFA) clockCount = 0;
+                    if (message === 0xFA) {
+                        clockCount = 0;
+                        bpmHistory = []; // Reset BPM history on start
+                        lastClockTime = 0;
+                    }
                     isReceivingClock = message !== 0xFC;
+                    if (message === 0xFC) {
+                        bpmHistory = []; // Reset on stop
+                    }
                     clockListeners.forEach(cb => {
                         try { cb({ type: types[message], timestamp: now }); }
                         catch (e) { console.error('Error in clock listener:', e); }
@@ -878,20 +902,25 @@
                         this.timingWorklet = new AudioWorkletNode(this.audioContext, 'timing-processor');
 
                         this.timingWorklet.port.onmessage = (event) => {
-                            const { type, deltaTime } = event.data;
+                            const { type, deltaTime, time } = event.data;
 
                             const actions = {
                                 midiStart: () => sendMidiClock && this.midi.sendSystemRealTime(0xFA),
                                 midiStop: () => sendMidiClock && this.midi.sendSystemRealTime(0xFC),
                                 midiClock: () => sendMidiClock && this.midi.sendSystemRealTime(0xF8),
                                 lfoUpdate: () => {
-                                    for (let i = 0; i < 6; i++) this.runLfo(i, deltaTime);
+                                    // Use AudioContext time instead of performance.now()
+                                    const currentTime = this.audioContext.currentTime;
+                                    for (let i = 0; i < 6; i++) this.runLfo(i, deltaTime, currentTime);
                                 }
                             };
 
                             if (actions[type]) actions[type]();
                         };
                     }
+
+                    // Sync LFO start time to AudioContext
+                    this.lfoStartTime = this.audioContext.currentTime;
 
                     this.timingWorklet.port.postMessage({
                         type: 'start',
@@ -961,9 +990,10 @@
                 return pattern[stepIndex] === '1';
             },
 
-            runLfo(trackIdx, dt) {
+            runLfo(trackIdx, dt, audioTime) {
                 const assignedLfos = this.globalLfos.filter(lfo => Number(lfo.assignedTrack) === trackIdx);
-                const currentTime = performance.now() / 1000;
+                // Use AudioContext time for precise timing
+                const currentTime = audioTime || (this.audioContext ? this.audioContext.currentTime : performance.now() / 1000);
                 const elapsedTime = currentTime - this.lfoStartTime;
 
                 assignedLfos.forEach((lfo) => {
