@@ -16,24 +16,45 @@
 </head>
 
 <body x-data="tx6Controller()" x-init="init()">
-    <div class="knob-container">
-        <header>
-            <div class="status" x-show="status" x-text="status"></div>
-            <div class="connection-buttons">
-                <template x-for="type in ['ble', 'usb']">
-                    <button @click="connect(type)" class="connect-btn" x-show="!isConnected" :disabled="connecting"
-                        x-text="`Connect ${type === 'ble' ? 'Bluetooth' : 'USB'}`">
-                    </button>
-                </template>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <h1 class="app-title">tx6-ctl</h1>
+        <div class="options-menu-wrapper">
+            <button class="options-button" @click="showOptionsMenu = !showOptionsMenu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="1"></circle>
+                    <circle cx="12" cy="5" r="1"></circle>
+                    <circle cx="12" cy="19" r="1"></circle>
+                </svg>
+            </button>
+            <div class="options-dropdown" x-show="showOptionsMenu" @click.away="showOptionsMenu = false" x-transition>
+                <button class="dropdown-item" @click="currentView = 'help'; showOptionsMenu = false">Help</button>
+                <button class="dropdown-item" @click="currentView = 'about'; showOptionsMenu = false">About</button>
             </div>
-            <div class="track-selector">
-                <template x-for="i in 6" :key="i">
-                    <button class="track-button" :class="{ active: currentTrack === i-1 }" @click="selectTrack(i-1)"
-                        x-text="`T${i}`">
-                    </button>
-                </template>
-            </div>
-        </header>
+        </div>
+    </div>
+
+    <!-- Shared Header -->
+    <header class="app-header" x-show="currentView !== 'help' && currentView !== 'about'">
+        <div class="status" x-show="status" x-text="status"></div>
+        <div class="connection-buttons">
+            <template x-for="type in ['ble', 'usb']">
+                <button @click="connect(type)" class="connect-btn" x-show="!isConnected" :disabled="connecting"
+                    x-text="`Connect ${type === 'ble' ? 'BLE' : 'USB'}`">
+                </button>
+            </template>
+        </div>
+        <div class="track-selector">
+            <template x-for="i in 6" :key="i">
+                <button class="track-button" :class="{ active: currentTrack === i-1 }" @click="selectTrack(i-1)"
+                    x-text="`T${i}`">
+                </button>
+            </template>
+        </div>
+    </header>
+
+    <!-- Main View -->
+    <div class="view-container knob-container" x-show="currentView === 'main'">
 
         <div class="knob-wrapper">
             <select x-model="currentSliderMode" @change="selectSliderMode($event.target.value)" class="mode-select">
@@ -70,39 +91,75 @@
                     <span class="knob-value" x-text="eqDisplayValue"></span>
                 </div>
             </div>
-            <button @click="toggleView('synth')" class="fx-settings-button"
-                :class="{ active: settingsView === 'synth' }">SYNTH</button>
         </div>
 
-        <div class="fx-buttons">
-            <button @click="toggleView('fx')" class="fx-settings-button white"
-                :class="{ active: settingsView === 'fx' }">FX</button>
-            <template x-for="i in 2">
-                <button @click="toggleFx(i)" class="fx-button"
-                    :class="{ active: fx[`fx${i}Active`], orange: i === 2 }"><span class="fx-button-inner"
-                        x-text="`FX${i}`"></span></button>
-            </template>
+        <!-- Master Channel Radio Group -->
+        <div class="master-channel-section">
+            <div class="master-channel-radio-group">
+                <label class="master-channel-radio-label">
+                    <input type="radio" name="master-channel" value="aux" x-model="masterChannel" class="master-channel-radio">
+                    <span>AUX</span>
+                </label>
+                <label class="master-channel-radio-label">
+                    <input type="radio" name="master-channel" value="cue" x-model="masterChannel" class="master-channel-radio">
+                    <span>CUE</span>
+                </label>
+                <label class="master-channel-radio-label">
+                    <input type="radio" name="master-channel" value="volume" x-model="masterChannel" class="master-channel-radio">
+                    <span>MASTER</span>
+                </label>
+            </div>
         </div>
 
-        <!-- FX Settings Overlay -->
-        <div class="fx-settings-overlay" :class="{ active: settingsView === 'fx' }">
-            <div class="fx-channel-tabs">
+        <!-- Master knob -->
+        <div class="knob-wrapper main-knob">
+            <div x-data="knob(knobConfigs.masterVolume)" class="knob" @mousedown="startDrag($event)"
+                @touchstart="startDrag($event)" x-init="knobData.value = knobs.masterVolume.value"
+                x-effect="knobData.value = knobs.masterVolume.value">
+                <div class="knob-indicator indicator-small"
+                    :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
+                </div>
+            </div>
+            <div class="value-display">
+                <span class="knob-value" x-text="Math.floor(knobs.masterVolume.value * 100 / 127)"></span>
+                <span class="knob-label" x-text="masterChannelLabel"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- FX View -->
+    <div class="view-container fx-view-container" x-show="currentView === 'fx'">
+        <div class="view-content">
+            <!-- FX Channel Selector -->
+            <div>
                 <template x-for="ch in [7, 8]">
-                    <div class="fx-channel-tab" :class="{ active: fx.currentChannel === ch }"
-                        @click="fx.currentChannel = ch; updateFxDisplay()" x-text="`FX ${ch === 7 ? 'I' : 'II'}`">
-                    </div>
+                    <button class="fx-channel-button" :class="{ active: fx.currentChannel === ch }"
+                        @click="fx.currentChannel = ch; updateFxDisplay()" 
+                        x-text="`FX ${ch === 7 ? 'I' : 'II'}`">
+                    </button>
                 </template>
             </div>
 
-            <div class="fx-settings-knobs">
-                <select x-model="fx.channels[fx.currentChannel].engine" @change="handleFxEngineChange"
-                    class="fx-engine-select">
+            <!-- FX Engine Select -->
+            <div class="fx-engine-section">
+                <label class="knob-label">Engine</label>
+                <div class="fx-engine-radio-group">
                     <template x-for="(option, index) in fx.channels[fx.currentChannel].types" :key="index">
-                        <option :value="calculateMidiValue(index, fx.channels[fx.currentChannel].types.length)"
-                            x-text="option"></option>
+                        <label class="fx-engine-radio-label">
+                            <input type="radio" 
+                                :name="`fx-engine-${fx.currentChannel}`"
+                                :value="calculateMidiValue(index, fx.channels[fx.currentChannel].types.length)"
+                                x-model="fx.channels[fx.currentChannel].engine"
+                                @change="handleFxEngineChange()"
+                                class="fx-engine-radio">
+                            <span x-text="option"></span>
+                        </label>
                     </template>
-                </select>
+                </div>
+            </div>
 
+            <!-- FX Parameters Knobs -->
+            <div class="fx-knobs-grid">
                 <template x-for="knobId in ['fxReturn', 'fxParam1', 'fxParam2']">
                     <div class="knob-wrapper" x-show="knobId !== 'fxParam2' || fxParam2Visibility">
                         <div x-data="knob(knobConfigs[knobId])" class="knob" @mousedown="startDrag($event)"
@@ -119,10 +176,25 @@
                     </div>
                 </template>
             </div>
-        </div>
 
-        <!-- LFO Overlay -->
-        <div class="fx-settings-overlay lfo-overlay" :class="{ active: settingsView === 'lfo' }" style="z-index: 20;">
+            <!-- FX Toggle Buttons -->
+            <div class="fx-toggle-section">
+                <label class="knob-label">Enable FX</label>
+                <div class="fx-toggle-buttons">
+                    <template x-for="i in 2">
+                        <button @click="toggleFx(i)" class="fx-button"
+                            :class="{ active: fx[`fx${i}Active`], orange: i === 2 }">
+                            <span class="fx-button-inner" x-text="`FX${i}`"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LFO View -->
+    <div class="view-container" x-show="currentView === 'lfo'">
+        <div class="view-content">
             <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1rem;">
                 <div class="knob-wrapper">
                     <div class="flex gap-1">
@@ -185,20 +257,42 @@
                     </template>
                 </div>
 
-                <button @click="settingsView = null" class="overlay-close-btn">BACK</button>
+                <!-- Transport Controls -->
+                <div class="lfo-transport-section">
+                    <h3 class="knob-label">Transport</h3>
+                    <div class="lfo-transport-controls">
+                        <div class="knob-wrapper">
+                            <div>
+                                <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()" class="bpm-input"
+                                    min="40" max="400">
+                                <div class="knob-label">BPM</div>
+                            </div>
+                        </div>
+
+                        <button @click="togglePlay()" class="start-stop-button" :class="{ active: startStopActive }">
+                            <svg class="play-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                            <svg class="stop-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6 6h12v12H6z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
 
-        <!-- Synth Overlay -->
-        <div class="fx-settings-overlay synth-overlay" :class="{ active: settingsView === 'synth' }"
-            style="z-index: 20;">
+    <!-- Synth View -->
+    <div class="view-container" x-show="currentView === 'synth'">
+        <div class="view-content">
             <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1rem;">
                 <div class="synth-controls">
                     <div class="synth-input-wrapper" style="display: flex; align-items: center; gap: 1rem;">
                         <div>
                             <label class="knob-label">SEQ</label>
                             <input type="number" min="0" max="29" x-model="synthSettings.seq" @input="handleSeqChange()"
-                                class="seq-input" placeholder="0-29">
+                  class="seq-input" placeholder="0-29">
                         </div>
                         <div class="seq-preview-grid" x-show="synthSettings.seq !== null && synthSettings.seq !== ''">
                             <template x-for="row in 2">
@@ -243,50 +337,72 @@
                         </template>
                     </div>
                 </div>
-
-                <button @click="settingsView = null" class="overlay-close-btn">BACK</button>
             </div>
         </div>
-
-        <h2 class="master-title">Master</h2>
-
-        <div class="knob-wrapper">
-            <div>
-                <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()" class="bpm-input"
-                    min="40" max="400">
-                <div class="knob-label">BPM</div>
-            </div>
-        </div>
-
-        <button @click="togglePlay()" class="start-stop-button" :class="{ active: startStopActive }">
-            <svg class="play-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8 5v14l11-7z" />
-            </svg>
-            <svg class="stop-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 6h12v12H6z" />
-            </svg>
-        </button>
-
-        <button @click="toggleView('lfo')" class="fx-settings-button"
-            :class="{ active: settingsView === 'lfo' }">LFO</button>
-
-        <!-- Master knobs -->
-        <template x-for="masterKnob in ['masterAux', 'masterCue', 'masterVolume']">
-            <div class="knob-wrapper" :class="{ 'main-knob': masterKnob === 'masterVolume' }">
-                <div x-data="knob(knobConfigs[masterKnob])" class="knob" @mousedown="startDrag($event)"
-                    @touchstart="startDrag($event)" x-init="knobData.value = knobs[masterKnob].value"
-                    x-effect="knobData.value = knobs[masterKnob].value">
-                    <div class="knob-indicator indicator-small"
-                        :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
-                    </div>
-                </div>
-                <div class="value-display">
-                    <span class="knob-value" x-text="Math.floor(knobs[masterKnob].value * 100 / 127)"></span>
-                    <span class="knob-label" x-text="masterKnob.replace('master', '')"></span>
-                </div>
-            </div>
-        </template>
     </div>
+
+    <!-- Help View -->
+    <div class="view-container info-view" x-show="currentView === 'help'">
+        <div class="view-content">
+            <h2 class="view-title">Help</h2>
+            <div class="info-text">
+                <p>Connect Bluetooth or USB to get started.</p>
+                <p>Make sure your TX-6 has MIDI CTRL IN enabled, and BLE set to ACCEPT (if needed)</p>
+                
+                <h3>Main</h3>
+                <ul>
+                    <li>Select track (T1-T6) from top row</li>
+                    <li>knob 1 controls filter and EQ</li>
+                    <li>Master knob controls aux, cue, or master volume</li>
+                </ul>
+                
+                <h3>FX</h3>
+                <ul>
+                    <li>Switch between FX I/II, select engine, adjust parameters</li>
+                </ul>
+                
+                <h3>LFO</h3>
+                <p>Note: these only work while play is pressed</p>
+                <ul>
+                    <li>Configure 10 LFOs with waveform, rate, amount, phase</li>
+                    <li>Control BPM and transport (play/stop)</li>
+                </ul>
+                
+                <h3>Synth</h3>
+                <ul>
+                    <li>Set sequence pattern, waveform, frequency, and length</li>
+                </ul>
+            </div>
+            <button @click="currentView = 'main'" class="back-button">Back</button>
+        </div>
+    </div>
+
+    <!-- About View -->
+    <div class="view-container info-view" x-show="currentView === 'about'">
+        <div class="view-content">
+            <h2 class="view-title">About</h2>
+            <div class="info-text">
+                <p>Remote control for your TX-6. Control with Bluetooth or USB.</p>
+                
+                <h3>Features</h3>
+                <ul>
+                    <li>10 assignable LFOs for params</li>
+                    <li>Per-track volume, FX, and EQ control</li>
+                    <li>Synth sequencer config</li>
+                    <li>Control FX settings</li>
+                </ul>
+            </div>
+            <button @click="currentView = 'main'" class="back-button">Back</button>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-navigation">
+        <button class="tab-button" :class="{ active: currentView === 'main' }" @click="switchView('main')">MAIN</button>
+        <button class="tab-button" :class="{ active: currentView === 'fx' }" @click="switchView('fx')">FX</button>
+        <button class="tab-button" :class="{ active: currentView === 'lfo' }" @click="switchView('lfo')">LFO</button>
+        <button class="tab-button" :class="{ active: currentView === 'synth' }" @click="switchView('synth')">SYNTH</button>
+    </nav>
 
     <button class="fullscreen-toggle-btn" @click="toggleFullscreen()" x-show="!isFullscreen" title="Enter fullscreen">
         <span>⛶</span>
@@ -618,6 +734,9 @@
             startStopActive: false,
             isFullscreen: false,
             settingsView: null,
+            currentView: 'main', // 'main', 'fx', 'lfo', 'synth', 'help', 'about'
+            showOptionsMenu: false,
+            masterChannel: 'volume', // 'aux', 'cue', 'volume'
             currentLfoIndex: 0,
             lfoPhases: Array(10).fill(0),
             lfoStartTime: null,
@@ -632,9 +751,7 @@
                         knobType: 'eq', minValue: 0, maxValue: 127, sensitivity: 1.5, doubleClickReset: 64,
                         onChange: (v) => { this.handleEqChange(v); this.setKnobValue('eq', v); }
                     },
-                    masterVolume: { knobType: 'masterVolume', onChange: (v) => { this.handleKnobChange('masterVolume', v); this.setKnobValue('masterVolume', v); } },
-                    masterAux: { knobType: 'masterAux', onChange: (v) => { this.handleKnobChange('masterAux', v); this.setKnobValue('masterAux', v); } },
-                    masterCue: { knobType: 'masterCue', onChange: (v) => { this.handleKnobChange('masterCue', v); this.setKnobValue('masterCue', v); } },
+                    masterVolume: { knobType: 'masterVolume', onChange: (v) => { this.handleMasterChannelChange(v); this.setKnobValue('masterVolume', v); } },
                     fxReturn: { knobType: 'fxReturn', onChange: (v) => { this.handleKnobChange('fxReturn', v); this.setKnobValue('fxReturn', v); } },
                     fxParam1: { knobType: 'fxParam1', onChange: (v) => { this.handleKnobChange('fxParam1', v); this.setKnobValue('fxParam1', v); } },
                     fxParam2: { knobType: 'fxParam2', onChange: (v) => { this.handleKnobChange('fxParam2', v); this.setKnobValue('fxParam2', v); } },
@@ -654,10 +771,17 @@
 
             // Knobs state
             knobs: {
-                eq: { value: 64 }, masterVolume: { value: 0 }, masterAux: { value: 0 },
-                masterCue: { value: 0 }, fxParam1: { value: 0 }, fxParam2: { value: 0 },
+                eq: { value: 64 }, masterVolume: { value: 0 }, 
+                fxParam1: { value: 0 }, fxParam2: { value: 0 },
                 fxReturn: { value: 0 }, lfoRate: { value: 64 }, lfoAmount: { value: 0 },
                 lfoPhase: { value: 0 }, synthFreq: { value: 0 }, synthLen: { value: 0 }
+            },
+
+            // Master channel values storage
+            masterChannelValues: {
+                aux: 0,
+                cue: 0,
+                volume: 0
             },
 
             // Global LFOs - simplified initialization
@@ -704,6 +828,10 @@
                 this.settingsView = this.settingsView === view ? null : view;
             },
 
+            switchView(view) {
+                this.currentView = view;
+            },
+
             getKnobAngle(type, value) {
                 if (type === 'lfoRate') return lfoRateToAngle(value);
                 if (type === 'lfoAmount') return lfoAmountToAngle(value);
@@ -748,6 +876,27 @@
                 this.updateLfoKnobs();
                 this.lfoStartTime = performance.now() / 1000;
                 this.$nextTick(() => this.drawLfoWaveform());
+
+                // Watch for master channel changes
+                this.$watch('masterChannel', (newChannel, oldChannel) => {
+                    if (oldChannel) {
+                        // Save current knob value to old channel
+                        this.masterChannelValues[oldChannel] = this.knobs.masterVolume.value;
+                    }
+                    // Load new channel's value
+                    this.knobs.masterVolume.value = this.masterChannelValues[newChannel];
+                    
+                    // Sync slider mode with master channel
+                    const sliderModeMap = {
+                        aux: 92,      // AUX slider CC
+                        volume: 7     // VOL slider CC
+                        // cue doesn't have a slider mode
+                    };
+                    
+                    if (sliderModeMap[newChannel]) {
+                        this.currentSliderMode = sliderModeMap[newChannel];
+                    }
+                });
 
                 this.midi.addClockListener(async (clockData) => {
                     this.clockStatus.isReceiving = true;
@@ -858,11 +1007,18 @@
                 }
             },
 
+            handleMasterChannelChange(value) {
+                const ccMap = {
+                    aux: CC.AUX,
+                    cue: CC.CUE,
+                    volume: CC.VOLUME
+                };
+                const cc = ccMap[this.masterChannel];
+                this.midi.sendCC(CHANNELS.MASTER, cc, value);
+            },
+
             handleKnobChange(knobType, value) {
                 const ccMap = {
-                    masterVolume: [CHANNELS.MASTER, CC.VOLUME],
-                    masterAux: [CHANNELS.MASTER, CC.AUX],
-                    masterCue: [CHANNELS.MASTER, CC.CUE],
                     synthFreq: [this.currentTrack, 89],
                     synthLen: [this.currentTrack, 90]
                 };
@@ -1257,6 +1413,15 @@
                 }
 
                 return Math.floor(freqValue * 100 / 127);
+            },
+
+            get masterChannelLabel() {
+                const labels = {
+                    aux: 'Aux',
+                    cue: 'Cue',
+                    volume: 'Volume'
+                };
+                return labels[this.masterChannel];
             }
         });
 

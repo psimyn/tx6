@@ -33,7 +33,7 @@ html, body {
     font-size: min(1.25rem, 5vw);
     overscroll-behavior: none; /* Disable pull-to-refresh */
     margin: 0;
-    padding: 0.25rem 0;
+    padding: 2rem 0 2rem 0; /* Top padding for top bar, bottom padding for tab navigation */
     font-family: "Helvetica Neue", Arial, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
@@ -50,6 +50,142 @@ h1 {
     font-size: 1.8rem;
     font-weight: 500;
     margin-bottom: 0.5rem;
+}
+
+.top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--knob-border);
+    background: rgba(226, 226, 228, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 100;
+}
+
+.app-title {
+    font-size: 1rem;
+    font-weight: 200;
+    margin: 0;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-color);
+    opacity: 0.8;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6),
+                 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.options-menu-wrapper {
+    position: relative;
+}
+
+.options-button {
+    background: transparent;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+}
+
+.options-button:hover {
+    opacity: 0.7;
+}
+
+.options-button svg {
+    width: 20px;
+    height: 20px;
+}
+
+.options-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--knob-color);
+    border: 1px solid var(--knob-border);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    min-width: 120px;
+    z-index: 1000;
+}
+
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    transition: background 0.2s;
+    border-bottom: 1px solid var(--knob-border);
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background: var(--bg-color-darker);
+}
+
+.info-view {
+    max-width: 40rem;
+}
+
+.info-text {
+    text-align: left;
+    line-height: 1.6;
+    padding: 0 1rem;
+}
+
+.info-text p {
+    margin: 0.5rem 0;
+}
+
+.info-text h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.5rem 0;
+    color: var(--button-color);
+}
+
+.info-text ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.info-text li {
+    margin: 0.25rem 0;
+}
+
+.back-button {
+    margin-top: 2rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--button-color);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.back-button:hover {
+    background: var(--button-hover);
 }
 
 .status {
@@ -136,7 +272,7 @@ h1 {
     touch-action: none;
     cursor: pointer;
     overflow: visible;
-    width: 30vw;
+    width: 25vw;
     aspect-ratio: 1;
     min-width: 4rem;
     min-height: 4rem;
@@ -361,7 +497,6 @@ input:focus {
     min-width: 3.35rem;
     position: relative;
     z-index: 2; /* Increased z-index */
-    transition: border-color 0.2s, box-shadow 0.2s;
     pointer-events: auto; /* Ensure select is clickable */
     margin-bottom: 0.5rem;
 }
@@ -502,6 +637,221 @@ header {
     grid-column: span 3;
 }
 
+.app-header {
+    padding: 0 1rem;
+    margin-bottom: 1rem;
+}
+
+.view-container {
+    max-width: 20rem;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.view-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.view-title {
+    font-size: 1.2rem;
+    font-weight: 500;
+    margin: 0 0 1rem 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.tab-navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    background: rgba(208, 208, 211, 0.8);
+    border-top: 1px solid var(--knob-border);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 100;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 1rem;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-top: 3px solid transparent;
+}
+
+.tab-button:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.tab-button.active {
+    color: var(--button-color);
+    border-top-color: var(--button-color);
+    background: var(--bg-color);
+}
+
+.fx-toggle-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.fx-view-container {
+    max-width: 24rem;
+}
+
+.fx-channel-selector {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.fx-channel-button {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    background: var(--knob-color);
+    border: 2px solid var(--knob-border);
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.fx-channel-button.active {
+    background: var(--button-color);
+    border-color: var(--button-color);
+    color: white;
+}
+
+.fx-engine-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.fx-engine-section .fx-engine-select {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.75rem 1.25rem 0.75rem 0.75rem;
+    font-size: 1rem;
+}
+
+.fx-engine-radio-group {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    grid-template-columns: auto auto auto;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0 auto;
+}
+
+.fx-engine-radio-label {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: var(--knob-color);
+    border: 2px solid var(--knob-border);
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.fx-engine-radio-label:has(input:checked) {
+    background: var(--button-color);
+    border-color: var(--button-color);
+    color: white;
+}
+
+.fx-engine-radio {
+    display: none;
+}
+
+.fx-knobs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    justify-items: center;
+}
+
+.fx-toggle-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+.lfo-transport-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--knob-border);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+.lfo-transport-controls {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.master-channel-section {
+    grid-column: span 3;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.master-channel-radio-group {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--select-bg);
+    border-radius: 62.4375rem;
+    padding: 0.4rem 0.5rem;
+    box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.1);
+}
+
+.master-channel-radio-label {
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    background: transparent;
+    border-radius: 62.4375rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.master-channel-radio-label:has(input:checked) {
+    background: var(--button-color);
+    color: white;
+}
+
+.master-channel-radio {
+    display: none;
+}
+
 .track-selector {
     background: var(--select-bg);
     border-radius: 62.4375rem;
@@ -616,12 +966,6 @@ header {
     left: 100%;
 }
 
-.fx-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
 .fx-button {
     --background-color: var(--button-color);
     color: white;
@@ -729,154 +1073,9 @@ header {
     box-shadow: inset 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.2), 0 0.0625rem 0.0625rem rgba(0, 0, 0, 0.02);
 }
 
-.fx-settings-button {
-    box-shadow: inset 0 -0.0625rem 0.25rem rgba(0, 0, 0, 0.02), 0.125rem 0.125rem 0.1875rem rgba(0, 0, 0, 0.1), -0.125rem -0.125rem 0.1875rem rgba(255, 255, 255, 0.1);
-    position: relative;
-    --background-color: var(--knob-color);
-    background: linear-gradient(to bottom right, var(--background-color), var(--knob-color-secondary));
-    cursor: pointer;
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
-    color: var(--button-color);
-    border: 0;
-    border-radius: 0.1875rem;
-}
-
-.fx-settings-button.active,
 .fx-button.active {
     box-shadow: inset 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.3);
     background-color: var(--background-color);
-}
-
-.fx-settings-overlay {
-    position: absolute;
-    background-color: var(--bg-color);
-    box-shadow: 0 18px 44px -32px, 0 12px 24px -16px;
-    z-index: 10;
-    display: none;
-    flex-direction: row-reverse;
-    gap: 1.5rem;
-    top: 3rem;
-    left: 0;
-    right: 5rem;
-    bottom: 0;
-    pointer-events: none;
-    transform-origin: bottom right;
-    padding: 1rem;
-}
-
-.lfo-overlay {
-    right: 0 !important;
-    bottom: unset;
-    width: 100%;
-    max-width: none;
-}
-
-.lfo-overlay > div {
-    width: 100%;
-    max-width: 100%;
-}
-
-.lfo-overlay .knob-wrapper:nth-child(2) {
-    margin-left: -1rem;
-}
-
-.overlay-close-btn {
-    margin-left: auto;
-    height: 2rem;
-    width: auto;
-    aspect-ratio: initial;
-    box-shadow: inset 0 -0.0625rem 0.25rem rgba(0, 0, 0, 0.02), 0.125rem 0.125rem 0.1875rem rgba(0, 0, 0, 0.1), -0.125rem -0.125rem 0.1875rem rgba(255, 255, 255, 0.1);
-    border: 0;
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
-}
-
-.fx-settings-overlay * {
-    pointer-events: auto;
-}
-
-.fx-settings-overlay.active {
-    display: flex;
-    animation: expandOverlay 0.05s ease-out forwards;
-}
-
-@keyframes expandOverlay {
-    0% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
-}
-
-.fx-settings-overlay .knob {
-    height: 4rem;
-    width: 4rem;
-    aspect-ratio: 1;
-    cursor: pointer;
-    pointer-events: auto;
-}
-
-.fx-settings-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.fx-settings-knobs {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 1rem;
-    align-items: start;
-    pointer-events: auto;
-}
-
-.fx-settings-knobs .knob-wrapper:nth-child(3) {
-    grid-column: 1;
-    grid-row: 2;
-}
-
-.fx-channel-tabs {
-    flex-shrink: 0;
-    display: flex;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    border-radius: 0.25rem;
-    margin-bottom: 1rem;
-    height: 75%;
-}
-
-.fx-channel-tab {
-    flex: 1;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    --background-color: var(--button-color);
-    border: 1px solid var(--background-color);
-    color: var(--background-color);
-    background-color: transparent;
-}
-
-.fx-channel-tab:first-child {
-    border-bottom: none;
-}
-
-.fx-channel-tab + .fx-channel-tab {
-    --background-color: var(--button-orange);
-    border-top: none;
-}
-
-.fx-channel-tab.active {
-    color: white;
-    background-color: var(--background-color);
-    box-shadow: 0 0 0 2px var(--background-color);
-    z-index: 1;
-}
-
-.fx-settings-overlay .knob-wrapper {
-    pointer-events: auto;
 }
 
 /* FX engine select specific styles */
@@ -919,18 +1118,6 @@ header {
     flex-direction: column;
     gap: 1rem;
     align-items: center;
-}
-
-.synth-overlay {
-    right: 0 !important;
-    bottom: unset;
-    width: 100%;
-    max-width: none;
-}
-
-.synth-overlay > div {
-    width: 100%;
-    max-width: 100%;
 }
 
 .synth-controls {
