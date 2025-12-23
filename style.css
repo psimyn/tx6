@@ -396,6 +396,7 @@ input:focus {
     border-radius: 1.5rem;
     margin: 0;
     padding: 0;
+    touch-action: none;
 }
 
 .volume-slider input[type="range"]::-webkit-slider-thumb {
@@ -482,7 +483,7 @@ input:focus {
     --select-bg: var(--knob-color);
     --select-border: var(--knob-border);
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2350514f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    
+
     background: var(--select-bg) var(--select-chevron) no-repeat right 0.5rem center/0.75rem 0.75rem;
     border: 1px solid var(--select-border);
     border-radius: 0.25rem;
@@ -496,9 +497,13 @@ input:focus {
     text-align: left;
     min-width: 3.35rem;
     position: relative;
-    z-index: 2; /* Increased z-index */
-    pointer-events: auto; /* Ensure select is clickable */
-    margin-bottom: 0.5rem;
+    z-index: 2;
+    pointer-events: auto;
+}
+
+.value-display .mode-select,
+.value-display .fx-engine-select {
+    margin-bottom: 0;
 }
 
 .fx-engine-select {
@@ -588,6 +593,9 @@ input:focus {
 
 .value-display {
     pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .knob-value {
@@ -646,7 +654,6 @@ header {
     max-width: 20rem;
     width: 100%;
     margin: 0 auto;
-    padding: 1rem;
 }
 
 .view-content {
@@ -680,25 +687,62 @@ header {
 .tab-button {
     flex: 1;
     padding: 1rem;
-    background: transparent;
-    border: none;
+    background: linear-gradient(180deg, #f5f5f7 0%, #e8e8eb 30%, #d9d9dd 60%, #c9c9ce 100%);
+    border: 1px solid #b8b8bc;
+    border-bottom: 2px solid #a8a8ac;
+    border-right: 1px solid #c0c0c4;
     color: var(--text-color);
     font-size: 0.85rem;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: 1px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    border-top: 3px solid transparent;
+    transition: all 0.1s ease;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12),
+                0 1px 2px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.tab-button::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    right: 4px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+    border-radius: 50%;
 }
 
 .tab-button:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: linear-gradient(180deg, #fafafc 0%, #f0f0f4 30%, #e1e1e6 60%, #d1d1d7 100%);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.tab-button:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.1),
+                inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .tab-button.active {
+    background: linear-gradient(180deg, #d4d4d8 0%, #c5c5c9 40%, #b5b5bb 100%);
+    border-color: #a0a0a4;
+    border-bottom-color: #909094;
+    box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.18),
+                inset 0 1px 1px rgba(0, 0, 0, 0.15),
+                inset 0 0 0 1px rgba(0, 0, 0, 0.1),
+                0 1px 0 rgba(0, 0, 0, 0.05);
     color: var(--button-color);
-    border-top-color: var(--button-color);
-    background: var(--bg-color);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: translateY(2px);
+}
+
+.tab-button.active::before {
+    background: linear-gradient(90deg, transparent, rgba(17, 2, 55, 0.15), transparent);
 }
 
 .fx-toggle-buttons {

@@ -57,30 +57,17 @@
     <div class="view-container knob-container" x-show="currentView === 'main'">
 
         <div class="knob-wrapper">
-            <select x-model="currentSliderMode" @change="selectSliderMode($event.target.value)" class="mode-select">
-                <option value="7">VOL</option>
-                <option value="92">AUX</option>
-                <option value="91">FX1</option>
-                <option value="93">CMP</option>
-            </select>
             <div class="volume-slider">
-                <input type="range" min="0" max="127" :value="sliderValue" @input="handleSliderChange($event)">
+                <input type="range" min="0" max="127" :value="sliderValue" @input="handleSliderChange($event)" @wheel="event.preventDefault()">
                 <input type="range" min="0" max="127" x-model="sliderOutputValue" class="slider-overlay" readonly
-                    tabindex="-1">
+                    tabindex="-1" @wheel="event.preventDefault()">
             </div>
             <div class="value-display">
                 <span class="knob-value value-large" x-text="Math.floor(sliderValue * 100 / 127)"></span>
             </div>
         </div>
 
-        <div class="control-buttons">
             <div class="knob-wrapper">
-                <select x-model="currentEqMode" @change="selectEqMode($event.target.value)" class="mode-select">
-                    <option value="74">FLT</option>
-                    <option value="85">HIGH</option>
-                    <option value="86">MID</option>
-                    <option value="87">LOW</option>
-                </select>
                 <div x-data="knob(knobConfigs.eq)" class="knob" @mousedown="startDrag($event)"
                     @touchstart="startDrag($event)" x-init="knobData.value = knobs.eq.value" x-effect="knobData.value = knobs.eq.value">
                     <div class="knob-indicator indicator-small"
@@ -88,10 +75,28 @@
                     </div>
                 </div>
                 <div class="value-display">
-                    <span class="knob-value" x-text="eqDisplayValue"></span>
+                    <select x-model="currentEqMode" @change="selectEqMode($event.target.value)" class="mode-select">
+                        <template x-for="option in eqDropdownOptions">
+                            <option :value="option.value" x-text="`${option.label}  ${option.displayValue}`"></option>
+                        </template>
+                    </select>
                 </div>
             </div>
-        </div>
+            <div class="knob-wrapper">
+                <div x-data="knob(knobConfigs.fx1)" class="knob" @mousedown="startDrag($event)"
+                    @touchstart="startDrag($event)" x-init="knobData.value = knobs.fx1.value" x-effect="knobData.value = knobs.fx1.value">
+                    <div class="knob-indicator indicator-small"
+                        :style="`background: var(--accent-color-orange); transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
+                    </div>
+                </div>
+                <div class="value-display">
+                    <select x-model="currentFxMode" @change="selectFxMode($event.target.value)" class="mode-select">
+                        <template x-for="option in fx1DropdownOptions">
+                            <option :value="option.value" x-text="`${option.label}  ${option.displayValue}`"></option>
+                        </template>
+                    </select>
+                </div>
+            </div>
 
         <!-- Master Channel Radio Group -->
         <div class="master-channel-section">
@@ -206,8 +211,7 @@
                         </select>
                         <select x-model="globalLfos[currentLfoIndex].target" class="fx-engine-select">
                             <option value="vol">VOL</option>
-                            <option value="fx1">FX1</option>
-                            <option value="cmp">CMP</option>
+                            <option value="aux">AUX</option>
                             <option value="flt">FLT</option>
                         </select>
                         <select x-model="globalLfos[currentLfoIndex].assignedTrack" class="fx-engine-select">
@@ -730,6 +734,7 @@
             lfoOutputValues: {},
             currentSliderMode: 7,
             currentEqMode: 74,
+            currentFxMode: 91,
             bpm: parseInt(localStorage.getItem('tx6-bpm')) || 100,
             startStopActive: false,
             isFullscreen: false,
@@ -751,6 +756,10 @@
                         knobType: 'eq', minValue: 0, maxValue: 127, sensitivity: 1.5, doubleClickReset: 64,
                         onChange: (v) => { this.handleEqChange(v); this.setKnobValue('eq', v); }
                     },
+                    fx1: {
+                        knobType: 'fx1', minValue: 0, maxValue: 127, sensitivity: 1.5,
+                        onChange: (v) => { this.handleFx1Change(v); this.setKnobValue('fx1', v); }
+                    },
                     masterVolume: { knobType: 'masterVolume', onChange: (v) => { this.handleMasterChannelChange(v); this.setKnobValue('masterVolume', v); } },
                     fxReturn: { knobType: 'fxReturn', onChange: (v) => { this.handleKnobChange('fxReturn', v); this.setKnobValue('fxReturn', v); } },
                     fxParam1: { knobType: 'fxParam1', onChange: (v) => { this.handleKnobChange('fxParam1', v); this.setKnobValue('fxParam1', v); } },
@@ -771,7 +780,8 @@
 
             // Knobs state
             knobs: {
-                eq: { value: 64 }, masterVolume: { value: 0 }, 
+                eq: { value: 64 }, masterVolume: { value: 0 },
+                fx1: { value: 0 },
                 fxParam1: { value: 0 }, fxParam2: { value: 0 },
                 fxReturn: { value: 0 }, lfoRate: { value: 64 }, lfoAmount: { value: 0 },
                 lfoPhase: { value: 0 }, synthFreq: { value: 0 }, synthLen: { value: 0 }
@@ -787,13 +797,13 @@
             // Global LFOs - simplified initialization
             globalLfos: Array(10).fill(null).map((_, i) => ({
                 name: `LFO ${i + 1}`,
-                target: 'vol',
+                target: ['vol', 'aux', 'flt'][i % 3],
                 shape: ['sine', 'triangle', 'square', 'saw', 'sine'][i % 5],
                 enabled: true,
                 rate: 1.0,
                 amount: 50,
                 phase: 0,
-                assignedTrack: 0 //i < 5 ? i : 0
+                assignedTrack: 0
             })),
 
             // FX state
@@ -931,7 +941,7 @@
             },
 
             initializeTrackValues() {
-                const modes = [7, 14, 15, 74, 82, 85, 86, 87];
+                const modes = [7, 14, 15, 74, 82, 85, 86, 87, 91, 93];
                 for (let track = 0; track < 7; track++) {
                     for (let mode of modes) {
                         const key = `${track}-${mode}`;
@@ -968,22 +978,34 @@
 
             },
 
-            selectSliderMode(ccNumber) {
-                this.currentSliderMode = Number(ccNumber);
-                this.midi.sendCC(this.currentTrack, this.currentSliderMode, this.sliderValue);
+            selectEqMode(ccNumber) {
+                const newMode = Number(ccNumber);
+                this.currentEqMode = newMode;
+
+                const newKey = `${this.currentTrack}-${newMode}`;
+                const value = this.trackValues[newKey] !== undefined ? this.trackValues[newKey] : 64;
+                this.$nextTick(() => {
+                    this.knobs.eq.value = value;
+                });
+                this.midi.sendCC(this.currentTrack, this.currentEqMode, value);
             },
 
-            selectEqMode(ccNumber) {
-                const oldKey = `eqDisplayValue${this.currentTrack}-${this.currentEqMode}`;
-                this.trackValues[oldKey] = this.knobs.eq.value;
+            selectFxMode(ccNumber) {
+                const newMode = Number(ccNumber);
+                this.currentFxMode = newMode;
 
-                this.currentEqMode = Number(ccNumber);
+                const newKey = `${this.currentTrack}-${newMode}`;
+                const value = this.trackValues[newKey] !== undefined ? this.trackValues[newKey] : 0;
+                this.$nextTick(() => {
+                    this.knobs.fx1.value = value;
+                });
+                this.midi.sendCC(this.currentTrack, this.currentFxMode, value);
+            },
 
-                const newKey = `${this.currentTrack}-${ccNumber}`;
-                const value = this.trackValues[newKey] !== undefined ? this.trackValues[newKey] : 64;
-
-                this.setKnobValue('eq', value);
-                this.handleKnobChange('eq', value);
+            handleFx1Change(value) {
+                this.midi.sendCC(this.currentTrack, this.currentFxMode, value);
+                const key = `${this.currentTrack}-${this.currentFxMode}`;
+                this.trackValues[key] = value;
             },
 
             handleSliderChange(event) {
@@ -1177,12 +1199,11 @@
                     shapeVal = shapes[lfo.shape]();
                     const amt = lfo.amount - 50;
 
-                    const targets = {
-                        vol: [7, 0],
-                        fx1: [91, 0],
-                        cmp: [93, 0],
-                        flt: [74, 64]
-                    };
+                const targets = {
+                    vol: 7,
+                    aux: 92,
+                    flt: 74
+                };
 
                     const [cc, defaultBase] = targets[lfo.target];
                     const base = Number(this.trackValues[`${trackIdx}-${cc}`]) || defaultBase;
@@ -1322,15 +1343,40 @@
             },
 
             // Computed properties
-            get eqDisplayValue() {
-                if (this.currentEqMode === CC.FILTER) {
+            get eqDropdownOptions() {
+                return [
+                    { value: 74, label: 'FLT', displayValue: this.getStoredEqDisplayValue(74) },
+                    { value: 85, label: 'HIGH', displayValue: this.getStoredEqDisplayValue(85) },
+                    { value: 86, label: 'MID', displayValue: this.getStoredEqDisplayValue(86) },
+                    { value: 87, label: 'LOW', displayValue: this.getStoredEqDisplayValue(87) }
+                ];
+            },
+
+            get fx1DropdownOptions() {
+                return [
+                    { value: 91, label: 'FX1', displayValue: this.getStoredFx1DisplayValue(91) },
+                    { value: 93, label: 'CMP', displayValue: this.getStoredFx1DisplayValue(93) }
+                ];
+            },
+
+            getStoredEqDisplayValue(ccNumber) {
+                const key = `${this.currentTrack}-${ccNumber}`;
+                const value = this.trackValues[key] !== undefined ? this.trackValues[key] : 64;
+
+                if (ccNumber === CC.FILTER) {
                     const filterValues = [10, 11, 13, 15, 18, 22, 24, 29, 33, 39, 47, 53, 63, 71, 85, 101, 114, 136, 163, 184, 219, 247, 295, 353, 397, 475, 534, 639, 763, 859, '1.0k', '1.2k', '1.4k', '1.7k', '1.9k', '2.2k', '2.7k', '3.0k', '3.6k', '4.0k', '4.8k', '5.7k', '6.5k', '7.7k', '8.7k', '10.4k', '12.4k', '14.0k', '16.7k', '20.0k'];
                     const allValues = [...filterValues, '-', ...filterValues];
-                    const index = Math.round(this.knobs.eq.value / 127 * 100);
+                    const index = Math.round(value / 127 * 100);
                     return allValues[index];
                 } else {
-                    return midiToEqDisplay(this.knobs.eq.value);
+                    return midiToEqDisplay(value);
                 }
+            },
+
+            getStoredFx1DisplayValue(ccNumber) {
+                const key = `${this.currentTrack}-${ccNumber}`;
+                const value = this.trackValues[key] !== undefined ? this.trackValues[key] : 0;
+                return Math.floor(value * 100 / 127);
             },
 
             get eqIndicatorColor() {
