@@ -340,6 +340,26 @@
                             </div>
                         </template>
                     </div>
+
+                    <!-- Keyboard -->
+                    <div class="keyboard-section">
+                        <div class="keyboard-controls">
+                            <button @click="decreaseOctave()" class="octave-button">-</button>
+                            <span class="octave-display" x-text="`Oct ${synthSettings.octave}`"></span>
+                            <button @click="increaseOctave()" class="octave-button">+</button>
+                        </div>
+                        <div class="keyboard">
+                            <template x-for="(note, index) in keyboardNotes" :key="index">
+                                <button 
+                                    @click="playNote(note)"
+                                    class="key"
+                                    :class="{ 'black-key': note.isBlack }"
+                                    :style="note.isBlack ? `left: ${note.position}%` : ''"
+                                    x-text="note.isBlack ? '' : note.label">
+                                </button>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -826,7 +846,7 @@
             },
 
             // Synth settings
-            synthSettings: { seq: '0', waveform: '0' },
+            synthSettings: { seq: '0', waveform: '0', octave: 4 },
             waveformLabels: ['SIN', 'TRI', 'SQR', 'SAW', 'KICK', 'SNARE', 'CLAP', 'HIHAT', 'SAMPLE', 'MIDI'],
             noteNames: Array(128).fill(null).map((_, i) => {
                 const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -1468,6 +1488,50 @@
                     volume: 'Volume'
                 };
                 return labels[this.masterChannel];
+            },
+
+            get keyboardNotes() {
+                const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                const whiteNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+                const blackPositions = { 'C#': 10, 'D#': 24, 'F#': 52.5, 'G#': 66.5, 'A#': 80.5 };
+                
+                return notes.map((note, index) => {
+                    const midiNote = this.synthSettings.octave * 12 + index;
+                    const isBlack = note.includes('#');
+                    
+                    return {
+                        note: note,
+                        midiNote: midiNote,
+                        label: isBlack ? '' : note,
+                        isBlack: isBlack,
+                        position: isBlack ? blackPositions[note] : null
+                    };
+                });
+            },
+
+            playNote(noteData) {
+                const currentWaveform = this.waveformLabels[Math.floor(this.synthSettings.waveform / 14)];
+                
+                // Only play notes for tonal waveforms
+                if (['SIN', 'TRI', 'SQR', 'SAW'].includes(currentWaveform)) {
+                    const midiValue = Math.floor((noteData.midiNote / 127) * 127);
+                    this.$nextTick(() => {
+                        this.knobs.synthFreq.value = midiValue;
+                    });
+                    this.midi.sendCC(this.currentTrack, 89, midiValue);
+                }
+            },
+
+            increaseOctave() {
+                if (this.synthSettings.octave < 10) {
+                    this.synthSettings.octave++;
+                }
+            },
+
+            decreaseOctave() {
+                if (this.synthSettings.octave > 0) {
+                    this.synthSettings.octave--;
+                }
             }
         });
 
