@@ -162,62 +162,113 @@
     <div class="view-container fx-view-container" x-show="currentView === 'fx'">
         <div class="view-content">
             <!-- FX Channel Selector -->
-            <div>
-                <template x-for="ch in [7, 8]">
-                    <button class="fx-channel-button" :class="{ active: fx.currentChannel === ch }"
-                        @click="fx.currentChannel = ch; updateFxDisplay()" 
-                        x-text="`FX ${ch === 7 ? 'I' : 'II'}`">
-                    </button>
-                </template>
+            <div class="fx-channel-selector">
+                <div class="fx-channel-radio-group">
+                    <label class="fx-channel-radio-label">
+                        <input type="radio" name="fx-channel" :value="7" x-model.number="fx.currentChannel" @change="updateFxDisplay()" class="fx-channel-radio">
+                        <span>FX I</span>
+                    </label>
+                    <label class="fx-channel-radio-label">
+                        <input type="radio" name="fx-channel" :value="8" x-model.number="fx.currentChannel" @change="updateFxDisplay()" class="fx-channel-radio">
+                        <span>FX II</span>
+                    </label>
+                </div>
             </div>
 
-            <!-- FX Engine Select -->
+            <!-- FX Engine Select and Toggle Button -->
             <div class="fx-engine-section">
-                <label class="knob-label">Engine</label>
-                <div class="fx-engine-radio-group">
-                    <template x-for="(option, index) in fx.channels[fx.currentChannel].types" :key="index">
-                        <label class="fx-engine-radio-label">
-                            <input type="radio" 
-                                :name="`fx-engine-${fx.currentChannel}`"
-                                :value="calculateMidiValue(index, fx.channels[fx.currentChannel].types.length)"
-                                x-model="fx.channels[fx.currentChannel].engine"
-                                @change="handleFxEngineChange()"
-                                class="fx-engine-radio">
-                            <span x-text="option"></span>
-                        </label>
-                    </template>
+                <div class="fx-engine-with-toggle">
+                    <div class="fx-engine-controls-wrapper">
+                        <div class="fx-engine-radio-group">
+                            <template x-for="(option, index) in fx.channels[fx.currentChannel].types" :key="index">
+                                <label class="fx-engine-radio-label">
+                                    <input type="radio" 
+                                        :name="`fx-engine-${fx.currentChannel}`"
+                                        :value="calculateMidiValue(index, fx.channels[fx.currentChannel].types.length)"
+                                        x-model="fx.channels[fx.currentChannel].engine"
+                                        @change="handleFxEngineChange()"
+                                        class="fx-engine-radio">
+                                    <span x-text="option"></span>
+                                </label>
+                            </template>
+                            <!-- FX1 Slider (shown only for FX I) -->
+                            <div class="fx1-slider-wrapper" x-show="fx.currentChannel === 7">
+                                <input type="range" min="0" max="127" 
+                                    :value="trackValues[`${currentTrack}-${currentFxMode}`] || 0"
+                                    @input="handleFx1ChangeFromSlider($event)"
+                                    class="fx1-slider">
+                                <span class="fx1-slider-value" x-text="Math.floor((trackValues[`${currentTrack}-${currentFxMode}`] || 0) * 100 / 127)"></span>
+                            </div>
+                        </div>
+                        <button @click="toggleFx(fx.currentChannel === 7 ? 1 : 2)" class="fx-button"
+                            :class="{ active: fx[`fx${fx.currentChannel === 7 ? 1 : 2}Active`], orange: fx.currentChannel === 8 }">
+                            <span class="fx-button-inner" x-text="`FX${fx.currentChannel === 7 ? 'I' : 'II'}`"></span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <!-- FX Parameters Knobs -->
             <div class="fx-knobs-grid">
-                <template x-for="knobId in ['fxReturn', 'fxParam1', 'fxParam2']">
-                    <div class="knob-wrapper" x-show="knobId !== 'fxParam2' || fxParam2Visibility">
-                        <div x-data="knob(knobConfigs[knobId])" class="knob" @mousedown="startDrag($event)"
-                            @touchstart="startDrag($event)" x-init="knobData.value = knobs[knobId].value"
-                            x-effect="knobData.value = knobs[knobId].value">
-                            <div class="knob-indicator indicator-small"
-                                :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
+                <!-- FX Return/Track Selector -->
+                <div class="knob-wrapper">
+                    <!-- Show knob for FX I (Return) -->
+                    <template x-if="fx.currentChannel === 7">
+                        <div>
+                            <div x-data="knob(knobConfigs.fxReturn)" class="knob" @mousedown="startDrag($event)"
+                                @touchstart="startDrag($event)" x-init="knobData.value = knobs.fxReturn.value"
+                                x-effect="knobData.value = knobs.fxReturn.value">
+                                <div class="knob-indicator indicator-small"
+                                    :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
+                                </div>
+                            </div>
+                            <div class="value-display">
+                                <span class="knob-value" x-text="getKnobDisplayValue('fxReturn')"></span>
+                                <span class="knob-label" x-text="getKnobLabel('fxReturn')"></span>
                             </div>
                         </div>
-                        <div class="value-display">
-                            <span class="knob-value" x-text="getKnobDisplayValue(knobId)"></span>
-                            <span class="knob-label" x-text="getKnobLabel(knobId)"></span>
+                    </template>
+                    <!-- Show select for FX II (Track) -->
+                    <template x-if="fx.currentChannel === 8">
+                        <div class="fx-track-select-wrapper">
+                            <label class="knob-label">Track</label>
+                            <select x-model.number="knobs.fxReturn.value" @change="handleKnobChange('fxReturn', knobs.fxReturn.value)" class="fx-engine-select fx-track-select">
+                                <template x-for="(label, index) in ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'ALL']" :key="index">
+                                    <option :value="Math.floor(index * (128 / 7))" x-text="label"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- FX Param1 -->
+                <div class="knob-wrapper">
+                    <div x-data="knob(knobConfigs.fxParam1)" class="knob" @mousedown="startDrag($event)"
+                        @touchstart="startDrag($event)" x-init="knobData.value = knobs.fxParam1.value"
+                        x-effect="knobData.value = knobs.fxParam1.value">
+                        <div class="knob-indicator indicator-small"
+                            :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                         </div>
                     </div>
-                </template>
-            </div>
-
-            <!-- FX Toggle Buttons -->
-            <div class="fx-toggle-section">
-                <label class="knob-label">Enable FX</label>
-                <div class="fx-toggle-buttons">
-                    <template x-for="i in 2">
-                        <button @click="toggleFx(i)" class="fx-button"
-                            :class="{ active: fx[`fx${i}Active`], orange: i === 2 }">
-                            <span class="fx-button-inner" x-text="`FX${i}`"></span>
-                        </button>
-                    </template>
+                    <div class="value-display">
+                        <span class="knob-value" x-text="getKnobDisplayValue('fxParam1')"></span>
+                        <span class="knob-label" x-text="getKnobLabel('fxParam1')"></span>
+                    </div>
+                </div>
+                
+                <!-- FX Param2 -->
+                <div class="knob-wrapper" x-show="fxParam2Visibility">
+                    <div x-data="knob(knobConfigs.fxParam2)" class="knob" @mousedown="startDrag($event)"
+                        @touchstart="startDrag($event)" x-init="knobData.value = knobs.fxParam2.value"
+                        x-effect="knobData.value = knobs.fxParam2.value">
+                        <div class="knob-indicator indicator-small"
+                            :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
+                        </div>
+                    </div>
+                    <div class="value-display">
+                        <span class="knob-value" x-text="getKnobDisplayValue('fxParam2')"></span>
+                        <span class="knob-label" x-text="getKnobLabel('fxParam2')"></span>
+                    </div>
                 </div>
             </div>
         </div>

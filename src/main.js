@@ -675,6 +675,14 @@ Alpine.data('tx6Controller', () => ({
         this.trackValues[key] = value;
     },
 
+    handleFx1ChangeFromSlider(event) {
+        const value = Number(event.target.value);
+        this.midi.sendCC(this.currentTrack, this.currentFxMode, value);
+        const key = `${this.currentTrack}-${this.currentFxMode}`;
+        this.trackValues[key] = value;
+        this.knobs.fx1.value = value;
+    },
+
     handleSliderChange(event) {
         const key = `${this.currentTrack}-${this.currentSliderMode}`;
         const value = Number(event.target.value);

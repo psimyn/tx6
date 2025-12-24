@@ -686,7 +686,7 @@ header {
 .view-content {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 0.5rem;
     align-items: center;
 }
 
@@ -779,27 +779,43 @@ header {
 
 .fx-channel-selector {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    justify-content: center;
 }
 
-.fx-channel-button {
-    flex: 1;
-    padding: 0.75rem 1.5rem;
-    background: var(--knob-color);
-    border: 2px solid var(--knob-border);
-    border-radius: 0.5rem;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--text-color);
+.fx-channel-radio-group {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--select-bg);
+    border-radius: 62.4375rem;
+    padding: 0.4rem 0.5rem;
+    box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.1);
+}
+
+.fx-channel-radio-label {
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    background: transparent;
+    border-radius: 62.4375rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-color);
 }
 
-.fx-channel-button.active {
+.fx-channel-radio-label:has(input:checked) {
     background: var(--button-color);
-    border-color: var(--button-color);
     color: white;
+}
+
+/* Orange background for FX II radio label */
+.fx-channel-radio-label:has(input[value="8"]:checked) {
+    background: var(--button-orange);
+}
+
+.fx-channel-radio {
+    display: none;
 }
 
 .fx-engine-section {
@@ -816,13 +832,85 @@ header {
     font-size: 1rem;
 }
 
+.fx-engine-with-toggle {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.fx-engine-controls-wrapper {
+    display: flex;
+    gap: 0.5rem;
+}
+
 .fx-engine-radio-group {
     display: grid;
     grid-template-rows: 1fr 1fr;
     grid-template-columns: auto auto auto;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin: 0 auto;
+}
+
+.fx1-slider-wrapper {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+}
+
+.fx1-slider {
+    flex: 1;
+    height: 1.68rem;
+    appearance: none;
+    background: linear-gradient(to bottom,
+        var(--knob-shadow) 1.96%,
+        var(--bg-color) 11.76%,
+        var(--slider-track) 13.73%,
+        var(--slider-track) 52.94%,
+        var(--slider-track) 88.16%, 
+        var(--bg-color) 90.16%,
+        var(--knob-shadow) 98%
+    );
+    border-radius: 1.5rem;
+    outline: none;
+    cursor: pointer;
+    touch-action: none;
+    margin: 0;
+    padding: 0;
+}
+
+.fx1-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: var(--knob-color-secondary);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0.0625rem 0.0625rem 0.125rem var(--knob-shadow),
+        -0.0625rem 0 0.0625rem var(--bg-color),
+        -0.0625rem 0 0.25rem var(--knob-shadow);
+}
+
+.fx1-slider::-moz-range-thumb {
+    width: 1.5rem;
+    height: 1.5rem;
+    background: var(--knob-color-secondary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0.0625rem 0.125rem var(--knob-shadow),
+        0 0.125rem 0.0625rem var(--bg-color),
+        0 0.125rem 0.25rem var(--knob-shadow);
+}
+
+.fx1-slider-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    min-width: 3ch;
+    text-align: right;
 }
 
 .fx-engine-radio-label {
@@ -843,6 +931,12 @@ header {
     color: white;
 }
 
+/* Orange background for FX2 (channel 8) checked engines */
+.fx-engine-section:has(input[name="fx-engine-8"]:checked) .fx-engine-radio-label:has(input:checked) {
+    background: var(--button-orange);
+    border-color: var(--button-orange);
+}
+
 .fx-engine-radio {
     display: none;
 }
@@ -853,6 +947,17 @@ header {
     gap: 1.5rem;
     margin-bottom: 2rem;
     justify-items: center;
+}
+
+.fx-track-select-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fx-track-select {
+    min-width: 5rem;
 }
 
 .fx-toggle-section {
