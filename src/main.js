@@ -877,9 +877,9 @@ Alpine.data('tx6Controller', () => ({
             const amt = lfo.amount - 50;
 
         const targets = {
-            vol: 7,
-            aux: 92,
-            flt: 74
+            vol: [7, 0],
+            aux: [92, 0],
+            flt: [74, 64]
         };
 
             const [cc, defaultBase] = targets[lfo.target];

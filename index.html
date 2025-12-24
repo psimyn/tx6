@@ -69,7 +69,7 @@
     </footer>
 
     <!-- Shared Header -->
-    <header class="app-header" x-show="currentView !== 'help' && currentView !== 'about' && !isConnected">
+    <header class="app-header" x-show="currentView !== 'help' && currentView !== 'about'">
         <div class="track-selector">
             <template x-for="i in 6" :key="i">
                 <button class="track-button" :class="{ active: currentTrack === i-1 }" @click="selectTrack(i-1)"
