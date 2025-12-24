@@ -17,20 +17,29 @@
 <body x-data="tx6Controller()" x-init="init()">
     <!-- Top Bar -->
     <div class="top-bar">
-        <h1 class="app-title">tx6-ctl</h1>
-        <div class="options-menu-wrapper">
-            <button class="options-button" @click="showOptionsMenu = !showOptionsMenu">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="1"></circle>
-                    <circle cx="12" cy="5" r="1"></circle>
-                    <circle cx="12" cy="19" r="1"></circle>
-                </svg>
-            </button>
-            <div class="options-dropdown" x-show="showOptionsMenu" @click.away="showOptionsMenu = false" x-transition>
-                <button class="dropdown-item" @click="currentView = 'help'; showOptionsMenu = false">Help</button>
-                <button class="dropdown-item" @click="currentView = 'about'; showOptionsMenu = false">About</button>
+        <div class="top-bar-header">
+            <h1 class="app-title">tx6-ctl</h1>
+            <div class="options-menu-wrapper">
+                <button class="options-button" @click="showOptionsMenu = !showOptionsMenu">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="1"></circle>
+                        <circle cx="12" cy="5" r="1"></circle>
+                        <circle cx="12" cy="19" r="1"></circle>
+                    </svg>
+                </button>
+                <div class="options-dropdown" x-show="showOptionsMenu" @click.away="showOptionsMenu = false" x-transition>
+                    <button class="dropdown-item" @click="currentView = 'help'; showOptionsMenu = false">Help</button>
+                    <button class="dropdown-item" @click="currentView = 'about'; showOptionsMenu = false">About</button>
+                </div>
             </div>
         </div>
+        <!-- Tab Navigation -->
+        <nav class="tab-navigation">
+            <button class="tab-button" :class="{ active: currentView === 'main' }" @click="switchView('main')">MAIN</button>
+            <button class="tab-button" :class="{ active: currentView === 'fx' }" @click="switchView('fx')">FX</button>
+            <button class="tab-button" :class="{ active: currentView === 'synth' }" @click="switchView('synth')">SYNTH</button>
+            <button class="tab-button" :class="{ active: currentView === 'lfo' }" @click="switchView('lfo')">LFO</button>
+        </nav>
     </div>
 
     <!-- Shared Header -->
@@ -419,14 +428,6 @@
             <button @click="currentView = 'main'" class="back-button">Back</button>
         </div>
     </div>
-
-    <!-- Tab Navigation -->
-    <nav class="tab-navigation">
-        <button class="tab-button" :class="{ active: currentView === 'main' }" @click="switchView('main')">MAIN</button>
-        <button class="tab-button" :class="{ active: currentView === 'fx' }" @click="switchView('fx')">FX</button>
-        <button class="tab-button" :class="{ active: currentView === 'lfo' }" @click="switchView('lfo')">LFO</button>
-        <button class="tab-button" :class="{ active: currentView === 'synth' }" @click="switchView('synth')">SYNTH</button>
-    </nav>
 
     <button class="fullscreen-toggle-btn" @click="toggleFullscreen()" x-show="!isFullscreen" title="Enter fullscreen">
         <span>⛶</span>

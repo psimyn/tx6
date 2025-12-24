@@ -964,13 +964,13 @@ Alpine.data('tx6Controller', () => ({
             
             // Vertical drag changes amount (inverted: up = increase)
             const deltaY = startY - clientY;
-            const amountChange = Math.round(deltaY / 2); // Sensitivity adjustment
+            const amountChange = Math.round(deltaY / 2);
             const newAmount = Math.max(0, Math.min(100, startAmount + amountChange));
             
-            // Horizontal drag changes phase
-            const deltaX = clientX - startX;
-            const phaseChange = Math.round(deltaX / 2); // Sensitivity adjustment
-            const newPhase = Math.max(0, Math.min(127, startPhase + phaseChange));
+            // Horizontal drag changes phase (flipped direction: dragging right decreases phase)
+            const deltaX = startX - clientX;
+            const phaseChange = Math.round(deltaX / 2);
+            const newPhase = ((startPhase + phaseChange) % 128 + 128) % 128;
             
             this.globalLfos[this.currentLfoIndex].amount = newAmount;
             this.globalLfos[this.currentLfoIndex].phase = newPhase;
