@@ -68,16 +68,16 @@
         </div>
     </footer>
 
-    <!-- Shared Header -->
-    <header class="app-header" x-show="currentView !== 'help' && currentView !== 'about'">
-        <div class="track-selector">
-            <template x-for="i in 6" :key="i">
-                <button class="track-button" :class="{ active: currentTrack === i-1 }" @click="selectTrack(i-1)"
-                    x-text="`T${i}`">
-                </button>
-            </template>
-        </div>
-    </header>
+     <!-- Shared Header -->
+     <header class="app-header" x-show="currentView !== 'help' && currentView !== 'about' && currentView !== 'lfo'">
+         <div class="track-selector">
+             <template x-for="i in 6" :key="i">
+                 <button class="track-button" :class="{ active: currentTrack === i-1 }" @click="selectTrack(i-1)"
+                     x-text="`T${i}`">
+                 </button>
+             </template>
+         </div>
+     </header>
 
     <!-- Main View -->
     <div class="view-container knob-container" x-show="currentView === 'main'">
@@ -275,40 +275,42 @@
     </div>
 
     <!-- LFO View -->
-    <div class="view-container" x-show="currentView === 'lfo'">
-        <div class="view-content">
-            <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1rem;">
-                <div class="knob-wrapper">
-                    <div class="flex gap-1">
-                        <select x-model="currentLfoIndex" @change="updateLfoKnobs()" class="fx-engine-select"
-                            style="min-width:80px;">
-                            <template x-for="i in 10">
-                                <option :value="i-1" x-text="`LFO ${i}`"></option>
-                            </template>
-                        </select>
-                        <select x-model="globalLfos[currentLfoIndex].target" class="fx-engine-select">
-                            <option value="vol">VOL</option>
-                            <option value="aux">AUX</option>
-                            <option value="flt">FLT</option>
-                        </select>
-                        <select x-model="globalLfos[currentLfoIndex].assignedTrack" class="fx-engine-select">
-                            <template x-for="i in 6">
-                                <option :value="i-1" x-text="`T${i}`"></option>
-                            </template>
-                        </select>
-                    </div>
-                </div>
+     <div class="view-container" x-show="currentView === 'lfo'">
+         <div class="view-content">
+             <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1rem;">
+                 <div style="display:flex;justify-content:space-between;align-items:flex-start;width:100%;gap:2rem;">
+                     <div class="flex gap-1">
+                         <select x-model="globalLfos[currentLfoIndex].assignedTrack" class="fx-engine-select">
+                             <template x-for="i in 6">
+                                 <option :value="i-1" x-text="`T${i}`"></option>
+                             </template>
+                         </select>
+                          <select x-model="globalLfos[currentLfoIndex].target" class="fx-engine-select">
+                              <option value="vol">VOL</option>
+                              <option value="aux">AUX</option>
+                              <option value="flt">FLT</option>
+                              <option value="det">DET</option>
+                              <option value="cmp">CMP</option>
+                          </select>
+                     </div>
+                     <select x-model="currentLfoIndex" @change="updateLfoKnobs()" class="fx-engine-select"
+                         style="min-width:100px;">
+                         <template x-for="i in 10">
+                             <option :value="i-1" x-text="`LFO ${i}`"></option>
+                         </template>
+                     </select>
+                 </div>
 
-                <div style="display:flex;align-items:center;gap:1rem;position:relative;">
-                    <select x-model="globalLfos[currentLfoIndex].shape" class="fx-engine-select lfo-shape"
-                        @change="$nextTick(() => drawLfoWaveform())" style="writing-mode:horizontal-tb;">
-                        <template x-for="shape in ['sine', 'triangle', 'square', 'saw', 'revsaw', 'noise']">
-                            <option :value="shape" x-text="shape.charAt(0).toUpperCase() + shape.slice(1)"></option>
-                        </template>
-                    </select>
-                    <canvas id="lfo-canvas" width="300" height="100"
-                        style="border: 1px solid var(--knob-border); border-radius: 4px;"></canvas>
-                </div>
+                 <div style="display:flex;align-items:center;gap:1rem;position:relative;">
+                     <select x-model="globalLfos[currentLfoIndex].shape" class="fx-engine-select lfo-shape"
+                         @change="$nextTick(() => drawLfoWaveform())" style="writing-mode:horizontal-tb;">
+                         <template x-for="shape in ['sine', 'triangle', 'square', 'saw', 'revsaw', 'noise']">
+                             <option :value="shape" x-text="shape.charAt(0).toUpperCase() + shape.slice(1)"></option>
+                         </template>
+                     </select>
+                     <canvas id="lfo-canvas" width="300" height="100"
+                         style="border: 1px solid var(--knob-border); border-radius: 4px;"></canvas>
+                 </div>
 
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;justify-items:center;">
                     <template x-for="lfoKnob in ['lfoRate', 'lfoAmount', 'lfoPhase']">

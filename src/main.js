@@ -911,11 +911,13 @@ Alpine.data('tx6Controller', () => ({
              shapeVal = shapes[lfo.shape]();
              const amt = lfo.amount - LFO.AMOUNT_DEFAULT;
 
-         const targets = {
-             vol: [CC.VOLUME, MIDI.MIN],
-             aux: [92, MIDI.MIN],
-             flt: [CC.FILTER, EQ.NEUTRAL_VALUE]
-         };
+          const targets = {
+              vol: [CC.VOLUME, MIDI.MIN],
+              aux: [92, MIDI.MIN],
+              flt: [CC.FILTER, EQ.NEUTRAL_VALUE],
+              det: [95, MIDI.MIN],
+              cmp: [93, MIDI.MIN]
+          };
 
              const [cc, defaultBase] = targets[lfo.target];
              const base = Number(this.trackValues[`${trackIdx}-${cc}`]) || defaultBase;
@@ -1235,13 +1237,13 @@ Alpine.data('tx6Controller', () => ({
      get sliderOutputValue() {
          const key = `${this.currentTrack}-${this.currentSliderMode}`;
          
-         // Check if there's an LFO assigned to current track that targets current slider mode
-         const targets = {
-             vol: CC.VOLUME,
-             aux: CC.AUX, 
-             cmp: 93,
-             flt: CC.FILTER
-         };
+          const targets = {
+              vol: CC.VOLUME,
+              aux: CC.AUX, 
+              cmp: 93,
+              det: 95,
+              flt: CC.FILTER
+          };
          
          const assignedLfos = this.globalLfos.filter(lfo => 
              Number(lfo.assignedTrack) === Number(this.currentTrack) && 
