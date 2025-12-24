@@ -25,15 +25,15 @@
     --select-border: rgba(0, 0, 0, 0.1);
 }
 
-*, *:before, *:after {
+ *, *:before, *:after {
     box-sizing: border-box;
 }
 
  html, body {
     font-size: min(1.25rem, 5vw);
-    overscroll-behavior: none; /* Disable pull-to-refresh */
+    overscroll-behavior: none;
     margin: 0;
-    padding: 3rem 0 0 0;
+    padding: 0;
     font-family: "Helvetica Neue", Arial, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
@@ -44,6 +44,10 @@
     background-image: linear-gradient(to bottom, rgba(0,0,0,0.001) 1px, transparent 1px), 
                       linear-gradient(to right, rgba(0,0,0,0.001) 1px, transparent 1px);
     background-size: 0.625rem 0.625rem;
+}
+
+body {
+    padding: 6.5rem 0 0 0;
 }
 
 h1 {
@@ -66,11 +70,65 @@ h1 {
     z-index: 100;
 }
 
-.top-bar-header {
+ .top-bar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0.5rem 1rem;
+}
+
+ .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.header-button {
+    background: transparent;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+}
+
+.header-button:hover {
+    opacity: 0.7;
+}
+
+.header-button svg {
+    width: 20px;
+    height: 20px;
+}
+
+.connection-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(226, 226, 228, 0.95);
+    border-top: 1px solid var(--knob-border);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 99;
+    padding: 0.5rem 1rem;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+[x-cloak] .connection-footer {
+    display: none;
+}
+
+.connection-footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 20rem;
+    margin: 0 auto;
 }
 
 .app-title {
@@ -87,27 +145,6 @@ h1 {
 
 .options-menu-wrapper {
     position: relative;
-}
-
-.options-button {
-    background: transparent;
-    border: none;
-    padding: 0.25rem;
-    cursor: pointer;
-    color: var(--text-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.2s;
-}
-
-.options-button:hover {
-    opacity: 0.7;
-}
-
-.options-button svg {
-    width: 20px;
-    height: 20px;
 }
 
 .options-dropdown {
@@ -195,26 +232,11 @@ h1 {
 
 .status {
     font-size: 1rem;
-    position: absolute;
-    bottom: 1rem;
-    left: 1rem;
     max-width: calc(100vw - 2rem);
     background: white;
-    z-index: 10;
     padding: 0.5rem 1rem;
     border-radius: 0.25rem;
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    transform: translateY(2.5rem);
-    display: none;
-}
-
-.status:not(:empty) {
-    display: block;
-    opacity: 1;
-    transform: translateY(0);
-    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 #connect-btn {
@@ -949,7 +971,7 @@ header {
 .connection-buttons {
     display: flex;
     gap: 1rem;
-    justify-content: space-between;
+    justify-content: center;
 }
 
 .connect-btn {
@@ -969,7 +991,6 @@ header {
         0 0.25rem 0.5rem rgba(0, 0, 0, 0.01),
         inset 0 0.0625rem 0.0625rem rgba(255, 255, 255, 0.02);
     text-shadow: 0 0.0625rem 0.0625rem rgba(0, 0, 0, 0.3);
-    margin-bottom: 0.5rem;
 }
 
 .connect-btn:hover {
@@ -1122,32 +1143,10 @@ header {
     background-color: var(--background-color);
 }
 
-/* FX engine select specific styles */
+ /* FX engine select specific styles */
 .fx-engine-select option {
     background-color: var(--knob-color);
     color: var(--text-color);
-}
-
- .fullscreen-toggle-btn {
-    position: fixed;
-    right: 0.5rem;
-    bottom: 1rem;
-    color: var(--text-color);
-    background-color: transparent;
-    border: none;
-    border-radius: 50%;
-    width: 2rem;
-    height: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: background 0.2s, box-shadow 0.2s;
-    z-index: 101;
-}
-.fullscreen-toggle-btn #fullscreen-icon {
-    font-size: 1.1em;
 }
 
 .flex {

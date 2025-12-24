@@ -19,17 +19,28 @@
     <div class="top-bar">
         <div class="top-bar-header">
             <h1 class="app-title">tx6-ctl</h1>
-            <div class="options-menu-wrapper">
-                <button class="options-button" @click="showOptionsMenu = !showOptionsMenu">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="1"></circle>
-                        <circle cx="12" cy="5" r="1"></circle>
-                        <circle cx="12" cy="19" r="1"></circle>
+            <div class="header-controls">
+                <button class="header-button" @click="toggleFullscreen()" :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" x-show="!isFullscreen">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                    </svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" x-show="isFullscreen">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
-                <div class="options-dropdown" x-show="showOptionsMenu" @click.away="showOptionsMenu = false" x-transition>
-                    <button class="dropdown-item" @click="currentView = 'help'; showOptionsMenu = false">Help</button>
-                    <button class="dropdown-item" @click="currentView = 'about'; showOptionsMenu = false">About</button>
+                <div class="options-menu-wrapper">
+                    <button class="header-button" @click="showOptionsMenu = !showOptionsMenu">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="12" cy="5" r="1"></circle>
+                            <circle cx="12" cy="19" r="1"></circle>
+                        </svg>
+                    </button>
+                    <div class="options-dropdown" x-show="showOptionsMenu" @click.away="showOptionsMenu = false" x-transition>
+                        <button class="dropdown-item" @click="currentView = 'help'; showOptionsMenu = false">Help</button>
+                        <button class="dropdown-item" @click="currentView = 'about'; showOptionsMenu = false">About</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -42,16 +53,22 @@
         </nav>
     </div>
 
-    <!-- Shared Header -->
-    <header class="app-header" x-show="currentView !== 'help' && currentView !== 'about'">
-        <div class="status" x-show="status" x-text="status"></div>
-        <div class="connection-buttons">
-            <template x-for="type in ['ble', 'usb']">
-                <button @click="connect(type)" class="connect-btn" x-show="!isConnected" :disabled="connecting"
-                    x-text="`Connect ${type === 'ble' ? 'BLE' : 'USB'}`">
-                </button>
-            </template>
+    <!-- Connection Footer -->
+    <footer class="connection-footer" x-show="!isConnected">
+        <div class="connection-footer-content">
+            <div class="status" x-show="status" x-text="status"></div>
+            <div class="connection-buttons">
+                <template x-for="type in ['ble', 'usb']">
+                    <button @click="connect(type)" class="connect-btn" :disabled="connecting"
+                        x-text="`Connect ${type === 'ble' ? 'BLE' : 'USB'}`">
+                    </button>
+                </template>
+            </div>
         </div>
+    </footer>
+
+    <!-- Shared Header -->
+    <header class="app-header" x-show="currentView !== 'help' && currentView !== 'about' && !isConnected">
         <div class="track-selector">
             <template x-for="i in 6" :key="i">
                 <button class="track-button" :class="{ active: currentTrack === i-1 }" @click="selectTrack(i-1)"
@@ -428,10 +445,6 @@
             <button @click="currentView = 'main'" class="back-button">Back</button>
         </div>
     </div>
-
-    <button class="fullscreen-toggle-btn" @click="toggleFullscreen()" x-show="!isFullscreen" title="Enter fullscreen">
-        <span>⛶</span>
-    </button>
 
 </body>
 
