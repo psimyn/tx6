@@ -476,9 +476,26 @@ Alpine.data('tx6Controller', () => ({
         this.midi = createMidiController();
         this.initializeTrackValues();
         this.setupFullscreenListener();
+        
+        // Set default LFO rates to 1/2 note of current BPM
+        this.initializeLfoRates();
+        
         this.updateLfoKnobs();
         this.lfoStartTime = performance.now() / 1000;
-        this.$nextTick(() => this.drawLfoWaveform());
+        this.$nextTick(() => {
+            this.drawLfoWaveform();
+            this.setupLfoCanvasDrag();
+        });
+
+        // Watch for view changes to setup canvas drag when switching to LFO view
+        this.$watch('currentView', (newView) => {
+            if (newView === 'lfo') {
+                this.$nextTick(() => {
+                    this.drawLfoWaveform();
+                    this.setupLfoCanvasDrag();
+                });
+            }
+        });
 
         // Watch for master channel changes
         this.$watch('masterChannel', (newChannel, oldChannel) => {
@@ -541,6 +558,19 @@ Alpine.data('tx6Controller', () => ({
                 this.trackValues[key] = (mode >= 74 && mode <= 87) ? 64 : 0;
             }
         }
+    },
+
+    initializeLfoRates() {
+        // Set all LFOs to 1/2 note (multiplier 0.5) of current BPM
+        const multiplier = 0.5;
+        const quarterNoteDuration = 60 / this.bpm;
+        const noteDuration = quarterNoteDuration / multiplier;
+        const targetHz = 1 / noteDuration;
+        const rateValue = Math.max(0, Math.min(3000, Math.round(targetHz * 100)));
+        
+        this.globalLfos.forEach(lfo => {
+            lfo.rate = rateValue;
+        });
     },
 
     async connect(type) {
@@ -850,10 +880,21 @@ Alpine.data('tx6Controller', () => ({
         ctx.stroke();
         ctx.setLineDash([]);
 
+        // Display values in corners
         ctx.fillStyle = 'rgba(80, 81, 79, 0.6)';
         ctx.font = '12px Arial';
+        
+        // Top right - Rate (Hz)
         ctx.textAlign = 'right';
         ctx.fillText(`${hz.toFixed(2)} Hz`, width - 5, 15);
+        
+        // Top left - Amount
+        ctx.textAlign = 'left';
+        ctx.fillText(`Amt: ${amount}`, 5, 15);
+        
+        // Bottom left - Phase
+        const phaseDegrees = Math.floor((currentLfo.phase / 127) * 360);
+        ctx.fillText(`Phase: ${phaseDegrees}°`, 5, height - 5);
 
         ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--button-color');
         ctx.lineWidth = 2;
@@ -882,6 +923,65 @@ Alpine.data('tx6Controller', () => ({
         }
 
         ctx.stroke();
+    },
+
+    setupLfoCanvasDrag() {
+        const canvas = document.getElementById('lfo-canvas');
+        if (!canvas || canvas.dataset.dragSetup) return;
+        
+        canvas.dataset.dragSetup = 'true';
+        let isDragging = false;
+        let startY = 0;
+        let startX = 0;
+        let startAmount = 0;
+        let startPhase = 0;
+
+        const startDrag = (e) => {
+            e.preventDefault();
+            isDragging = true;
+            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            startY = clientY;
+            startX = clientX;
+            startAmount = this.globalLfos[this.currentLfoIndex].amount;
+            startPhase = this.globalLfos[this.currentLfoIndex].phase;
+        };
+
+        const handleDrag = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            
+            // Vertical drag changes amount (inverted: up = increase)
+            const deltaY = startY - clientY;
+            const amountChange = Math.round(deltaY / 2); // Sensitivity adjustment
+            const newAmount = Math.max(0, Math.min(100, startAmount + amountChange));
+            
+            // Horizontal drag changes phase
+            const deltaX = clientX - startX;
+            const phaseChange = Math.round(deltaX / 2); // Sensitivity adjustment
+            const newPhase = Math.max(0, Math.min(127, startPhase + phaseChange));
+            
+            this.globalLfos[this.currentLfoIndex].amount = newAmount;
+            this.globalLfos[this.currentLfoIndex].phase = newPhase;
+            this.knobs.lfoAmount.value = newAmount;
+            this.knobs.lfoPhase.value = newPhase;
+            
+            this.$nextTick(() => this.drawLfoWaveform());
+        };
+
+        const endDrag = () => {
+            isDragging = false;
+        };
+
+        canvas.addEventListener('mousedown', startDrag);
+        canvas.addEventListener('touchstart', startDrag, { passive: false });
+        document.addEventListener('mousemove', handleDrag);
+        document.addEventListener('touchmove', handleDrag, { passive: false });
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
     },
 
     setLfoRateFromBpm(multiplier) {
