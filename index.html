@@ -329,7 +329,7 @@
                                     @touchstart="startDrag($event)" x-init="knobData.value = knobs[synthKnob].value"
                                     x-effect="knobData.value = knobs[synthKnob].value">
                                     <div class="knob-indicator indicator-small"
-                                        :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
+                                        :style="`transform: translateX(-50%) rotate(${synthKnob === 'synthFreq' ? synthFreqToAngle(knobData.value) : midiToAngle(knobData.value)}deg)`">
                                     </div>
                                 </div>
                                 <div class="value-display">
@@ -344,7 +344,7 @@
                     <div class="keyboard-section">
                         <div class="keyboard-controls">
                             <button @click="decreaseOctave()" class="octave-button">-</button>
-                            <span class="octave-display" x-text="`Oct ${synthSettings.octave}`"></span>
+                            <span class="octave-display" x-text="synthSettings.octave"></span>
                             <button @click="increaseOctave()" class="octave-button">+</button>
                         </div>
                         <div class="keyboard">
@@ -352,8 +352,9 @@
                                 <button 
                                     @click="playNote(note)"
                                     class="key"
-                                    :class="{ 'black-key': note.isBlack }"
+                                    :class="{ 'black-key': note.isBlack, 'disabled': note.isDisabled }"
                                     :style="note.isBlack ? `left: ${note.position}%` : ''"
+                                    :disabled="note.isDisabled"
                                     x-text="note.isBlack ? '' : note.label">
                                 </button>
                             </template>

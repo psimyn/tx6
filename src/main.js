@@ -24,6 +24,7 @@ const seqs = [
 const midiToAngle = (value) => -150 + (value / 127) * 300;
 const lfoRateToAngle = (value) => -150 + (value / 3000) * 300;
 const lfoAmountToAngle = (value) => -150 + (value / 100) * 300;
+const synthFreqToAngle = (value) => -150 + (value / 100) * 300;
 const midiToEqDisplay = (value) => {
     const dbValue = Math.round((value - 64) * (18 / 64));
     return dbValue === 0 ? "0dB" : (dbValue > 0 ? "+" + dbValue : dbValue) + "dB";
@@ -33,6 +34,7 @@ const midiToEqDisplay = (value) => {
 window.midiToAngle = midiToAngle;
 window.lfoRateToAngle = lfoRateToAngle;
 window.lfoAmountToAngle = lfoAmountToAngle;
+window.synthFreqToAngle = synthFreqToAngle;
 
 // Alpine.js knob component
 Alpine.data('knob', (config) => ({
@@ -364,7 +366,7 @@ Alpine.data('tx6Controller', () => ({
                 onChange: (v) => { this.handleKnobChange('lfoAmount', v); this.setKnobValue('lfoAmount', v); }
             },
             lfoPhase: { knobType: 'lfoPhase', onChange: (v) => { this.handleKnobChange('lfoPhase', v); this.setKnobValue('lfoPhase', v); } },
-            synthFreq: { knobType: 'synthFreq', onChange: (v) => { this.handleKnobChange('synthFreq', v); this.setKnobValue('synthFreq', v); } },
+            synthFreq: { knobType: 'synthFreq', minValue: 0, maxValue: 100, sensitivity: 1.5, onChange: (v) => { this.handleKnobChange('synthFreq', v); this.setKnobValue('synthFreq', v); } },
             synthLen: { knobType: 'synthLen', onChange: (v) => { this.handleKnobChange('synthLen', v); this.setKnobValue('synthLen', v); } }
         };
     },
@@ -375,7 +377,7 @@ Alpine.data('tx6Controller', () => ({
         fx1: { value: 0 },
         fxParam1: { value: 0 }, fxParam2: { value: 0 },
         fxReturn: { value: 0 }, lfoRate: { value: 64 }, lfoAmount: { value: 0 },
-        lfoPhase: { value: 0 }, synthFreq: { value: 0 }, synthLen: { value: 0 }
+        lfoPhase: { value: 0 }, synthFreq: { value: 60 }, synthLen: { value: 0 }
     },
 
     // Master channel values storage
@@ -637,7 +639,9 @@ Alpine.data('tx6Controller', () => ({
         };
 
         if (ccMap[knobType]) {
-            this.midi.sendCC(...ccMap[knobType], value);
+            // Scale synthFreq from 0-100 to 0-127 for MIDI CC
+            const midiValue = knobType === 'synthFreq' ? Math.round((value / 100) * 127) : value;
+            this.midi.sendCC(...ccMap[knobType], midiValue);
         } else if (knobType === 'fxParam1') {
             this.midi.sendCC(this.fx.currentChannel, CC.FX_PARAM1, value);
             this.fx.channels[this.fx.currentChannel].values.param1 = value;
@@ -1043,7 +1047,7 @@ Alpine.data('tx6Controller', () => ({
         const freqValue = this.knobs.synthFreq.value;
 
         if (['SIN', 'TRI', 'SQR', 'SAW'].includes(currentWaveform)) {
-            const noteIndex = Math.floor(freqValue / 127 * (this.noteNames.length - 1));
+            const noteIndex = Math.min(100, Math.max(0, Math.floor(freqValue)));
             const noteName = this.noteNames[noteIndex] || 'C0';
             const frequency = this.midiNoteToFrequency(noteIndex);
             return `${noteName}\n${frequency}Hz`;
@@ -1069,32 +1073,39 @@ Alpine.data('tx6Controller', () => ({
         return notes.map((note, index) => {
             const midiNote = this.synthSettings.octave * 12 + index;
             const isBlack = note.includes('#');
+            const isDisabled = midiNote > 100; // Disable notes above E8 (MIDI 100)
             
             return {
                 note: note,
                 midiNote: midiNote,
                 label: isBlack ? '' : note,
                 isBlack: isBlack,
-                position: isBlack ? blackPositions[note] : null
+                position: isBlack ? blackPositions[note] : null,
+                isDisabled: isDisabled
             };
         });
     },
 
     playNote(noteData) {
+        // Don't play disabled notes
+        if (noteData.isDisabled) return;
+        
         const currentWaveform = this.waveformLabels[Math.floor(this.synthSettings.waveform / 14)];
         
         // Only play notes for tonal waveforms
         if (['SIN', 'TRI', 'SQR', 'SAW'].includes(currentWaveform)) {
-            const midiValue = Math.floor((noteData.midiNote / 127) * 127);
+            const noteValue = Math.min(100, Math.max(0, noteData.midiNote));
             this.$nextTick(() => {
-                this.knobs.synthFreq.value = midiValue;
+                this.knobs.synthFreq.value = noteValue;
             });
+            // Scale from 0-100 to 0-127 for MIDI CC
+            const midiValue = Math.round((noteValue / 100) * 127);
             this.midi.sendCC(this.currentTrack, 89, midiValue);
         }
     },
 
     increaseOctave() {
-        if (this.synthSettings.octave < 10) {
+        if (this.synthSettings.octave < 8) {
             this.synthSettings.octave++;
         }
     },

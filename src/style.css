@@ -1235,6 +1235,7 @@ header {
     background: var(--bg-color);
     border-radius: 0.25rem;
     margin: 0 -1rem;
+    perspective: 1000px;
 }
 
 .key {
@@ -1243,7 +1244,7 @@ header {
     border: 1px solid var(--knob-border);
     border-radius: 0 0 0.25rem 0.25rem;
     cursor: pointer;
-    transition: all 0.1s;
+    transition: all 0.08s ease-out;
     font-size: 0.7rem;
     font-weight: 500;
     color: var(--text-color);
@@ -1254,6 +1255,8 @@ header {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     position: relative;
     z-index: 1;
+    transform-origin: bottom center;
+    transform-style: preserve-3d;
 }
 
 .key:hover {
@@ -1262,8 +1265,9 @@ header {
 
 .key:active {
     background: #e0e0e0;
-    transform: translateY(2px);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px) rotateX(-2deg) scaleY(0.98);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15),
+                inset 0 2px 3px rgba(0, 0, 0, 0.1);
 }
 
 .black-key {
@@ -1275,6 +1279,9 @@ header {
     border-radius: 0 0 0.2rem 0.2rem;
     z-index: 2;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.08s ease-out;
+    transform-origin: bottom center;
+    transform-style: preserve-3d;
 }
 
 .black-key:hover {
@@ -1283,7 +1290,43 @@ header {
 
 .black-key:active {
     background: linear-gradient(to bottom, #1a1a1a, #0a0a0a);
-    transform: translateY(2px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px) rotateX(-3deg) scaleY(0.95);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4),
+                inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.key.disabled {
+    background: #d0d0d0;
+    color: #a0a0a0;
+    cursor: not-allowed;
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.key.disabled:hover {
+    background: #d0d0d0;
+    transform: none;
+}
+
+.key.disabled:active {
+    background: #d0d0d0;
+    transform: none;
+}
+
+.black-key.disabled {
+    background: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.black-key.disabled:hover {
+    background: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
+    transform: none;
+}
+
+.black-key.disabled:active {
+    background: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
+    transform: none;
 }
 
