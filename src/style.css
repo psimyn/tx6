@@ -1280,7 +1280,7 @@ header {
     z-index: 2;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
     transition: all 0.08s ease-out;
-    transform-origin: bottom center;
+    transform-origin: top center;
     transform-style: preserve-3d;
 }
 
@@ -1290,7 +1290,7 @@ header {
 
 .black-key:active {
     background: linear-gradient(to bottom, #1a1a1a, #0a0a0a);
-    transform: translateY(-2px) rotateX(-3deg) scaleY(0.95);
+    transform: translateY(0px) rotateX(-3deg) scaleY(0.95);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4),
                 inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }

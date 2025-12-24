@@ -343,7 +343,7 @@ Alpine.data('tx6Controller', () => ({
     lfoPhases: Array(10).fill(0),
     lfoStartTime: null,
     lastTapTime: 0,
-    trackValues: {},
+    trackValues: Alpine.$persist({}).as('tx6-trackValues'),
     midi: null,
 
     // Consolidated knob configurations - must be a getter to maintain context
@@ -484,6 +484,30 @@ Alpine.data('tx6Controller', () => ({
         // Set default LFO rates to 1/2 note of current BPM
         this.initializeLfoRates();
         
+        // Ensure currentEqMode and currentFxMode are numbers (Alpine persist might store as string)
+        this.currentEqMode = Number(this.currentEqMode);
+        this.currentFxMode = Number(this.currentFxMode);
+        this.currentSliderMode = Number(this.currentSliderMode);
+        
+        console.log('Init - currentEqMode:', this.currentEqMode, 'type:', typeof this.currentEqMode);
+        console.log('Init - currentFxMode:', this.currentFxMode, 'type:', typeof this.currentFxMode);
+        console.log('Init - trackValues:', this.trackValues);
+        
+        // Initialize EQ knob value from persisted state
+        this.$nextTick(() => {
+            const eqKey = `${this.currentTrack}-${this.currentEqMode}`;
+            const eqValue = this.trackValues[eqKey] !== undefined ? this.trackValues[eqKey] : 64;
+            console.log('Setting EQ knob - key:', eqKey, 'value:', eqValue);
+            this.knobs.eq.value = eqValue;
+            
+            const fxKey = `${this.currentTrack}-${this.currentFxMode}`;
+            const fxValue = this.trackValues[fxKey] !== undefined ? this.trackValues[fxKey] : 0;
+            console.log('Setting FX knob - key:', fxKey, 'value:', fxValue);
+            this.knobs.fx1.value = fxValue;
+            
+            console.log('After init - currentEqMode:', this.currentEqMode);
+        });
+        
         this.updateLfoKnobs();
         this.lfoStartTime = performance.now() / 1000;
         this.$nextTick(() => {
@@ -559,7 +583,9 @@ Alpine.data('tx6Controller', () => ({
         for (let track = 0; track < 7; track++) {
             for (let mode of modes) {
                 const key = `${track}-${mode}`;
-                this.trackValues[key] = (mode >= 74 && mode <= 87) ? 64 : 0;
+                if (this.trackValues[key] === undefined) {
+                    this.trackValues[key] = (mode >= 74 && mode <= 87) ? 64 : 0;
+                }
             }
         }
     },
@@ -607,6 +633,16 @@ Alpine.data('tx6Controller', () => ({
 
         this.currentTrack = trackIndex;
 
+        // Update EQ and FX knobs for the new track
+        this.$nextTick(() => {
+            const eqKey = `${this.currentTrack}-${this.currentEqMode}`;
+            const eqValue = this.trackValues[eqKey] !== undefined ? this.trackValues[eqKey] : 64;
+            this.knobs.eq.value = eqValue;
+            
+            const fxKey = `${this.currentTrack}-${this.currentFxMode}`;
+            const fxValue = this.trackValues[fxKey] !== undefined ? this.trackValues[fxKey] : 0;
+            this.knobs.fx1.value = fxValue;
+        });
     },
 
     selectEqMode(ccNumber) {
@@ -1046,6 +1082,31 @@ Alpine.data('tx6Controller', () => ({
         });
     },
 
+    resetToDefaults() {
+        if (!confirm('Reset all settings to defaults? This will reload the page.')) {
+            return;
+        }
+
+        // Clear all persisted data
+        localStorage.removeItem('tx6-currentTrack');
+        localStorage.removeItem('tx6-currentSliderMode');
+        localStorage.removeItem('tx6-currentEqMode');
+        localStorage.removeItem('tx6-currentFxMode');
+        localStorage.removeItem('tx6-bpm');
+        localStorage.removeItem('tx6-currentView');
+        localStorage.removeItem('tx6-masterChannel');
+        localStorage.removeItem('tx6-currentLfoIndex');
+        localStorage.removeItem('tx6-knobs');
+        localStorage.removeItem('tx6-masterChannelValues');
+        localStorage.removeItem('tx6-globalLfos');
+        localStorage.removeItem('tx6-fx');
+        localStorage.removeItem('tx6-synthSettings');
+        localStorage.removeItem('tx6-trackValues');
+
+        // Reload page to reinitialize with defaults
+        window.location.reload();
+    },
+
     midiNoteToFrequency(midiNote) {
         const frequency = 880 * Math.pow(2, (midiNote - 69) / 12);
         return frequency < 100 ? frequency.toFixed(1) : Math.round(frequency);
@@ -1182,7 +1243,7 @@ Alpine.data('tx6Controller', () => ({
     get keyboardNotes() {
         const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
         const whiteNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-        const blackPositions = { 'C#': 10, 'D#': 24, 'F#': 52.5, 'G#': 66.5, 'A#': 80.5 };
+        const blackPositions = { 'C#': 10, 'D#': 24, 'F#': 53.5, 'G#': 67.5, 'A#': 81.5 };
         
         return notes.map((note, index) => {
             const midiNote = this.synthSettings.octave * 12 + index;

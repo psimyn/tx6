@@ -40,6 +40,7 @@
                     <div class="options-dropdown" x-show="showOptionsMenu" @click.away="showOptionsMenu = false" x-transition>
                         <button class="dropdown-item" @click="currentView = 'help'; showOptionsMenu = false">Help</button>
                         <button class="dropdown-item" @click="currentView = 'about'; showOptionsMenu = false">About</button>
+                        <button class="dropdown-item" @click="resetToDefaults(); showOptionsMenu = false">Reset</button>
                     </div>
                 </div>
             </div>
@@ -100,9 +101,9 @@
                     </div>
                 </div>
                 <div class="value-display">
-                    <select x-model="currentEqMode" @change="selectEqMode($event.target.value)" class="mode-select">
-                        <template x-for="option in eqDropdownOptions">
-                            <option :value="option.value" x-text="`${option.label}  ${option.displayValue}`"></option>
+                    <select x-model.number="currentEqMode" @change="selectEqMode($event.target.value)" class="mode-select">
+                        <template x-for="option in eqDropdownOptions" :key="option.value">
+                            <option :value="option.value" :selected="option.value === currentEqMode" x-text="`${option.label}  ${option.displayValue}`"></option>
                         </template>
                     </select>
                 </div>
@@ -115,9 +116,9 @@
                     </div>
                 </div>
                 <div class="value-display">
-                    <select x-model="currentFxMode" @change="selectFxMode($event.target.value)" class="mode-select">
-                        <template x-for="option in fx1DropdownOptions">
-                            <option :value="option.value" x-text="`${option.label}  ${option.displayValue}`"></option>
+                    <select x-model.number="currentFxMode" @change="selectFxMode($event.target.value)" class="mode-select">
+                        <template x-for="option in fx1DropdownOptions" :key="option.value">
+                            <option :value="option.value" :selected="option.value === currentFxMode" x-text="`${option.label}  ${option.displayValue}`"></option>
                         </template>
                     </select>
                 </div>
