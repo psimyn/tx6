@@ -1,5 +1,9 @@
 import Alpine from 'alpinejs';
+import persist from '@alpinejs/persist';
 import './style.css';
+
+// Register Alpine plugins
+Alpine.plugin(persist);
 
 // Constants
 const CC = {
@@ -322,20 +326,20 @@ Alpine.data('tx6Controller', () => ({
     isConnected: false,
     connecting: false,
     clockStatus: { isReceiving: false, bpm: 0, clockCount: 0, lastUpdate: 0 },
-    currentTrack: 0,
+    currentTrack: Alpine.$persist(0).as('tx6-currentTrack'),
 
     lfoOutputValues: {},
-    currentSliderMode: 7,
-    currentEqMode: 74,
-    currentFxMode: 91,
-    bpm: parseInt(localStorage.getItem('tx6-bpm')) || 100,
+    currentSliderMode: Alpine.$persist(7).as('tx6-currentSliderMode'),
+    currentEqMode: Alpine.$persist(74).as('tx6-currentEqMode'),
+    currentFxMode: Alpine.$persist(91).as('tx6-currentFxMode'),
+    bpm: Alpine.$persist(100).as('tx6-bpm'),
     startStopActive: false,
     isFullscreen: false,
     settingsView: null,
-    currentView: 'main', // 'main', 'fx', 'lfo', 'synth', 'help', 'about'
+    currentView: Alpine.$persist('main').as('tx6-currentView'), // 'main', 'fx', 'lfo', 'synth', 'help', 'about'
     showOptionsMenu: false,
-    masterChannel: 'volume', // 'aux', 'cue', 'volume'
-    currentLfoIndex: 0,
+    masterChannel: Alpine.$persist('volume').as('tx6-masterChannel'), // 'aux', 'cue', 'volume'
+    currentLfoIndex: Alpine.$persist(0).as('tx6-currentLfoIndex'),
     lfoPhases: Array(10).fill(0),
     lfoStartTime: null,
     lastTapTime: 0,
@@ -372,23 +376,23 @@ Alpine.data('tx6Controller', () => ({
     },
 
     // Knobs state
-    knobs: {
+    knobs: Alpine.$persist({
         eq: { value: 64 }, masterVolume: { value: 0 },
         fx1: { value: 0 },
         fxParam1: { value: 0 }, fxParam2: { value: 0 },
         fxReturn: { value: 0 }, lfoRate: { value: 64 }, lfoAmount: { value: 0 },
         lfoPhase: { value: 0 }, synthFreq: { value: 60 }, synthLen: { value: 0 }
-    },
+    }).as('tx6-knobs'),
 
     // Master channel values storage
-    masterChannelValues: {
+    masterChannelValues: Alpine.$persist({
         aux: 0,
         cue: 0,
         volume: 0
-    },
+    }).as('tx6-masterChannelValues'),
 
     // Global LFOs - simplified initialization
-    globalLfos: Array(10).fill(null).map((_, i) => ({
+    globalLfos: Alpine.$persist(Array(10).fill(null).map((_, i) => ({
         name: `LFO ${i + 1}`,
         target: ['vol', 'aux', 'flt'][i % 3],
         shape: ['sine', 'triangle', 'square', 'saw', 'sine'][i % 5],
@@ -397,16 +401,16 @@ Alpine.data('tx6Controller', () => ({
         amount: 50,
         phase: 0,
         assignedTrack: 0
-    })),
+    }))).as('tx6-globalLfos'),
 
     // FX state
-    fx: {
+    fx: Alpine.$persist({
         fx1Active: false, fx2Active: false, currentChannel: 7,
         channels: {
             7: { types: ['REV', 'CHO', 'DLY'], engine: 0, values: { param1: 0, param2: 0, return: 0 } },
             8: { types: ['FLT', 'CRU', 'DST', 'TRM', 'FRZ', 'TPE'], engine: 0, values: { param1: 0, param2: 0, track: 0 } }
         }
-    },
+    }).as('tx6-fx'),
 
     // FX parameter configuration
     paramConfig: {
@@ -419,7 +423,7 @@ Alpine.data('tx6Controller', () => ({
     },
 
     // Synth settings
-    synthSettings: { seq: '0', waveform: '0', octave: 4 },
+    synthSettings: Alpine.$persist({ seq: '0', waveform: '0', octave: 4 }).as('tx6-synthSettings'),
     waveformLabels: ['SIN', 'TRI', 'SQR', 'SAW', 'KICK', 'SNARE', 'CLAP', 'HIHAT', 'SAMPLE', 'MIDI'],
     noteNames: Array(128).fill(null).map((_, i) => {
         const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -561,16 +565,20 @@ Alpine.data('tx6Controller', () => ({
     },
 
     initializeLfoRates() {
-        // Set all LFOs to 1/2 note (multiplier 0.5) of current BPM
-        const multiplier = 0.5;
-        const quarterNoteDuration = 60 / this.bpm;
-        const noteDuration = quarterNoteDuration / multiplier;
-        const targetHz = 1 / noteDuration;
-        const rateValue = Math.max(0, Math.min(3000, Math.round(targetHz * 100)));
-        
-        this.globalLfos.forEach(lfo => {
-            lfo.rate = rateValue;
-        });
+        // Only set default rates if LFOs haven't been persisted yet
+        // Check if first LFO still has default rate of 1.0
+        if (this.globalLfos[0].rate === 1.0) {
+            // Set all LFOs to 1/2 note (multiplier 0.5) of current BPM
+            const multiplier = 0.5;
+            const quarterNoteDuration = 60 / this.bpm;
+            const noteDuration = quarterNoteDuration / multiplier;
+            const targetHz = 1 / noteDuration;
+            const rateValue = Math.max(0, Math.min(3000, Math.round(targetHz * 100)));
+            
+            this.globalLfos.forEach(lfo => {
+                lfo.rate = rateValue;
+            });
+        }
     },
 
     async connect(type) {
