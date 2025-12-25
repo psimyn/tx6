@@ -7,7 +7,9 @@ Alpine.plugin(persist);
 const CC = {
     VOLUME: 7, AUX: 14, CUE: 15, FX: 82, EQ_HIGH: 85, EQ_MID: 86, EQ_LOW: 87,
     FILTER: 74, START_STOP: 46, BPM: 47, FX_ENGINE: 15, FX_PARAM1: 12,
-    FX_PARAM2: 13, FX_RETURN: 7, FX_TRACK_SELECT: 9
+    FX_PARAM2: 13, FX_RETURN: 7, FX_TRACK_SELECT: 9,
+    // Additional CC numbers used in LFO targets
+    AUX_SEND: 92, COMPRESSOR: 93, DETUNE: 95
 };
 
 const CHANNELS = { MASTER: 6, FX1: 7, FX2: 8 };
@@ -38,6 +40,36 @@ const TRACKS = {
     COUNT: 6,
     FX1: 7,
     FX2: 8
+};
+
+/** FX engine types for each FX channel */
+const FX_ENGINES = {
+    FX1: ['REV', 'CHO', 'DLY'],
+    FX2: ['FLT', 'CRU', 'DST', 'TRM', 'FRZ', 'TPE']
+};
+
+/** Centralized LFO target definitions with CC mappings */
+const LFO_TARGETS = {
+    // Track targets (channels 0-5)
+    track: {
+        vol: { cc: CC.VOLUME, defaultBase: 0, label: 'VOL' },
+        aux: { cc: CC.AUX_SEND, defaultBase: 0, label: 'AUX' },
+        flt: { cc: CC.FILTER, defaultBase: 64, label: 'FLT' },
+        det: { cc: CC.DETUNE, defaultBase: 0, label: 'DET' },
+        cmp: { cc: CC.COMPRESSOR, defaultBase: 0, label: 'CMP' }
+    },
+    // FX1 targets (channel 7)
+    fx1: {
+        fx1_active: { cc: CC.FX, defaultBase: 0, label: 'Active' },
+        fx1_param: { cc: CC.FX_PARAM1, defaultBase: 0, label: 'Param' },
+        fx1_return: { cc: CC.FX_RETURN, defaultBase: 0, label: 'Return' }
+    },
+    // FX2 targets (channel 8)
+    fx2: {
+        fx2_active: { cc: CC.FX, defaultBase: 0, label: 'Active' },
+        fx2_param1: { cc: CC.FX_PARAM1, defaultBase: 0, label: 'Param1' },
+        fx2_param2: { cc: CC.FX_PARAM2, defaultBase: 0, label: 'Param2' }
+    }
 };
 
 const LFO = {
@@ -101,6 +133,12 @@ const seqs = [
     'U1', 'U2', 'U3', 'U4', 'U5', 'U6'
 ];
 
+const LFO_TRACK_OPTIONS = [
+    { value: 0, label: 'T1' }, { value: 1, label: 'T2' }, { value: 2, label: 'T3' },
+    { value: 3, label: 'T4' }, { value: 4, label: 'T5' }, { value: 5, label: 'T6' },
+    { value: 7, label: 'FX1' }, { value: 8, label: 'FX2' }
+];
+
 const midiToAngle = (value) => KNOB_ANGLE.MIN_ANGLE + (value / MIDI.MAX) * KNOB_ANGLE.TOTAL_RANGE;
 const lfoRateToAngle = (value) => KNOB_ANGLE.MIN_ANGLE + (value / LFO.RATE_MAX) * KNOB_ANGLE.TOTAL_RANGE;
 const lfoAmountToAngle = (value) => KNOB_ANGLE.MIN_ANGLE + (value / LFO.AMOUNT_MAX) * KNOB_ANGLE.TOTAL_RANGE;
@@ -110,10 +148,7 @@ const midiToEqDisplay = (value) => {
     return dbValue === 0 ? "0dB" : (dbValue > 0 ? "+" + dbValue : dbValue) + "dB";
 };
 
-window.midiToAngle = midiToAngle;
-window.lfoRateToAngle = lfoRateToAngle;
-window.lfoAmountToAngle = lfoAmountToAngle;
-window.synthFreqToAngle = synthFreqToAngle;
+// Angle conversion functions exposed via Alpine component methods below
 
 Alpine.data('knob', (config) => ({
     knobData: { value: 0 },
@@ -432,6 +467,7 @@ Alpine.data('tx6Controller', () => ({
             },
             lfoPhase: { knobType: 'lfoPhase', onChange: (v) => { this.handleKnobChange('lfoPhase', v); this.setKnobValue('lfoPhase', v); } },
             synthFreq: { knobType: 'synthFreq', minValue: SYNTH.FREQ_MIN, maxValue: SYNTH.FREQ_MAX, sensitivity: UI.SLIDER_SENSITIVITY, onChange: (v) => { this.handleKnobChange('synthFreq', v); this.synthSettings.freq = v; } },
+            synthDet: { knobType: 'synthDet', doubleClickReset: MIDI.MID, onChange: (v) => { this.handleKnobChange('synthDet', v); this.synthSettings.det = v; } },
             synthLen: { knobType: 'synthLen', onChange: (v) => { this.handleKnobChange('synthLen', v); this.synthSettings.len = v; } }
         };
     },
@@ -479,7 +515,7 @@ Alpine.data('tx6Controller', () => ({
     },
 
     trackSynthSettings: Alpine.$persist(
-        Array(6).fill(null).map(() => ({ seq: 0, waveform: 0, octave: SYNTH.OCTAVE_DEFAULT, freq: SYNTH.FREQ_DEFAULT, len: MIDI.MIN }))
+        Array(6).fill(null).map(() => ({ seq: 0, waveform: 0, octave: SYNTH.OCTAVE_DEFAULT, freq: SYNTH.FREQ_DEFAULT, det: MIDI.MID, len: MIDI.MIN }))
     ).as('tx6-trackSynthSettings'),
 
     get synthSettings() {
@@ -497,6 +533,19 @@ Alpine.data('tx6Controller', () => ({
 
     switchView(view) {
         this.currentView = view;
+    },
+
+    // Angle conversion methods (replacing global window.* functions)
+    midiToAngle(value) {
+        return midiToAngle(value);
+    },
+
+    synthFreqToAngle(value) {
+        return synthFreqToAngle(value);
+    },
+
+    getLfoTrackOptions() {
+        return LFO_TRACK_OPTIONS;
     },
 
     getKnobAngle(type, value) {
@@ -699,7 +748,7 @@ Alpine.data('tx6Controller', () => ({
         this.$nextTick(() => {
             this.knobs.eq.value = value;
         });
-        this.midi.sendCC(this.currentTrack, this.currentEqMode, value);
+        this.sendValidatedCC(this.currentTrack, this.currentEqMode, value);
     },
 
     selectFxMode(ccNumber) {
@@ -711,18 +760,18 @@ Alpine.data('tx6Controller', () => ({
         this.$nextTick(() => {
             this.knobs.fx1.value = value;
         });
-        this.midi.sendCC(this.currentTrack, this.currentFxMode, value);
+        this.sendValidatedCC(this.currentTrack, this.currentFxMode, value);
     },
 
     handleFx1Change(value) {
-        this.midi.sendCC(this.currentTrack, this.currentFxMode, value);
+        this.sendValidatedCC(this.currentTrack, this.currentFxMode, value);
         const key = `${this.currentTrack}-${this.currentFxMode}`;
         this.trackValues[key] = value;
     },
 
     handleFx1ChangeFromSlider(event) {
         const value = Number(event.target.value);
-        this.midi.sendCC(this.currentTrack, this.currentFxMode, value);
+        this.sendValidatedCC(this.currentTrack, this.currentFxMode, value);
         const key = `${this.currentTrack}-${this.currentFxMode}`;
         this.trackValues[key] = value;
         this.knobs.fx1.value = value;
@@ -732,7 +781,7 @@ Alpine.data('tx6Controller', () => ({
         const key = `${this.currentTrack}-${this.currentSliderMode}`;
         const value = Number(event.target.value);
         this.trackValues[key] = value;
-        this.midi.sendCC(this.currentTrack, this.currentSliderMode, value);
+        this.sendValidatedCC(this.currentTrack, this.currentSliderMode, value);
 
     },
 
@@ -749,6 +798,36 @@ Alpine.data('tx6Controller', () => ({
         }
     },
 
+    /**
+     * Sends a validated MIDI CC message with bounds checking and connection verification
+     * @param {number} channel - MIDI channel (0-15)
+     * @param {number} cc - CC number (0-127)
+     * @param {number} value - CC value (0-127)
+     * @returns {boolean} True if message was sent, false if validation failed or not connected
+     */
+    sendValidatedCC(channel, cc, value) {
+        // Validate inputs
+        if (!Number.isInteger(channel) || channel < 0 || channel > 15) {
+            console.warn('Invalid MIDI channel:', channel);
+            return false;
+        }
+        if (!Number.isInteger(cc) || cc < MIDI.MIN || cc > MIDI.MAX) {
+            console.warn('Invalid CC number:', cc);
+            return false;
+        }
+        // Clamp value to valid range
+        const clampedValue = Math.max(MIDI.MIN, Math.min(MIDI.MAX, Math.round(value)));
+
+        // Check connection state
+        if (!this.isConnected) {
+            // Silently skip if not connected (common during startup)
+            return false;
+        }
+
+        this.midi.sendCC(channel, cc, clampedValue);
+        return true;
+    },
+
     handleMasterChannelChange(value) {
         const ccMap = {
             aux: CC.AUX,
@@ -756,28 +835,34 @@ Alpine.data('tx6Controller', () => ({
             volume: CC.VOLUME
         };
         const cc = ccMap[this.masterChannel];
-        this.midi.sendCC(CHANNELS.MASTER, cc, value);
+        this.sendValidatedCC(CHANNELS.MASTER, cc, value);
     },
 
+    /**
+     * Handles changes to knob values and sends corresponding MIDI CC messages
+     * @param {string} knobType - Type of knob being changed
+     * @param {number} value - New value for the knob
+     */
     handleKnobChange(knobType, value) {
         const ccMap = {
             synthFreq: [this.currentTrack, 89],
+            synthDet: [this.currentTrack, CC.DETUNE],
             synthLen: [this.currentTrack, 90]
         };
 
         if (ccMap[knobType]) {
             // Scale synthFreq from 0-100 to CC 0-127 for TX-6
             const midiValue = knobType === 'synthFreq' ? Math.ceil(value * MIDI.MAX / SYNTH.MIDI_NOTE_MAX) : value;
-            this.midi.sendCC(...ccMap[knobType], midiValue);
+            this.sendValidatedCC(...ccMap[knobType], midiValue);
         } else if (knobType === 'fxParam1') {
-            this.midi.sendCC(this.fx.currentChannel, CC.FX_PARAM1, value);
+            this.sendValidatedCC(this.fx.currentChannel, CC.FX_PARAM1, value);
             this.fx.channels[this.fx.currentChannel].values.param1 = value;
         } else if (knobType === 'fxParam2') {
-            this.midi.sendCC(this.fx.currentChannel, CC.FX_PARAM2, value);
+            this.sendValidatedCC(this.fx.currentChannel, CC.FX_PARAM2, value);
             this.fx.channels[this.fx.currentChannel].values.param2 = value;
         } else if (knobType === 'fxReturn') {
             const ccType = this.fx.currentChannel === TRACKS.FX1 ? CC.FX_RETURN : CC.FX_TRACK_SELECT;
-            this.midi.sendCC(this.fx.currentChannel, ccType, value);
+            this.sendValidatedCC(this.fx.currentChannel, ccType, value);
             const prop = this.fx.currentChannel === TRACKS.FX1 ? 'return' : 'track';
             this.fx.channels[this.fx.currentChannel].values[prop] = value;
         } else if (['lfoRate', 'lfoAmount', 'lfoPhase'].includes(knobType)) {
@@ -850,13 +935,8 @@ Alpine.data('tx6Controller', () => ({
         }
     },
 
-    updateBpm() {
-        this.bpm = Math.max(BPM.MIN, Math.min(BPM.MAX, this.bpm));
-        localStorage.setItem('tx6-bpm', this.bpm.toString());
-    },
-
     handleEqChange(value) {
-        this.midi.sendCC(this.currentTrack, this.currentEqMode, value);
+        this.sendValidatedCC(this.currentTrack, this.currentEqMode, value);
         const key = `${this.currentTrack}-${this.currentEqMode}`;
         this.trackValues[key] = value;
     },
@@ -864,22 +944,22 @@ Alpine.data('tx6Controller', () => ({
     toggleFx(fxNumber) {
         const prop = `fx${fxNumber}Active`;
         this.fx[prop] = !this.fx[prop];
-        this.midi.sendCC(fxNumber === 1 ? CHANNELS.FX1 : CHANNELS.FX2, CC.FX, this.fx[prop] ? MIDI.MAX : MIDI.MIN);
+        this.sendValidatedCC(fxNumber === 1 ? CHANNELS.FX1 : CHANNELS.FX2, CC.FX, this.fx[prop] ? MIDI.MAX : MIDI.MIN);
     },
 
     handleFxEngineChange() {
         const value = parseInt(this.fx.channels[this.fx.currentChannel].engine);
-        this.midi.sendCC(this.fx.currentChannel, CC.FX_ENGINE, value);
+        this.sendValidatedCC(this.fx.currentChannel, CC.FX_ENGINE, value);
     },
 
     handleSeqChange() {
         const value = Math.floor(MIDI.MAX * this.synthSettings.seq / SYNTH.SEQ_MAX);
-        this.midi.sendCC(this.currentTrack, CC.AUX, value);
+        this.sendValidatedCC(this.currentTrack, CC.AUX, value);
     },
 
     handleWaveformChange() {
         const value = parseInt(this.synthSettings.waveform);
-        this.midi.sendCC(this.currentTrack, 3, value);
+        this.sendValidatedCC(this.currentTrack, 3, value);
     },
 
     getSeqPreviewCell(rowIndex, colIndex) {
@@ -900,74 +980,57 @@ Alpine.data('tx6Controller', () => ({
         const elapsedTime = currentTime - this.lfoStartTime;
 
         assignedLfos.forEach((lfo) => {
-            const globalLfoIndex = this.globalLfos.indexOf(lfo);
-            if (lfo.amount === LFO.AMOUNT_DEFAULT) return;
+            try {
+                const globalLfoIndex = this.globalLfos.indexOf(lfo);
+                if (lfo.amount === LFO.AMOUNT_DEFAULT) return;
 
-            const hz = lfo.rate / LFO.PHASE_MULTIPLIER;
+                const hz = lfo.rate / LFO.PHASE_MULTIPLIER;
 
-            const absolutePhase = (2 * Math.PI * hz * elapsedTime) % (2 * Math.PI);
-            this.lfoPhases[globalLfoIndex] = absolutePhase;
+                const absolutePhase = (2 * Math.PI * hz * elapsedTime) % (2 * Math.PI);
+                this.lfoPhases[globalLfoIndex] = absolutePhase;
 
-            const phaseOffset = (lfo.phase / MIDI.MAX) * 2 * Math.PI;
-            const effectivePhase = (absolutePhase + phaseOffset) % (2 * Math.PI);
+                const phaseOffset = (lfo.phase / MIDI.MAX) * 2 * Math.PI;
+                const effectivePhase = (absolutePhase + phaseOffset) % (2 * Math.PI);
 
-            let shapeVal = 0;
-            const shapes = {
-                sine: () => Math.sin(effectivePhase),
-                triangle: () => 2 * Math.abs((effectivePhase / Math.PI) % 2 - 1) - 1,
-                square: () => Math.sign(Math.sin(effectivePhase)),
-                saw: () => 2 * ((effectivePhase / (2 * Math.PI)) % 1) - 1,
-                revsaw: () => 1 - 2 * ((effectivePhase / (2 * Math.PI)) % 1),
-                noise: () => Math.random() * 2 - 1
-            };
+                let shapeVal = 0;
+                const shapes = {
+                    sine: () => Math.sin(effectivePhase),
+                    triangle: () => 2 * Math.abs((effectivePhase / Math.PI) % 2 - 1) - 1,
+                    square: () => Math.sign(Math.sin(effectivePhase)),
+                    saw: () => 2 * ((effectivePhase / (2 * Math.PI)) % 1) - 1,
+                    revsaw: () => 1 - 2 * ((effectivePhase / (2 * Math.PI)) % 1),
+                    noise: () => Math.random() * 2 - 1
+                };
 
-            shapeVal = shapes[lfo.shape]();
-            const amt = lfo.amount - LFO.AMOUNT_DEFAULT;
+                shapeVal = shapes[lfo.shape] ? shapes[lfo.shape]() : 0;
+                const amt = lfo.amount - LFO.AMOUNT_DEFAULT;
 
-            // Track targets (tracks 0-5)
-            const trackTargets = {
-                vol: [CC.VOLUME, MIDI.MIN],
-                aux: [92, MIDI.MIN],
-                flt: [CC.FILTER, EQ.NEUTRAL_VALUE],
-                det: [95, MIDI.MIN],
-                cmp: [93, MIDI.MIN]
-            };
+                // Get target config from centralized LFO_TARGETS
+                let targetConfig, channel;
+                if (trackIdx <= 5 && LFO_TARGETS.track[lfo.target]) {
+                    targetConfig = LFO_TARGETS.track[lfo.target];
+                    channel = trackIdx;
+                } else if (trackIdx === TRACKS.FX1 && LFO_TARGETS.fx1[lfo.target]) {
+                    targetConfig = LFO_TARGETS.fx1[lfo.target];
+                    channel = CHANNELS.FX1;
+                } else if (trackIdx === TRACKS.FX2 && LFO_TARGETS.fx2[lfo.target]) {
+                    targetConfig = LFO_TARGETS.fx2[lfo.target];
+                    channel = CHANNELS.FX2;
+                } else {
+                    return; // Invalid target for this track
+                }
 
-            // FX1 targets (channel 7): active, param, return
-            const fx1Targets = {
-                fx1_active: [CC.FX, MIDI.MIN],
-                fx1_param: [CC.FX_PARAM1, MIDI.MIN],
-                fx1_return: [CC.FX_RETURN, MIDI.MIN]
-            };
+                const { cc, defaultBase } = targetConfig;
+                const base = Number(this.trackValues[`${channel}-${cc}`]) || defaultBase;
+                const lfoValue = Math.max(MIDI.MIN, Math.min(MIDI.MAX, base + amt * shapeVal));
 
-            // FX2 targets (channel 8): active, param1, param2
-            const fx2Targets = {
-                fx2_active: [CC.FX, MIDI.MIN],
-                fx2_param1: [CC.FX_PARAM1, MIDI.MIN],
-                fx2_param2: [CC.FX_PARAM2, MIDI.MIN]
-            };
+                const outputKey = `${channel}-${cc}`;
+                this.lfoOutputValues[outputKey] = lfoValue;
 
-            let cc, defaultBase, channel;
-            if (trackIdx <= 5 && trackTargets[lfo.target]) {
-                [cc, defaultBase] = trackTargets[lfo.target];
-                channel = trackIdx;
-            } else if (trackIdx === 7 && fx1Targets[lfo.target]) {
-                [cc, defaultBase] = fx1Targets[lfo.target];
-                channel = CHANNELS.FX1;
-            } else if (trackIdx === 8 && fx2Targets[lfo.target]) {
-                [cc, defaultBase] = fx2Targets[lfo.target];
-                channel = CHANNELS.FX2;
-            } else {
-                return; // Invalid target for this track
+                this.sendValidatedCC(channel, cc, Math.round(lfoValue));
+            } catch (error) {
+                console.error('Error processing LFO:', error);
             }
-
-            const base = Number(this.trackValues[`${channel}-${cc}`]) || defaultBase;
-            const lfoValue = Math.max(MIDI.MIN, Math.min(MIDI.MAX, base + amt * shapeVal));
-
-            const outputKey = `${channel}-${cc}`;
-            this.lfoOutputValues[outputKey] = lfoValue;
-
-            this.midi.sendCC(channel, cc, Math.round(lfoValue));
         });
     },
 
@@ -1209,28 +1272,21 @@ Alpine.data('tx6Controller', () => ({
         ];
     },
 
+    /**
+     * Returns available LFO target options based on assigned track
+     * @param {number} assignedTrack - Track index (0-5 for tracks, 7 for FX1, 8 for FX2)
+     * @returns {Array<{value: string, label: string}>} Array of target options
+     */
     getLfoTargetOptions(assignedTrack) {
-        if (assignedTrack === 7) {
-            return [
-                { value: 'fx1_active', label: 'Active' },
-                { value: 'fx1_param', label: 'Param' },
-                { value: 'fx1_return', label: 'Return' }
-            ];
-        } else if (assignedTrack === 8) {
-            return [
-                { value: 'fx2_active', label: 'Active' },
-                { value: 'fx2_param1', label: 'Param1' },
-                { value: 'fx2_param2', label: 'Param2' }
-            ];
+        let targets;
+        if (assignedTrack === TRACKS.FX1) {
+            targets = LFO_TARGETS.fx1;
+        } else if (assignedTrack === TRACKS.FX2) {
+            targets = LFO_TARGETS.fx2;
         } else {
-            return [
-                { value: 'vol', label: 'VOL' },
-                { value: 'aux', label: 'AUX' },
-                { value: 'flt', label: 'FLT' },
-                { value: 'det', label: 'DET' },
-                { value: 'cmp', label: 'CMP' }
-            ];
+            targets = LFO_TARGETS.track;
         }
+        return Object.entries(targets).map(([key, val]) => ({ value: key, label: val.label }));
     },
 
     handleLfoTrackChange(lfoIndex) {
@@ -1343,6 +1399,18 @@ Alpine.data('tx6Controller', () => ({
         return Math.floor(freqValue * 100 / SYNTH.FREQ_MAX);
     },
 
+    /** Displays DET value as -100 to 100 (even numbers only, like -50 to +50 doubled) */
+    get synthDetDisplayValue() {
+        const detValue = this.synthSettings.det ?? MIDI.MID;
+        // Asymmetric scaling with TX-6 matching rounding
+        if (detValue <= MIDI.MID) {
+            // 0-64 → -100 to 0
+            return Math.round((detValue - MIDI.MID) * 50 / MIDI.MID) * 2;
+        }
+        // 65-127 → 2 to 100 (use 62 divisor and cap at 50)
+        return Math.min(50, Math.round((detValue - MIDI.MID) * 50 / 62)) * 2;
+    },
+
     get masterChannelLabel() {
         const labels = {
             aux: 'Aux',
@@ -1385,7 +1453,7 @@ Alpine.data('tx6Controller', () => ({
             });
             // Scale note value (0-100) to CC value (0-127) for TX-6
             const midiValue = Math.ceil(noteValue * MIDI.MAX / SYNTH.MIDI_NOTE_MAX);
-            this.midi.sendCC(this.currentTrack, 89, midiValue);
+            this.sendValidatedCC(this.currentTrack, 89, midiValue);
         }
     },
 

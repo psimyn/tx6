@@ -306,10 +306,8 @@
                     <div class="flex gap-1">
                         <select x-model.number="globalLfos[currentLfoIndex].assignedTrack"
                             @change="handleLfoTrackChange(currentLfoIndex)" class="fx-engine-select">
-                            <template
-                                x-for="opt in [{v:0,l:'T1'},{v:1,l:'T2'},{v:2,l:'T3'},{v:3,l:'T4'},{v:4,l:'T5'},{v:5,l:'T6'},{v:7,l:'FX1'},{v:8,l:'FX2'}]"
-                                :key="opt.v">
-                                <option :value="opt.v" x-text="opt.l"></option>
+                            <template x-for="opt in getLfoTrackOptions()" :key="opt.value">
+                                <option :value="opt.value" x-text="opt.label"></option>
                             </template>
                         </select>
                         <select x-model="globalLfos[currentLfoIndex].target" class="fx-engine-select">
@@ -414,33 +412,8 @@
         <div class="view-content">
             <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1rem;">
                 <div class="synth-controls">
-                    <div class="synth-input-wrapper" style="display: flex; align-items: center; gap: 1rem;">
-                        <div>
-                            <label class="knob-label">SEQ</label>
-                            <input type="number" min="0" max="29" x-model.number="synthSettings.seq"
-                                @input="handleSeqChange()" class="seq-input" placeholder="0-29">
-                        </div>
-                        <div class="seq-preview-grid"
-                            x-show="synthSettings.seq !== null && synthSettings.seq !== '' && synthSettings.seq >= 0 && synthSettings.seq <= 22">
-                            <template x-for="row in 2">
-                                <div class="seq-preview-row" style="display: flex; gap: 2px;">
-                                    <template x-for="col in 8">
-                                        <div class="seq-preview-cell"
-                                            :class="{ 'active': getSeqPreviewCell(row-1, col-1) }"
-                                            style="width: 8px; height: 8px; border: 1px solid var(--knob-border); background: var(--background-color);">
-                                        </div>
-                                    </template>
-                                </div>
-                            </template>
-                        </div>
-                        <div class="seq-preview-label" x-show="synthSettings.seq === 23"
-                            style="font-size: 14px; font-weight: bold;">RAND</div>
-                        <div class="seq-preview-label" x-show="synthSettings.seq >= 24 && synthSettings.seq <= 29"
-                            style="font-size: 14px; font-weight: bold;" x-text="'U' + (synthSettings.seq - 23)"></div>
-                    </div>
-
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;justify-items:center;">
-                        <div class="knob-wrapper">
+                    <div class="synth-input-wrapper" style="display: flex; align-items: flex-end; gap: 1rem;">
+                        <div style="display: flex; flex-direction: column;">
                             <label class="knob-label">WAVE</label>
                             <select x-model.number="synthSettings.waveform" @change="handleWaveformChange()"
                                 class="fx-engine-select">
@@ -449,24 +422,76 @@
                                 </template>
                             </select>
                         </div>
-
-                        <template x-for="synthKnob in ['synthFreq', 'synthLen']">
-                            <div class="knob-wrapper">
-                                <label class="knob-label" x-text="synthKnob === 'synthFreq' ? 'FREQ' : 'LEN'"></label>
-                                <div x-data="knob(knobConfigs[synthKnob])" class="knob" @mousedown="startDrag($event)"
-                                    @touchstart="startDrag($event)"
-                                    x-init="knobData.value = synthKnob === 'synthFreq' ? synthSettings.freq : synthSettings.len"
-                                    x-effect="knobData.value = synthKnob === 'synthFreq' ? synthSettings.freq : synthSettings.len">
-                                    <div class="knob-indicator indicator-small"
-                                        :style="`transform: translateX(-50%) rotate(${synthKnob === 'synthFreq' ? synthFreqToAngle(knobData.value) : midiToAngle(knobData.value)}deg)`">
-                                    </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <label class="knob-label">SEQ</label>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="number" min="0" max="29" x-model.number="synthSettings.seq"
+                                    @input="handleSeqChange()" class="seq-input" placeholder="0-29">
+                                <div class="seq-preview-grid"
+                                    x-show="synthSettings.seq !== null && synthSettings.seq !== '' && synthSettings.seq >= 0 && synthSettings.seq <= 22">
+                                    <template x-for="row in 2">
+                                        <div class="seq-preview-row" style="display: flex; gap: 2px;">
+                                            <template x-for="col in 8">
+                                                <div class="seq-preview-cell"
+                                                    :class="{ 'active': getSeqPreviewCell(row-1, col-1) }"
+                                                    style="width: 8px; height: 8px; border: 1px solid var(--knob-border); background: var(--background-color);">
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
                                 </div>
-                                <div class="value-display">
-                                    <span class="knob-value"
-                                        x-text="synthKnob === 'synthFreq' ? synthFreqDisplayValue : Math.floor(synthSettings.len * 100 / 127)"></span>
+                                <div class="seq-preview-label" x-show="synthSettings.seq === 23"
+                                    style="font-size: 14px; font-weight: bold;">RAND</div>
+                                <div class="seq-preview-label"
+                                    x-show="synthSettings.seq >= 24 && synthSettings.seq <= 29"
+                                    style="font-size: 14px; font-weight: bold;" x-text="'U' + (synthSettings.seq - 23)">
                                 </div>
                             </div>
-                        </template>
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;justify-items:center;">
+                        <div class="knob-wrapper">
+                            <label class="knob-label">FREQ</label>
+                            <div x-data="knob(knobConfigs.synthFreq)" class="knob" @mousedown="startDrag($event)"
+                                @touchstart="startDrag($event)" x-init="knobData.value = synthSettings.freq"
+                                x-effect="knobData.value = synthSettings.freq">
+                                <div class="knob-indicator indicator-small"
+                                    :style="`transform: translateX(-50%) rotate(${synthFreqToAngle(knobData.value)}deg)`">
+                                </div>
+                            </div>
+                            <div class="value-display">
+                                <span class="knob-value" x-text="synthFreqDisplayValue"></span>
+                            </div>
+                        </div>
+
+                        <div class="knob-wrapper">
+                            <label class="knob-label">DET</label>
+                            <div x-data="knob(knobConfigs.synthDet)" class="knob" @mousedown="startDrag($event)"
+                                @touchstart="startDrag($event)" x-init="knobData.value = synthSettings.det"
+                                x-effect="knobData.value = synthSettings.det">
+                                <div class="knob-indicator indicator-small"
+                                    :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
+                                </div>
+                            </div>
+                            <div class="value-display">
+                                <span class="knob-value" x-text="synthDetDisplayValue"></span>
+                            </div>
+                        </div>
+
+                        <div class="knob-wrapper">
+                            <label class="knob-label">LEN</label>
+                            <div x-data="knob(knobConfigs.synthLen)" class="knob" @mousedown="startDrag($event)"
+                                @touchstart="startDrag($event)" x-init="knobData.value = synthSettings.len"
+                                x-effect="knobData.value = synthSettings.len">
+                                <div class="knob-indicator indicator-small"
+                                    :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
+                                </div>
+                            </div>
+                            <div class="value-display">
+                                <span class="knob-value" x-text="Math.floor(synthSettings.len * 100 / 127)"></span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Keyboard -->
