@@ -304,17 +304,19 @@
             <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1rem;">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;width:100%;gap:2rem;">
                     <div class="flex gap-1">
-                        <select x-model.number="globalLfos[currentLfoIndex].assignedTrack" class="fx-engine-select">
-                            <template x-for="i in 6">
-                                <option :value="i-1" x-text="`T${i}`"></option>
+                        <select x-model.number="globalLfos[currentLfoIndex].assignedTrack"
+                            @change="handleLfoTrackChange(currentLfoIndex)" class="fx-engine-select">
+                            <template
+                                x-for="opt in [{v:0,l:'T1'},{v:1,l:'T2'},{v:2,l:'T3'},{v:3,l:'T4'},{v:4,l:'T5'},{v:5,l:'T6'},{v:7,l:'FX1'},{v:8,l:'FX2'}]"
+                                :key="opt.v">
+                                <option :value="opt.v" x-text="opt.l"></option>
                             </template>
                         </select>
                         <select x-model="globalLfos[currentLfoIndex].target" class="fx-engine-select">
-                            <option value="vol">VOL</option>
-                            <option value="aux">AUX</option>
-                            <option value="flt">FLT</option>
-                            <option value="det">DET</option>
-                            <option value="cmp">CMP</option>
+                            <template x-for="opt in getLfoTargetOptions(globalLfos[currentLfoIndex].assignedTrack)"
+                                :key="opt.value">
+                                <option :value="opt.value" x-text="opt.label"></option>
+                            </template>
                         </select>
                     </div>
                     <select x-model.number="currentLfoIndex" @change="updateLfoKnobs()" class="fx-engine-select"

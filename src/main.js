@@ -811,7 +811,10 @@ Alpine.data('tx6Controller', () => ({
                         lfoUpdate: () => {
                             // Use AudioContext time instead of performance.now()
                             const currentTime = this.audioContext.currentTime;
+                            // Run LFOs for tracks 0-5, plus FX1 (7) and FX2 (8)
                             for (let i = 0; i < TRACKS.COUNT; i++) this.runLfo(i, deltaTime, currentTime);
+                            this.runLfo(TRACKS.FX1, deltaTime, currentTime);
+                            this.runLfo(TRACKS.FX2, deltaTime, currentTime);
                         }
                     };
 
@@ -921,7 +924,8 @@ Alpine.data('tx6Controller', () => ({
             shapeVal = shapes[lfo.shape]();
             const amt = lfo.amount - LFO.AMOUNT_DEFAULT;
 
-            const targets = {
+            // Track targets (tracks 0-5)
+            const trackTargets = {
                 vol: [CC.VOLUME, MIDI.MIN],
                 aux: [92, MIDI.MIN],
                 flt: [CC.FILTER, EQ.NEUTRAL_VALUE],
@@ -929,14 +933,41 @@ Alpine.data('tx6Controller', () => ({
                 cmp: [93, MIDI.MIN]
             };
 
-            const [cc, defaultBase] = targets[lfo.target];
-            const base = Number(this.trackValues[`${trackIdx}-${cc}`]) || defaultBase;
+            // FX1 targets (channel 7): active, param, return
+            const fx1Targets = {
+                fx1_active: [CC.FX, MIDI.MIN],
+                fx1_param: [CC.FX_PARAM1, MIDI.MIN],
+                fx1_return: [CC.FX_RETURN, MIDI.MIN]
+            };
+
+            // FX2 targets (channel 8): active, param1, param2
+            const fx2Targets = {
+                fx2_active: [CC.FX, MIDI.MIN],
+                fx2_param1: [CC.FX_PARAM1, MIDI.MIN],
+                fx2_param2: [CC.FX_PARAM2, MIDI.MIN]
+            };
+
+            let cc, defaultBase, channel;
+            if (trackIdx <= 5 && trackTargets[lfo.target]) {
+                [cc, defaultBase] = trackTargets[lfo.target];
+                channel = trackIdx;
+            } else if (trackIdx === 7 && fx1Targets[lfo.target]) {
+                [cc, defaultBase] = fx1Targets[lfo.target];
+                channel = CHANNELS.FX1;
+            } else if (trackIdx === 8 && fx2Targets[lfo.target]) {
+                [cc, defaultBase] = fx2Targets[lfo.target];
+                channel = CHANNELS.FX2;
+            } else {
+                return; // Invalid target for this track
+            }
+
+            const base = Number(this.trackValues[`${channel}-${cc}`]) || defaultBase;
             const lfoValue = Math.max(MIDI.MIN, Math.min(MIDI.MAX, base + amt * shapeVal));
 
-            const outputKey = `${trackIdx}-${cc}`;
+            const outputKey = `${channel}-${cc}`;
             this.lfoOutputValues[outputKey] = lfoValue;
 
-            this.midi.sendCC(trackIdx, cc, Math.round(lfoValue));
+            this.midi.sendCC(channel, cc, Math.round(lfoValue));
         });
     },
 
@@ -1176,6 +1207,39 @@ Alpine.data('tx6Controller', () => ({
             { value: 91, label: 'FX1', displayValue: this.getStoredFx1DisplayValue(91) },
             { value: 93, label: 'CMP', displayValue: this.getStoredFx1DisplayValue(93) }
         ];
+    },
+
+    getLfoTargetOptions(assignedTrack) {
+        if (assignedTrack === 7) {
+            return [
+                { value: 'fx1_active', label: 'Active' },
+                { value: 'fx1_param', label: 'Param' },
+                { value: 'fx1_return', label: 'Return' }
+            ];
+        } else if (assignedTrack === 8) {
+            return [
+                { value: 'fx2_active', label: 'Active' },
+                { value: 'fx2_param1', label: 'Param1' },
+                { value: 'fx2_param2', label: 'Param2' }
+            ];
+        } else {
+            return [
+                { value: 'vol', label: 'VOL' },
+                { value: 'aux', label: 'AUX' },
+                { value: 'flt', label: 'FLT' },
+                { value: 'det', label: 'DET' },
+                { value: 'cmp', label: 'CMP' }
+            ];
+        }
+    },
+
+    handleLfoTrackChange(lfoIndex) {
+        const lfo = this.globalLfos[lfoIndex];
+        const options = this.getLfoTargetOptions(lfo.assignedTrack);
+        // Reset target to first option if current target is invalid for new track
+        if (!options.find(opt => opt.value === lfo.target)) {
+            lfo.target = options[0].value;
+        }
     },
 
     getStoredEqDisplayValue(ccNumber) {
