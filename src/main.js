@@ -73,7 +73,7 @@ const LFO_TARGETS = {
 };
 
 const LFO = {
-    COUNT: 10,
+    COUNT: 3,
     RATE_MIN: 0,
     RATE_MAX: 3000,
     RATE_DEFAULT: 64,
@@ -1041,6 +1041,24 @@ Alpine.data('tx6Controller', () => ({
         this.knobs.lfoPhase.value = currentLfo.phase;
 
         this.$nextTick(() => this.drawLfoWaveform());
+    },
+
+    /** Adds a new LFO and navigates to it */
+    addLfo() {
+        const newIndex = this.globalLfos.length;
+        this.globalLfos.push({
+            name: `LFO ${newIndex + 1}`,
+            target: ['vol', 'aux', 'flt'][newIndex % 3],
+            shape: ['sine', 'triangle', 'square', 'saw', 'sine'][newIndex % 5],
+            enabled: true,
+            rate: 1.0,
+            amount: LFO.AMOUNT_DEFAULT,
+            phase: MIDI.MIN,
+            assignedTrack: MIDI.MIN
+        });
+        this.lfoPhases.push(0);
+        this.currentLfoIndex = newIndex;
+        this.updateLfoKnobs();
     },
 
     drawLfoWaveform() {

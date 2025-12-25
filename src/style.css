@@ -555,6 +555,50 @@ input:focus {
     width: auto;
 }
 
+/* LFO Navigation Buttons */
+.lfo-nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    background: var(--knob-color);
+    border: 1px solid var(--knob-border);
+    border-radius: 0.25rem;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.lfo-nav-btn:hover:not(:disabled) {
+    border-color: var(--button-color);
+}
+
+.lfo-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.lfo-nav-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.lfo-add-btn {
+    font-size: 1.25rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.lfo-number-display {
+    min-width: 1.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
 .mode-select:focus,
 .fx-engine-select:focus {
     outline: none;
@@ -1316,19 +1360,18 @@ header {
 }
 
 .octave-button {
-    background: var(--button-color);
-    color: white;
-    border: none;
-    border-radius: 0.25rem;
-    width: 2.5rem;
-    height: 2.5rem;
-    font-size: 1.2rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    background: var(--knob-color);
+    border: 1px solid var(--knob-border);
+    border-radius: 0.25rem;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
     position: absolute;
     top: 1.5rem;
     transform: translateY(-100%);
@@ -1344,11 +1387,17 @@ header {
 }
 
 .octave-button:hover {
-    background: var(--button-hover);
+    border-color: var(--button-color);
 }
 
-.octave-button:active {
-    transform: translateY(calc(-100% + 1px));
+.octave-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.octave-button svg {
+    width: 14px;
+    height: 14px;
 }
 
 .octave-display {

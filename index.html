@@ -317,12 +317,29 @@
                             </template>
                         </select>
                     </div>
-                    <select x-model.number="currentLfoIndex" @change="updateLfoKnobs()" class="fx-engine-select"
-                        style="min-width:100px;">
-                        <template x-for="i in 10">
-                            <option :value="i-1" x-text="`LFO ${i}`"></option>
-                        </template>
-                    </select>
+                    <div style="display: flex; align-items: center; gap: 0.25rem;">
+                        <button @click="currentLfoIndex > 0 && (currentLfoIndex--, updateLfoKnobs())"
+                            :disabled="currentLfoIndex === 0" class="lfo-nav-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M15 18l-6-6 6-6" />
+                            </svg>
+                        </button>
+                        <span class="lfo-number-display" x-text="currentLfoIndex + 1"></span>
+                        <button
+                            @click="currentLfoIndex < globalLfos.length - 1 ? (currentLfoIndex++, updateLfoKnobs()) : addLfo()"
+                            class="lfo-nav-btn" :class="{ 'lfo-add-btn': currentLfoIndex >= globalLfos.length - 1 }">
+                            <template x-if="currentLfoIndex < globalLfos.length - 1">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M9 18l6-6-6-6" />
+                                </svg>
+                            </template>
+                            <template x-if="currentLfoIndex >= globalLfos.length - 1">
+                                <span>+</span>
+                            </template>
+                        </button>
+                    </div>
                 </div>
 
                 <div style="display:flex;align-items:center;gap:1rem;position:relative;">
