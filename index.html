@@ -20,26 +20,35 @@
         <div class="top-bar-header">
             <h1 class="app-title">tx6-ctl</h1>
             <div class="header-controls">
-                <button class="header-button" @click="toggleFullscreen()" :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" x-show="!isFullscreen">
-                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                <button class="header-button" @click="toggleFullscreen()"
+                    :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" x-show="!isFullscreen">
+                        <path
+                            d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
+                        </path>
                     </svg>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" x-show="isFullscreen">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" x-show="isFullscreen">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
                 <div class="options-menu-wrapper">
                     <button class="header-button" @click="showOptionsMenu = !showOptionsMenu">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="1"></circle>
                             <circle cx="12" cy="5" r="1"></circle>
                             <circle cx="12" cy="19" r="1"></circle>
                         </svg>
                     </button>
-                    <div class="options-dropdown" x-show="showOptionsMenu" @click.away="showOptionsMenu = false" x-transition>
-                        <button class="dropdown-item" @click="currentView = 'help'; showOptionsMenu = false">Help</button>
-                        <button class="dropdown-item" @click="currentView = 'about'; showOptionsMenu = false">About</button>
+                    <div class="options-dropdown" x-show="showOptionsMenu" @click.away="showOptionsMenu = false"
+                        x-transition>
+                        <button class="dropdown-item"
+                            @click="currentView = 'help'; showOptionsMenu = false">Help</button>
+                        <button class="dropdown-item"
+                            @click="currentView = 'about'; showOptionsMenu = false">About</button>
                         <button class="dropdown-item" @click="resetToDefaults(); showOptionsMenu = false">Reset</button>
                     </div>
                 </div>
@@ -47,10 +56,13 @@
         </div>
         <!-- Tab Navigation -->
         <nav class="tab-navigation">
-            <button class="tab-button" :class="{ active: currentView === 'main' }" @click="switchView('main')">MAIN</button>
+            <button class="tab-button" :class="{ active: currentView === 'main' }"
+                @click="switchView('main')">MAIN</button>
             <button class="tab-button" :class="{ active: currentView === 'fx' }" @click="switchView('fx')">FX</button>
-            <button class="tab-button" :class="{ active: currentView === 'synth' }" @click="switchView('synth')">SYNTH</button>
-            <button class="tab-button" :class="{ active: currentView === 'lfo' }" @click="switchView('lfo')">LFO</button>
+            <button class="tab-button" :class="{ active: currentView === 'synth' }"
+                @click="switchView('synth')">SYNTH</button>
+            <button class="tab-button" :class="{ active: currentView === 'lfo' }"
+                @click="switchView('lfo')">LFO</button>
         </nav>
     </div>
 
@@ -68,23 +80,24 @@
         </div>
     </footer>
 
-     <!-- Shared Header -->
-     <header class="app-header" x-show="currentView !== 'help' && currentView !== 'about' && currentView !== 'lfo'">
-         <div class="track-selector">
-             <template x-for="i in 6" :key="i">
-                 <button class="track-button" :class="{ active: currentTrack === i-1 }" @click="selectTrack(i-1)"
-                     x-text="`T${i}`">
-                 </button>
-             </template>
-         </div>
-     </header>
+    <!-- Shared Header -->
+    <header class="app-header" x-show="currentView !== 'help' && currentView !== 'about' && currentView !== 'lfo'">
+        <div class="track-selector">
+            <template x-for="i in 6" :key="i">
+                <button class="track-button" :class="{ active: currentTrack === i-1 }" @click="selectTrack(i-1)"
+                    x-text="`T${i}`">
+                </button>
+            </template>
+        </div>
+    </header>
 
     <!-- Main View -->
     <div class="view-container knob-container" x-show="currentView === 'main'">
 
         <div class="knob-wrapper">
             <div class="volume-slider">
-                <input type="range" min="0" max="127" :value="sliderValue" @input="handleSliderChange($event)" @wheel="event.preventDefault()">
+                <input type="range" min="0" max="127" :value="sliderValue" @input="handleSliderChange($event)"
+                    @wheel="event.preventDefault()">
                 <input type="range" min="0" max="127" x-model="sliderOutputValue" class="slider-overlay" readonly
                     tabindex="-1" @wheel="event.preventDefault()">
             </div>
@@ -93,50 +106,57 @@
             </div>
         </div>
 
-            <div class="knob-wrapper">
-                <div x-data="knob(knobConfigs.eq)" class="knob" @mousedown="startDrag($event)"
-                    @touchstart="startDrag($event)" x-init="knobData.value = knobs.eq.value" x-effect="knobData.value = knobs.eq.value">
-                    <div class="knob-indicator indicator-small"
-                        :style="`background: ${eqIndicatorColor}; transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
-                    </div>
-                </div>
-                <div class="value-display">
-                    <select x-model.number="currentEqMode" @change="selectEqMode($event.target.value)" class="mode-select">
-                        <template x-for="option in eqDropdownOptions" :key="option.value">
-                            <option :value="option.value" :selected="option.value === currentEqMode" x-text="`${option.label}  ${option.displayValue}`"></option>
-                        </template>
-                    </select>
+        <div class="knob-wrapper">
+            <div x-data="knob(knobConfigs.eq)" class="knob" @mousedown="startDrag($event)"
+                @touchstart="startDrag($event)" x-init="knobData.value = knobs.eq.value"
+                x-effect="knobData.value = knobs.eq.value">
+                <div class="knob-indicator indicator-small"
+                    :style="`background: ${eqIndicatorColor}; transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                 </div>
             </div>
-            <div class="knob-wrapper">
-                <div x-data="knob(knobConfigs.fx1)" class="knob" @mousedown="startDrag($event)"
-                    @touchstart="startDrag($event)" x-init="knobData.value = knobs.fx1.value" x-effect="knobData.value = knobs.fx1.value">
-                    <div class="knob-indicator indicator-small"
-                        :style="`background: var(--accent-color-orange); transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
-                    </div>
-                </div>
-                <div class="value-display">
-                    <select x-model.number="currentFxMode" @change="selectFxMode($event.target.value)" class="mode-select">
-                        <template x-for="option in fx1DropdownOptions" :key="option.value">
-                            <option :value="option.value" :selected="option.value === currentFxMode" x-text="`${option.label}  ${option.displayValue}`"></option>
-                        </template>
-                    </select>
+            <div class="value-display">
+                <select x-model.number="currentEqMode" @change="selectEqMode($event.target.value)" class="mode-select">
+                    <template x-for="option in eqDropdownOptions" :key="option.value">
+                        <option :value="option.value" :selected="option.value === currentEqMode"
+                            x-text="`${option.label}  ${option.displayValue}`"></option>
+                    </template>
+                </select>
+            </div>
+        </div>
+        <div class="knob-wrapper">
+            <div x-data="knob(knobConfigs.fx1)" class="knob" @mousedown="startDrag($event)"
+                @touchstart="startDrag($event)" x-init="knobData.value = knobs.fx1.value"
+                x-effect="knobData.value = knobs.fx1.value">
+                <div class="knob-indicator indicator-small"
+                    :style="`background: var(--accent-color-orange); transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                 </div>
             </div>
+            <div class="value-display">
+                <select x-model.number="currentFxMode" @change="selectFxMode($event.target.value)" class="mode-select">
+                    <template x-for="option in fx1DropdownOptions" :key="option.value">
+                        <option :value="option.value" :selected="option.value === currentFxMode"
+                            x-text="`${option.label}  ${option.displayValue}`"></option>
+                    </template>
+                </select>
+            </div>
+        </div>
 
         <!-- Master Channel Radio Group -->
         <div class="master-channel-section">
             <div class="master-channel-radio-group">
                 <label class="master-channel-radio-label">
-                    <input type="radio" name="master-channel" value="aux" x-model="masterChannel" class="master-channel-radio">
+                    <input type="radio" name="master-channel" value="aux" x-model="masterChannel"
+                        class="master-channel-radio">
                     <span>AUX</span>
                 </label>
                 <label class="master-channel-radio-label">
-                    <input type="radio" name="master-channel" value="cue" x-model="masterChannel" class="master-channel-radio">
+                    <input type="radio" name="master-channel" value="cue" x-model="masterChannel"
+                        class="master-channel-radio">
                     <span>CUE</span>
                 </label>
                 <label class="master-channel-radio-label">
-                    <input type="radio" name="master-channel" value="volume" x-model="masterChannel" class="master-channel-radio">
+                    <input type="radio" name="master-channel" value="volume" x-model="masterChannel"
+                        class="master-channel-radio">
                     <span>MASTER</span>
                 </label>
             </div>
@@ -165,11 +185,13 @@
             <div class="fx-channel-selector">
                 <div class="fx-channel-radio-group">
                     <label class="fx-channel-radio-label">
-                        <input type="radio" name="fx-channel" :value="7" x-model.number="fx.currentChannel" @change="updateFxDisplay()" class="fx-channel-radio">
+                        <input type="radio" name="fx-channel" :value="7" x-model.number="fx.currentChannel"
+                            @change="updateFxDisplay()" class="fx-channel-radio">
                         <span>FX I</span>
                     </label>
                     <label class="fx-channel-radio-label">
-                        <input type="radio" name="fx-channel" :value="8" x-model.number="fx.currentChannel" @change="updateFxDisplay()" class="fx-channel-radio">
+                        <input type="radio" name="fx-channel" :value="8" x-model.number="fx.currentChannel"
+                            @change="updateFxDisplay()" class="fx-channel-radio">
                         <span>FX II</span>
                     </label>
                 </div>
@@ -180,24 +202,23 @@
                 <div class="fx-engine-with-toggle">
                     <div class="fx-engine-controls-wrapper">
                         <div class="fx-engine-radio-group">
-                            <template x-for="(option, index) in fx.channels[fx.currentChannel].types" :key="index">
+                            <template x-for="(option, index) in fx.channels[fx.currentChannel].types"
+                                :key="`${fx.currentChannel}-${index}`">
                                 <label class="fx-engine-radio-label">
-                                    <input type="radio" 
-                                        :name="`fx-engine-${fx.currentChannel}`"
+                                    <input type="radio" :name="`fx-engine-${fx.currentChannel}`"
                                         :value="calculateMidiValue(index, fx.channels[fx.currentChannel].types.length)"
-                                        x-model="fx.channels[fx.currentChannel].engine"
-                                        @change="handleFxEngineChange()"
-                                        class="fx-engine-radio">
+                                        x-model.number="fx.channels[fx.currentChannel].engine"
+                                        @change="handleFxEngineChange()" class="fx-engine-radio">
                                     <span x-text="option"></span>
                                 </label>
                             </template>
                             <!-- FX1 Slider (shown only for FX I) -->
                             <div class="fx1-slider-wrapper" x-show="fx.currentChannel === 7">
-                                <input type="range" min="0" max="127" 
+                                <input type="range" min="0" max="127"
                                     :value="trackValues[`${currentTrack}-${currentFxMode}`] || 0"
-                                    @input="handleFx1ChangeFromSlider($event)"
-                                    class="fx1-slider">
-                                <span class="fx1-slider-value" x-text="Math.floor((trackValues[`${currentTrack}-${currentFxMode}`] || 0) * 100 / 127)"></span>
+                                    @input="handleFx1ChangeFromSlider($event)" class="fx1-slider">
+                                <span class="fx1-slider-value"
+                                    x-text="Math.floor((trackValues[`${currentTrack}-${currentFxMode}`] || 0) * 100 / 127)"></span>
                             </div>
                         </div>
                         <button @click="toggleFx(fx.currentChannel === 7 ? 1 : 2)" class="fx-button"
@@ -232,15 +253,18 @@
                     <template x-if="fx.currentChannel === 8">
                         <div class="fx-track-select-wrapper">
                             <label class="knob-label">Track</label>
-                            <select x-model.number="knobs.fxReturn.value" @change="handleKnobChange('fxReturn', knobs.fxReturn.value)" class="fx-engine-select fx-track-select">
-                                <template x-for="(label, index) in ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'ALL']" :key="index">
+                            <select x-model.number="knobs.fxReturn.value"
+                                @change="handleKnobChange('fxReturn', knobs.fxReturn.value)"
+                                class="fx-engine-select fx-track-select">
+                                <template x-for="(label, index) in ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'ALL']"
+                                    :key="index">
                                     <option :value="Math.floor(index * (128 / 7))" x-text="label"></option>
                                 </template>
                             </select>
                         </div>
                     </template>
                 </div>
-                
+
                 <!-- FX Param1 -->
                 <div class="knob-wrapper">
                     <div x-data="knob(knobConfigs.fxParam1)" class="knob" @mousedown="startDrag($event)"
@@ -255,7 +279,7 @@
                         <span class="knob-label" x-text="getKnobLabel('fxParam1')"></span>
                     </div>
                 </div>
-                
+
                 <!-- FX Param2 -->
                 <div class="knob-wrapper" x-show="fxParam2Visibility">
                     <div x-data="knob(knobConfigs.fxParam2)" class="knob" @mousedown="startDrag($event)"
@@ -275,83 +299,100 @@
     </div>
 
     <!-- LFO View -->
-     <div class="view-container" x-show="currentView === 'lfo'">
-         <div class="view-content">
-             <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1rem;">
-                 <div style="display:flex;justify-content:space-between;align-items:flex-start;width:100%;gap:2rem;">
-                     <div class="flex gap-1">
-                         <select x-model="globalLfos[currentLfoIndex].assignedTrack" class="fx-engine-select">
-                             <template x-for="i in 6">
-                                 <option :value="i-1" x-text="`T${i}`"></option>
-                             </template>
-                         </select>
-                          <select x-model="globalLfos[currentLfoIndex].target" class="fx-engine-select">
-                              <option value="vol">VOL</option>
-                              <option value="aux">AUX</option>
-                              <option value="flt">FLT</option>
-                              <option value="det">DET</option>
-                              <option value="cmp">CMP</option>
-                          </select>
-                     </div>
-                     <select x-model="currentLfoIndex" @change="updateLfoKnobs()" class="fx-engine-select"
-                         style="min-width:100px;">
-                         <template x-for="i in 10">
-                             <option :value="i-1" x-text="`LFO ${i}`"></option>
-                         </template>
-                     </select>
-                 </div>
-
-                 <div style="display:flex;align-items:center;gap:1rem;position:relative;">
-                     <select x-model="globalLfos[currentLfoIndex].shape" class="fx-engine-select lfo-shape"
-                         @change="$nextTick(() => drawLfoWaveform())" style="writing-mode:horizontal-tb;">
-                         <template x-for="shape in ['sine', 'triangle', 'square', 'saw', 'revsaw', 'noise']">
-                             <option :value="shape" x-text="shape.charAt(0).toUpperCase() + shape.slice(1)"></option>
-                         </template>
-                     </select>
-                     <canvas id="lfo-canvas" width="300" height="100"
-                         style="border: 1px solid var(--knob-border); border-radius: 4px;"></canvas>
-                 </div>
-
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;justify-items:center;">
-                    <template x-for="lfoKnob in ['lfoRate', 'lfoAmount', 'lfoPhase']">
-                        <div class="knob-wrapper">
-                            <label class="knob-label" x-text="lfoKnob.replace('lfo', '').toUpperCase()"></label>
-                            <div x-data="knob(knobConfigs[lfoKnob])" class="knob" @mousedown="startDrag($event)"
-                                @touchstart="startDrag($event)"
-                                x-init="knobData.value = globalLfos[currentLfoIndex][lfoKnob.replace('lfo', '').toLowerCase()]"
-                                x-effect="knobData.value = globalLfos[currentLfoIndex][lfoKnob.replace('lfo', '').toLowerCase()]">
-                                <div class="knob-indicator indicator-small"
-                                    :style="`transform: translateX(-50%) rotate(${getKnobAngle(lfoKnob, knobData.value)}deg)`">
-                                </div>
-                            </div>
-                            <div class="value-display">
-                                <span class="knob-value" x-text="getLfoKnobDisplay(lfoKnob)"></span>
-                                <span class="knob-label" x-text="getLfoKnobUnit(lfoKnob)"></span>
-                            </div>
-                            <div class="rate-buttons" x-show="lfoKnob === 'lfoRate'">
-                                <template x-for="mult in [0.25, 0.5, 1/3, 1, 2, 4]">
-                                    <button @click="setLfoRateFromBpm(mult)" class="rate-button"
-                                        :class="{ 'active': isRateButtonActive(mult) }"
-                                        x-text="getRateButtonLabel(mult)">
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-                    </template>
+    <div class="view-container" x-show="currentView === 'lfo'">
+        <div class="view-content">
+            <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1rem;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;width:100%;gap:2rem;">
+                    <div class="flex gap-1">
+                        <select x-model.number="globalLfos[currentLfoIndex].assignedTrack" class="fx-engine-select">
+                            <template x-for="i in 6">
+                                <option :value="i-1" x-text="`T${i}`"></option>
+                            </template>
+                        </select>
+                        <select x-model="globalLfos[currentLfoIndex].target" class="fx-engine-select">
+                            <option value="vol">VOL</option>
+                            <option value="aux">AUX</option>
+                            <option value="flt">FLT</option>
+                            <option value="det">DET</option>
+                            <option value="cmp">CMP</option>
+                        </select>
+                    </div>
+                    <select x-model.number="currentLfoIndex" @change="updateLfoKnobs()" class="fx-engine-select"
+                        style="min-width:100px;">
+                        <template x-for="i in 10">
+                            <option :value="i-1" x-text="`LFO ${i}`"></option>
+                        </template>
+                    </select>
                 </div>
 
-                <!-- Transport Controls -->
-                <div class="lfo-transport-section">
-                    <h3 class="knob-label">Transport</h3>
-                    <div class="lfo-transport-controls">
-                        <div class="knob-wrapper">
-                            <div>
-                                <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()" class="bpm-input"
-                                    min="40" max="400">
-                                <div class="knob-label">BPM</div>
+                <div style="display:flex;align-items:center;gap:1rem;position:relative;">
+                    <select x-model="globalLfos[currentLfoIndex].shape" class="fx-engine-select lfo-shape"
+                        @change="$nextTick(() => drawLfoWaveform())" style="writing-mode:horizontal-tb;">
+                        <template x-for="shape in ['sine', 'triangle', 'square', 'saw', 'revsaw', 'noise']">
+                            <option :value="shape" :selected="globalLfos[currentLfoIndex].shape === shape"
+                                x-text="shape.charAt(0).toUpperCase() + shape.slice(1)"></option>
+                        </template>
+                    </select>
+                    <canvas id="lfo-canvas" width="300" height="100"
+                        style="border: 1px solid var(--knob-border); border-radius: 4px;"></canvas>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;justify-items:center;">
+                    <div class="knob-wrapper">
+                        <label class="knob-label">RATE</label>
+                        <div x-data="knob(knobConfigs.lfoRate)" class="knob" @mousedown="startDrag($event)"
+                            @touchstart="startDrag($event)" x-init="knobData.value = globalLfos[currentLfoIndex].rate"
+                            x-effect="knobData.value = globalLfos[currentLfoIndex].rate">
+                            <div class="knob-indicator indicator-small"
+                                :style="`transform: translateX(-50%) rotate(${getKnobAngle('lfoRate', knobData.value)}deg)`">
                             </div>
                         </div>
+                        <div class="value-display">
+                            <span class="knob-value" x-text="getLfoKnobDisplay('lfoRate')"></span>
+                            <span class="knob-label" x-text="getLfoKnobUnit('lfoRate')"></span>
+                        </div>
+                        <div class="rate-buttons">
+                            <template x-for="mult in [0.25, 0.5, 1/3, 1, 2, 4]">
+                                <button @click="setLfoRateFromBpm(mult)" class="rate-button"
+                                    :class="{ 'active': isRateButtonActive(mult) }" x-text="getRateButtonLabel(mult)">
+                                </button>
+                            </template>
+                        </div>
+                    </div>
 
+                    <div class="knob-wrapper">
+                        <label class="knob-label">AMOUNT</label>
+                        <div x-data="knob(knobConfigs.lfoAmount)" class="knob" @mousedown="startDrag($event)"
+                            @touchstart="startDrag($event)" x-init="knobData.value = globalLfos[currentLfoIndex].amount"
+                            x-effect="knobData.value = globalLfos[currentLfoIndex].amount">
+                            <div class="knob-indicator indicator-small"
+                                :style="`transform: translateX(-50%) rotate(${getKnobAngle('lfoAmount', knobData.value)}deg)`">
+                            </div>
+                        </div>
+                        <div class="value-display">
+                            <span class="knob-value" x-text="getLfoKnobDisplay('lfoAmount')"></span>
+                            <span class="knob-label" x-text="getLfoKnobUnit('lfoAmount')"></span>
+                        </div>
+                        <div>
+                            <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()"
+                                class="bpm-input" min="40" max="400">
+                            <div class="knob-label">BPM</div>
+                        </div>
+                    </div>
+
+                    <div class="knob-wrapper">
+                        <label class="knob-label">PHASE</label>
+                        <div x-data="knob(knobConfigs.lfoPhase)" class="knob" @mousedown="startDrag($event)"
+                            @touchstart="startDrag($event)" x-init="knobData.value = globalLfos[currentLfoIndex].phase"
+                            x-effect="knobData.value = globalLfos[currentLfoIndex].phase">
+                            <div class="knob-indicator indicator-small"
+                                :style="`transform: translateX(-50%) rotate(${getKnobAngle('lfoPhase', knobData.value)}deg)`">
+                            </div>
+                        </div>
+                        <div class="value-display">
+                            <span class="knob-value" x-text="getLfoKnobDisplay('lfoPhase')"></span>
+                            <span class="knob-label" x-text="getLfoKnobUnit('lfoPhase')"></span>
+                        </div>
                         <button @click="togglePlay()" class="start-stop-button" :class="{ active: startStopActive }">
                             <svg class="play-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M8 5v14l11-7z" />
@@ -374,10 +415,11 @@
                     <div class="synth-input-wrapper" style="display: flex; align-items: center; gap: 1rem;">
                         <div>
                             <label class="knob-label">SEQ</label>
-                            <input type="number" min="0" max="29" x-model="synthSettings.seq" @input="handleSeqChange()"
-                  class="seq-input" placeholder="0-29">
+                            <input type="number" min="0" max="29" x-model.number="synthSettings.seq"
+                                @input="handleSeqChange()" class="seq-input" placeholder="0-29">
                         </div>
-                        <div class="seq-preview-grid" x-show="synthSettings.seq !== null && synthSettings.seq !== ''">
+                        <div class="seq-preview-grid"
+                            x-show="synthSettings.seq !== null && synthSettings.seq !== '' && synthSettings.seq >= 0 && synthSettings.seq <= 22">
                             <template x-for="row in 2">
                                 <div class="seq-preview-row" style="display: flex; gap: 2px;">
                                     <template x-for="col in 8">
@@ -389,12 +431,16 @@
                                 </div>
                             </template>
                         </div>
+                        <div class="seq-preview-label" x-show="synthSettings.seq === 23"
+                            style="font-size: 14px; font-weight: bold;">RAND</div>
+                        <div class="seq-preview-label" x-show="synthSettings.seq >= 24 && synthSettings.seq <= 29"
+                            style="font-size: 14px; font-weight: bold;" x-text="'U' + (synthSettings.seq - 23)"></div>
                     </div>
 
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;justify-items:center;">
                         <div class="knob-wrapper">
                             <label class="knob-label">WAVE</label>
-                            <select x-model="synthSettings.waveform" @change="handleWaveformChange()"
+                            <select x-model.number="synthSettings.waveform" @change="handleWaveformChange()"
                                 class="fx-engine-select">
                                 <template x-for="(opt, i) in waveformLabels">
                                     <option :value="i * 14" x-text="opt"></option>
@@ -406,15 +452,16 @@
                             <div class="knob-wrapper">
                                 <label class="knob-label" x-text="synthKnob === 'synthFreq' ? 'FREQ' : 'LEN'"></label>
                                 <div x-data="knob(knobConfigs[synthKnob])" class="knob" @mousedown="startDrag($event)"
-                                    @touchstart="startDrag($event)" x-init="knobData.value = knobs[synthKnob].value"
-                                    x-effect="knobData.value = knobs[synthKnob].value">
+                                    @touchstart="startDrag($event)"
+                                    x-init="knobData.value = synthKnob === 'synthFreq' ? synthSettings.freq : synthSettings.len"
+                                    x-effect="knobData.value = synthKnob === 'synthFreq' ? synthSettings.freq : synthSettings.len">
                                     <div class="knob-indicator indicator-small"
                                         :style="`transform: translateX(-50%) rotate(${synthKnob === 'synthFreq' ? synthFreqToAngle(knobData.value) : midiToAngle(knobData.value)}deg)`">
                                     </div>
                                 </div>
                                 <div class="value-display">
                                     <span class="knob-value"
-                                        x-text="synthKnob === 'synthFreq' ? synthFreqDisplayValue : Math.floor(knobs[synthKnob].value * 100 / 127)"></span>
+                                        x-text="synthKnob === 'synthFreq' ? synthFreqDisplayValue : Math.floor(synthSettings.len * 100 / 127)"></span>
                                 </div>
                             </div>
                         </template>
@@ -422,23 +469,30 @@
 
                     <!-- Keyboard -->
                     <div class="keyboard-section">
-                        <div class="keyboard-controls">
-                            <button @click="decreaseOctave()" class="octave-button">-</button>
+                        <button @click="decreaseOctave()" class="octave-button octave-left">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M15 18l-6-6 6-6" />
+                            </svg>
+                        </button>
+                        <div class="keyboard-wrapper">
                             <span class="octave-display" x-text="synthSettings.octave"></span>
-                            <button @click="increaseOctave()" class="octave-button">+</button>
+                            <div class="keyboard">
+                                <template x-for="(note, index) in keyboardNotes" :key="index">
+                                    <button @click="playNote(note)" class="key"
+                                        :class="{ 'black-key': note.isBlack, 'disabled': note.isDisabled }"
+                                        :style="note.isBlack ? `left: ${note.position}%` : ''"
+                                        :disabled="note.isDisabled" x-text="note.isBlack ? '' : note.label">
+                                    </button>
+                                </template>
+                            </div>
                         </div>
-                        <div class="keyboard">
-                            <template x-for="(note, index) in keyboardNotes" :key="index">
-                                <button 
-                                    @click="playNote(note)"
-                                    class="key"
-                                    :class="{ 'black-key': note.isBlack, 'disabled': note.isDisabled }"
-                                    :style="note.isBlack ? `left: ${note.position}%` : ''"
-                                    :disabled="note.isDisabled"
-                                    x-text="note.isBlack ? '' : note.label">
-                                </button>
-                            </template>
-                        </div>
+                        <button @click="increaseOctave()" class="octave-button octave-right">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M9 18l6-6-6-6" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -452,26 +506,26 @@
             <div class="info-text">
                 <p>Connect Bluetooth or USB to get started.</p>
                 <p>Make sure your TX-6 has MIDI CTRL IN enabled, and BLE set to ACCEPT (if needed)</p>
-                
+
                 <h3>Main</h3>
                 <ul>
                     <li>Select track (T1-T6) from top row</li>
                     <li>knob 1 controls filter and EQ</li>
                     <li>Master knob controls aux, cue, or master volume</li>
                 </ul>
-                
+
                 <h3>FX</h3>
                 <ul>
                     <li>Switch between FX I/II, select engine, adjust parameters</li>
                 </ul>
-                
+
                 <h3>LFO</h3>
                 <p>Note: these only work while play is pressed</p>
                 <ul>
                     <li>Configure 10 LFOs with waveform, rate, amount, phase</li>
                     <li>Control BPM and transport (play/stop)</li>
                 </ul>
-                
+
                 <h3>Synth</h3>
                 <ul>
                     <li>Set sequence pattern, waveform, frequency, and length</li>
@@ -487,7 +541,7 @@
             <h2 class="view-title">About</h2>
             <div class="info-text">
                 <p>Remote control for your TX-6. Control with Bluetooth or USB.</p>
-                
+
                 <h3>Features</h3>
                 <ul>
                     <li>10 assignable LFOs for params</li>

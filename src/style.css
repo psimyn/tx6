@@ -1,4 +1,4 @@
-:root { 
+:root {
     --bg-color: #e2e2e4;
     --bg-color-darker: #d0d0d3;
     --text-color: #50514f;
@@ -7,7 +7,8 @@
     --knob-border: rgba(0, 0, 0, 0.1);
     --knob-shine: rgba(255, 255, 255, 0.6);
     --knob-shadow: rgba(0, 0, 0, 0.2);
-    --slider-track: var(--accent-color-blue); /* rgba(0, 0, 0, 0.8) */
+    --slider-track: var(--accent-color-blue);
+    /* rgba(0, 0, 0, 0.8) */
     --accent-color: #e2e2e4;
     --accent-color-orange: #ff9500;
     --accent-color-white: #ffffff;
@@ -25,11 +26,14 @@
     --select-border: rgba(0, 0, 0, 0.1);
 }
 
- *, *:before, *:after {
+*,
+*:before,
+*:after {
     box-sizing: border-box;
 }
 
- html, body {
+html,
+body {
     font-size: min(1.25rem, 5vw);
     overscroll-behavior: none;
     margin: 0;
@@ -41,8 +45,8 @@
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
     text-align: center;
-    background-image: linear-gradient(to bottom, rgba(0,0,0,0.001) 1px, transparent 1px), 
-                      linear-gradient(to right, rgba(0,0,0,0.001) 1px, transparent 1px);
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.001) 1px, transparent 1px),
+        linear-gradient(to right, rgba(0, 0, 0, 0.001) 1px, transparent 1px);
     background-size: 0.625rem 0.625rem;
 }
 
@@ -56,7 +60,7 @@ h1 {
     margin-bottom: 0.5rem;
 }
 
- .top-bar {
+.top-bar {
     position: fixed;
     top: 0;
     left: 0;
@@ -70,14 +74,14 @@ h1 {
     z-index: 100;
 }
 
- .top-bar-header {
+.top-bar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0.5rem 1rem;
 }
 
- .header-controls {
+.header-controls {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -140,7 +144,7 @@ h1 {
     color: var(--text-color);
     opacity: 0.8;
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6),
-                 0 -1px 0 rgba(0, 0, 0, 0.2);
+        0 -1px 0 rgba(0, 0, 0, 0.2);
 }
 
 .options-menu-wrapper {
@@ -289,13 +293,13 @@ h1 {
     position: relative;
     border: 1px solid var(--knob-border);
     box-shadow: 0 0 0 3px var(--knob-color-secondary),
-                0 5px 14px rgba(0, 0, 0, 0.1), 
-                8px 0 16px rgba(0, 0, 0, 0.1), 
-                0 8px 6px rgba(0, 0, 0, 0.1), 
-                5px 0 4px rgba(0, 0, 0, 0.1), 
-                0 2px 0 3px #ccc, 
-                1px 0 0 3px #aaa,
-                -2px -2px 3px rgba(255, 255, 255, 0.1);
+        0 5px 14px rgba(0, 0, 0, 0.1),
+        8px 0 16px rgba(0, 0, 0, 0.1),
+        0 8px 6px rgba(0, 0, 0, 0.1),
+        5px 0 4px rgba(0, 0, 0, 0.1),
+        0 2px 0 3px #ccc,
+        1px 0 0 3px #aaa,
+        -2px -2px 3px rgba(255, 255, 255, 0.1);
     touch-action: none;
     cursor: pointer;
     overflow: visible;
@@ -409,14 +413,13 @@ input:focus {
     width: var(--width);
     height: var(--height);
     background: linear-gradient(to top,
-        var(--knob-shadow) 1.96%,
-        var(--bg-color) 11.76%,
-        var(--slider-track) 13.73%,
-        var(--slider-track) 52.94%,
-        var(--slider-track) 88.16%, 
-        var(--bg-color) 90.16%,
-        var(--knob-shadow) 98%
-    );
+            var(--knob-shadow) 1.96%,
+            var(--bg-color) 11.76%,
+            var(--slider-track) 13.73%,
+            var(--slider-track) 52.94%,
+            var(--slider-track) 88.16%,
+            var(--bg-color) 90.16%,
+            var(--knob-shadow) 98%);
     outline: none;
     transform: rotate(-90deg);
     transform-origin: center;
@@ -506,7 +509,8 @@ input:focus {
     justify-content: center;
 }
 
-.mode-select, .fx-engine-select {
+.mode-select,
+.fx-engine-select {
     --select-bg: var(--knob-color);
     --select-border: var(--knob-border);
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2350514f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
@@ -551,7 +555,8 @@ input:focus {
     width: auto;
 }
 
-.mode-select:focus, .fx-engine-select:focus {
+.mode-select:focus,
+.fx-engine-select:focus {
     outline: none;
     border-color: var(--button-color);
     box-shadow: 0 0 0 1px var(--button-color);
@@ -576,7 +581,9 @@ input:focus {
 
 /* Firefox specific */
 @-moz-document url-prefix() {
-    .mode-select, .fx-engine-select {
+
+    .mode-select,
+    .fx-engine-select {
         text-indent: 0.01px;
         text-overflow: '';
     }
@@ -654,7 +661,7 @@ input:focus {
     border-radius: 50%;
     transform: translate(-50%, -50%);
     z-index: 3;
-    box-shadow: inset 0.0625rem 0.0625rem 0.125rem rgba(0,0,0,0.2);
+    box-shadow: inset 0.0625rem 0.0625rem 0.125rem rgba(0, 0, 0, 0.2);
 }
 
 #eq-knob::before {
@@ -698,7 +705,7 @@ header {
     letter-spacing: 2px;
 }
 
- .tab-navigation {
+.tab-navigation {
     display: flex;
     background: rgba(208, 208, 211, 0.8);
     border-top: 1px solid var(--knob-border);
@@ -721,8 +728,8 @@ header {
     transition: all 0.1s ease;
     position: relative;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12),
-                0 1px 2px rgba(0, 0, 0, 0.08),
-                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
@@ -740,14 +747,14 @@ header {
 .tab-button:hover {
     background: linear-gradient(180deg, #fafafc 0%, #f0f0f4 30%, #e1e1e6 60%, #d1d1d7 100%);
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15),
-                0 1px 2px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        0 1px 2px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .tab-button:active {
     transform: translateY(2px);
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.1),
-                inset 0 1px 2px rgba(0, 0, 0, 0.1);
+        inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .tab-button.active {
@@ -755,9 +762,9 @@ header {
     border-color: #a0a0a4;
     border-bottom-color: #909094;
     box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.18),
-                inset 0 1px 1px rgba(0, 0, 0, 0.15),
-                inset 0 0 0 1px rgba(0, 0, 0, 0.1),
-                0 1px 0 rgba(0, 0, 0, 0.05);
+        inset 0 1px 1px rgba(0, 0, 0, 0.15),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.1),
+        0 1px 0 rgba(0, 0, 0, 0.05);
     color: var(--button-color);
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
     transform: translateY(2px);
@@ -865,14 +872,13 @@ header {
     height: 1.68rem;
     appearance: none;
     background: linear-gradient(to bottom,
-        var(--knob-shadow) 1.96%,
-        var(--bg-color) 11.76%,
-        var(--slider-track) 13.73%,
-        var(--slider-track) 52.94%,
-        var(--slider-track) 88.16%, 
-        var(--bg-color) 90.16%,
-        var(--knob-shadow) 98%
-    );
+            var(--knob-shadow) 1.96%,
+            var(--bg-color) 11.76%,
+            var(--slider-track) 13.73%,
+            var(--slider-track) 52.94%,
+            var(--slider-track) 88.16%,
+            var(--bg-color) 90.16%,
+            var(--knob-shadow) 98%);
     border-radius: 1.5rem;
     outline: none;
     cursor: pointer;
@@ -1090,8 +1096,8 @@ header {
     transition: box-shadow 0.4s ease;
     position: relative;
     overflow: hidden;
-    box-shadow: 
-        0 0 0 1px var(--bg-color),            
+    box-shadow:
+        0 0 0 1px var(--bg-color),
         0 0.125rem 0.25rem rgba(0, 0, 0, 0.02),
         0 0.25rem 0.5rem rgba(0, 0, 0, 0.01),
         inset 0 0.0625rem 0.0625rem rgba(255, 255, 255, 0.02);
@@ -1100,7 +1106,7 @@ header {
 
 .connect-btn:hover {
     background-color: var(--button-hover);
-    box-shadow: 
+    box-shadow:
         0 0 0 1px var(--bg-color),
         0 0.25rem 0.5rem rgba(0, 0, 0, 0.03),
         0 0.375rem 0.75rem rgba(0, 0, 0, 0.015),
@@ -1109,7 +1115,7 @@ header {
 
 .connect-btn:active {
     transform: translateY(0.0625rem);
-    box-shadow: 
+    box-shadow:
         0 0 0 1px var(--bg-color),
         0 0.0625rem 0.125rem rgba(0, 0, 0, 0.2),
         0 0.125rem 0.25rem rgba(0, 0, 0, 0.1),
@@ -1123,12 +1129,10 @@ header {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-        90deg, 
-        transparent, 
-        rgba(255, 255, 255, 0.1), 
-        transparent
-    );
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, 0.1),
+            transparent);
     transition: left 0.7s ease;
 }
 
@@ -1183,6 +1187,7 @@ header {
 .fx-button.orange {
     --background-color: var(--button-orange);
 }
+
 .fx-button.white {
     --background-color: white;
     color: var(--button-color);
@@ -1248,7 +1253,7 @@ header {
     background-color: var(--background-color);
 }
 
- /* FX engine select specific styles */
+/* FX engine select specific styles */
 .fx-engine-select option {
     background-color: var(--knob-color);
     color: var(--text-color);
@@ -1290,8 +1295,18 @@ header {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
     align-items: center;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.keyboard-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
 }
 
 .keyboard-controls {
@@ -1305,8 +1320,8 @@ header {
     color: white;
     border: none;
     border-radius: 0.25rem;
-    width: 2rem;
-    height: 2rem;
+    width: 2.5rem;
+    height: 2.5rem;
     font-size: 1.2rem;
     font-weight: bold;
     cursor: pointer;
@@ -1314,6 +1329,18 @@ header {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: absolute;
+    top: 1.5rem;
+    transform: translateY(-100%);
+    z-index: 10;
+}
+
+.octave-button.octave-left {
+    left: 0;
+}
+
+.octave-button.octave-right {
+    right: 0;
 }
 
 .octave-button:hover {
@@ -1321,14 +1348,13 @@ header {
 }
 
 .octave-button:active {
-    transform: translateY(1px);
+    transform: translateY(calc(-100% + 1px));
 }
 
 .octave-display {
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--text-color);
-    min-width: 4rem;
     text-align: center;
 }
 
@@ -1372,7 +1398,7 @@ header {
     background: #e0e0e0;
     transform: translateY(-2px) rotateX(-2deg) scaleY(0.98);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15),
-                inset 0 2px 3px rgba(0, 0, 0, 0.1);
+        inset 0 2px 3px rgba(0, 0, 0, 0.1);
 }
 
 .black-key {
@@ -1397,7 +1423,7 @@ header {
     background: linear-gradient(to bottom, #1a1a1a, #0a0a0a);
     transform: translateY(0px) rotateX(-3deg) scaleY(0.95);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4),
-                inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .key.disabled {
@@ -1434,4 +1460,3 @@ header {
     background: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
     transform: none;
 }
-
