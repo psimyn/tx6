@@ -1607,10 +1607,12 @@ Alpine.data('tx6Controller', () => ({
         });
     },
 
-    activeNotes: new Set(),  // Track currently held notes
+    activeNotes: {},  // Reactive object for tracking pressed notes { midiNote: true }
+    lastTouchNote: null,  // Track last touched note for glissando
 
     noteOn(noteData) {
         if (noteData.isDisabled) return;
+        if (this.activeNotes[noteData.midiNote]) return; // Already playing
 
         const currentWaveform = this.waveformLabels[Math.floor(this.synthSettings.waveform / SYNTH.WAVEFORM_DIVIDE)];
 
@@ -1624,31 +1626,81 @@ Alpine.data('tx6Controller', () => ({
             this.sendValidatedCC(this.currentTrack, 89, midiValue);
         }
 
+        // Track active note (reactive)
+        this.activeNotes[noteData.midiNote] = true;
+        this.lastTouchNote = noteData.midiNote;
+
         // Send MIDI Note On
-        if (this.isConnected && !this.activeNotes.has(noteData.midiNote)) {
-            this.activeNotes.add(noteData.midiNote);
+        if (this.isConnected) {
             this.midi.sendNoteOn(this.currentTrack, noteData.midiNote);
         }
     },
 
     noteOff(noteData) {
         if (noteData.isDisabled) return;
+        if (!this.activeNotes[noteData.midiNote]) return; // Not playing
+
+        // Remove from active notes (reactive)
+        delete this.activeNotes[noteData.midiNote];
+
+        if (this.lastTouchNote === noteData.midiNote) {
+            this.lastTouchNote = null;
+        }
 
         // Send MIDI Note Off
-        if (this.isConnected && this.activeNotes.has(noteData.midiNote)) {
-            this.activeNotes.delete(noteData.midiNote);
+        if (this.isConnected) {
             this.midi.sendNoteOff(this.currentTrack, noteData.midiNote);
         }
+    },
+
+    // Handle touch move for glissando (sliding finger across keys)
+    handleKeyboardTouchMove(event) {
+        const touch = event.touches[0];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+
+        if (!element || !element.classList.contains('key')) {
+            return;
+        }
+
+        // Find the note data for this key element
+        const keyIndex = Array.from(element.parentElement.children)
+            .filter(el => el.tagName === 'BUTTON')
+            .indexOf(element);
+
+        if (keyIndex >= 0 && keyIndex < this.keyboardNotes.length) {
+            const noteData = this.keyboardNotes[keyIndex];
+
+            // If different from last touched note, switch notes
+            if (noteData && noteData.midiNote !== this.lastTouchNote) {
+                // Turn off previous note
+                if (this.lastTouchNote !== null) {
+                    const prevNote = this.keyboardNotes.find(n => n.midiNote === this.lastTouchNote);
+                    if (prevNote) this.noteOff(prevNote);
+                }
+                // Turn on new note
+                this.noteOn(noteData);
+            }
+        }
+    },
+
+    // End all notes on touch end (for glissando cleanup)
+    handleKeyboardTouchEnd() {
+        Object.keys(this.activeNotes).forEach(midiNote => {
+            const noteData = this.keyboardNotes.find(n => n.midiNote === parseInt(midiNote));
+            if (noteData) this.noteOff(noteData);
+        });
+        this.lastTouchNote = null;
     },
 
     allNotesOff() {
         // Send Note Off for all active notes
         if (this.isConnected) {
-            this.activeNotes.forEach(note => {
-                this.midi.sendNoteOff(this.currentTrack, note);
+            Object.keys(this.activeNotes).forEach(note => {
+                this.midi.sendNoteOff(this.currentTrack, parseInt(note));
             });
         }
-        this.activeNotes.clear();
+        this.activeNotes = {};
+        this.lastTouchNote = null;
     },
 
     increaseOctave() {

@@ -716,8 +716,6 @@ input:focus {
 .mode-select:focus,
 .fx-engine-select:focus {
     outline: none;
-    border-color: var(--button-color);
-    box-shadow: 0 0 0 1px var(--button-color);
 }
 
 /* Hide default dropdown arrows */
@@ -1583,6 +1581,7 @@ header {
     border-radius: 0.25rem;
     margin: 0 -1rem;
     perspective: 1000px;
+    touch-action: none;
 }
 
 .key {

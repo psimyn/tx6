@@ -530,12 +530,13 @@
                         </button>
                         <div class="keyboard-wrapper">
                             <span class="octave-display" x-text="synthSettings.octave"></span>
-                            <div class="keyboard">
+                            <div class="keyboard" @touchmove.prevent="handleKeyboardTouchMove($event)"
+                                @touchend="handleKeyboardTouchEnd()" @touchcancel="handleKeyboardTouchEnd()">
                                 <template x-for="(note, index) in keyboardNotes" :key="index">
                                     <button @mousedown="noteOn(note)" @touchstart.prevent="noteOn(note)"
-                                        @mouseup="noteOff(note)" @touchend="noteOff(note)" @touchcancel="noteOff(note)"
-                                        @mouseleave="noteOff(note)" @contextmenu.prevent class="key"
-                                        :class="{ 'black-key': note.isBlack, 'disabled': note.isDisabled, 'pressed': activeNotes.has(note.midiNote) }"
+                                        @mouseup="noteOff(note)" @mouseleave="noteOff(note)" @contextmenu.prevent
+                                        class="key"
+                                        :class="{ 'black-key': note.isBlack, 'disabled': note.isDisabled, 'pressed': activeNotes[note.midiNote] }"
                                         :style="note.isBlack ? `left: ${note.position}%` : ''"
                                         :disabled="note.isDisabled" x-text="note.isBlack ? '' : note.label">
                                     </button>
