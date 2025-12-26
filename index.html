@@ -535,7 +535,7 @@
                                     <button @mousedown="noteOn(note)" @touchstart.prevent="noteOn(note)"
                                         @mouseup="noteOff(note)" @touchend="noteOff(note)" @touchcancel="noteOff(note)"
                                         @mouseleave="noteOff(note)" @contextmenu.prevent class="key"
-                                        :class="{ 'black-key': note.isBlack, 'disabled': note.isDisabled }"
+                                        :class="{ 'black-key': note.isBlack, 'disabled': note.isDisabled, 'pressed': activeNotes.has(note.midiNote) }"
                                         :style="note.isBlack ? `left: ${note.position}%` : ''"
                                         :disabled="note.isDisabled" x-text="note.isBlack ? '' : note.label">
                                     </button>
@@ -603,6 +603,13 @@
                     <li>Per-track volume, FX, and EQ control</li>
                     <li>Synth sequencer config</li>
                     <li>Control FX settings</li>
+                </ul>
+
+                <h3>Version Info</h3>
+                <ul class="version-info">
+                    <li x-text="'Cache: ' + (swCacheVersion || 'not available')"></li>
+                    <li x-text="'JS: ' + jsFileName"></li>
+                    <li x-text="'CSS: ' + cssFileName"></li>
                 </ul>
             </div>
             <button @click="currentView = 'main'" class="back-button">Back</button>

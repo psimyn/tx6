@@ -459,6 +459,11 @@ Alpine.data('tx6Controller', () => ({
     midi: null,
     _switchingChannel: false,  // Guard flag to prevent watcher re-entrancy
 
+    // Version info for about page
+    swCacheVersion: null,
+    jsFileName: '',
+    cssFileName: '',
+
     /** Creates standardized knob change handler - reduces boilerplate */
     createKnobHandler(knobType, customHandler) {
         return (v) => {
@@ -627,6 +632,20 @@ Alpine.data('tx6Controller', () => ({
         if (storedVersion !== String(SCHEMA_VERSION)) {
             console.log(`Schema migration: ${storedVersion || 'none'} → ${SCHEMA_VERSION}`);
             localStorage.setItem('tx6-schema-version', String(SCHEMA_VERSION));
+        }
+
+        // Populate version info for about page
+        const scripts = document.querySelectorAll('script[src*="main"]');
+        this.jsFileName = scripts.length ? scripts[0].src.split('/').pop() : 'main.js';
+        const styles = document.querySelectorAll('link[rel="stylesheet"][href*="style"]');
+        this.cssFileName = styles.length ? styles[0].href.split('/').pop() : 'style.css';
+
+        // Get cache version from service worker
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                const tx6Cache = names.find(n => n.startsWith('tx6-cache'));
+                this.swCacheVersion = tx6Cache || 'none';
+            });
         }
 
         this.lfoPhases = Array(this.globalLfos.length).fill(0);

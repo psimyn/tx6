@@ -338,6 +338,13 @@ h1 {
     margin: 0.25rem 0;
 }
 
+.version-info {
+    font-family: monospace;
+    font-size: 0.75rem;
+    opacity: 0.7;
+    word-break: break-all;
+}
+
 .back-button {
     margin-top: 2rem;
     padding: 0.75rem 1.5rem;
@@ -1605,7 +1612,8 @@ header {
     }
 }
 
-.key:active {
+.key:active,
+.key.pressed {
     background: var(--key-white-active);
     transform: translateY(-2px) rotateX(-2deg) scaleY(0.98);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15),
@@ -1632,7 +1640,8 @@ header {
     }
 }
 
-.black-key:active {
+.black-key:active,
+.black-key.pressed {
     background: linear-gradient(to bottom, #1a1a1a, #0a0a0a);
     transform: translateY(0px) rotateX(-3deg) scaleY(0.95);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4),
