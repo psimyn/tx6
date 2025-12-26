@@ -777,6 +777,9 @@ Alpine.data('tx6Controller', () => ({
         if (savedTheme) {
             this.currentTheme = savedTheme;
             document.documentElement.classList.add(savedTheme === 'dark' ? 'dark-theme' : 'light-theme');
+            // Update theme-color meta tag for Android system bar
+            const themeColor = savedTheme === 'dark' ? '#1a1a1a' : '#e2e2e4';
+            document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColor);
         } else {
             this.currentTheme = 'system';
         }
@@ -784,6 +787,10 @@ Alpine.data('tx6Controller', () => ({
 
     toggleTheme() {
         const root = document.documentElement;
+
+        // Disable transitions during theme switch to prevent flash
+        root.classList.add('no-transitions');
+
         let isDark;
         if (this.currentTheme === 'system') {
             isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -805,7 +812,18 @@ Alpine.data('tx6Controller', () => ({
             root.classList.add('dark-theme');
         }
 
+        // Update theme-color meta tag to prevent Android system bar flickering
+        const themeColor = this.currentTheme === 'dark' ? '#1a1a1a' : '#e2e2e4';
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColor);
+
         localStorage.setItem('tx6-theme', this.currentTheme);
+
+        // Re-enable transitions after paint
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                root.classList.remove('no-transitions');
+            });
+        });
     },
 
     selectTrack(trackIndex) {

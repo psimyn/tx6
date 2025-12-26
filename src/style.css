@@ -146,6 +146,14 @@
     box-sizing: border-box;
 }
 
+/* Disable transitions during theme toggle */
+.no-transitions,
+.no-transitions *,
+.no-transitions *:before,
+.no-transitions *:after {
+    transition: none !important;
+}
+
 html,
 body {
     font-size: min(1.25rem, 5vw);
