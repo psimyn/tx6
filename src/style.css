@@ -8,7 +8,6 @@
     --knob-shine: rgba(255, 255, 255, 0.6);
     --knob-shadow: rgba(0, 0, 0, 0.2);
     --slider-track: var(--accent-color-blue);
-    /* rgba(0, 0, 0, 0.8) */
     --accent-color: #e2e2e4;
     --accent-color-orange: #ff9500;
     --accent-color-white: #ffffff;
@@ -24,6 +23,117 @@
     --label-color: #110237;
     --select-bg: #f0f0f2;
     --select-border: rgba(0, 0, 0, 0.1);
+    --border-color: #ccc;
+    --text-inverse: #ffffff;
+    --header-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6), 0 0 20px rgba(255, 255, 255, 0.2);
+
+    /* Shadow Variables */
+    --knob-box-shadow:
+        0 0 0 3px var(--knob-color-secondary),
+        0 5px 14px rgba(0, 0, 0, 0.1),
+        8px 0 16px rgba(0, 0, 0, 0.1),
+        0 8px 6px rgba(0, 0, 0, 0.1),
+        5px 0 4px rgba(0, 0, 0, 0.1),
+        0 2px 0 3px #ccc,
+        1px 0 0 3px #aaa,
+        -2px -2px 3px rgba(255, 255, 255, 0.1);
+    --tab-box-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.12),
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    --tab-hover-box-shadow:
+        0 3px 6px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+
+    /* Component Variables */
+    --top-bar-bg: rgba(226, 226, 228, 0.95);
+    --tab-nav-bg: rgba(208, 208, 211, 0.8);
+    --key-white: #ffffff;
+    --key-white-active: #e0e0e0;
+    --key-white-hover: #f0f0f0;
+
+    /* Tab Button Variables */
+    --tab-bg: linear-gradient(180deg, #f5f5f7 0%, #e8e8eb 30%, #d9d9dd 60%, #c9c9ce 100%);
+    --tab-bg-hover: linear-gradient(180deg, #fafafc 0%, #f0f0f4 30%, #e1e1e6 60%, #d1d1d7 100%);
+    --tab-bg-active: linear-gradient(180deg, #d4d4d8 0%, #c5c5c9 40%, #b5b5bb 100%);
+    --tab-border: #b8b8bc;
+    --tab-border-bottom: #b8b8bc;
+    --tab-border-right: #c0c0c4;
+    --tab-border-active: #b8b8bc;
+    --tab-border-active-bottom: #b8b8bc;
+    --tab-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+    --tab-highlight: rgba(255, 255, 255, 0.5);
+    --button-border: #555;
+    --key-disabled: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #1a1a1a;
+        --bg-color-darker: #111;
+        --text-color: #b0b0b0;
+        --knob-color: #2a2a2a;
+        --knob-color-secondary: #333;
+        --knob-border: rgba(255, 255, 255, 0.1);
+        --knob-shine: rgba(255, 255, 255, 0.1);
+        --knob-shadow: rgba(0, 0, 0, 0.4);
+        --slider-track: #444;
+        --accent-color: #aaa;
+        --accent-color-orange: #aaa;
+        --accent-color-white: #aaa;
+        --accent-color-blue: #aaa;
+        --eq-center-color: #888;
+        --button-color: #888;
+        --button-color-secondary: #666;
+        --button-hover: #999;
+        --button-active: #777;
+        --button-orange: #888;
+        --button-orange-hover: #999;
+        --button-orange-active: #777;
+        --label-color: #aaa;
+        --select-bg: #2a2a2a;
+        --select-border: rgba(255, 255, 255, 0.1);
+        --border-color: #444;
+        --key-white-hover: #3a3a3a;
+        --header-text-shadow: none;
+
+        /* Dark Mode Tab Variables - Simple flat look as requested */
+        --tab-bg: #2a2a2a;
+        --tab-bg-hover: #333;
+        --tab-bg-active: #1a1a1a;
+        --tab-border: #333;
+        --tab-border-bottom: #333;
+        --tab-border-right: #333;
+        --tab-border-active: #333;
+        --tab-border-active-bottom: #1a1a1a;
+        --tab-text-shadow: none;
+        --tab-highlight: rgba(255, 255, 255, 0.1);
+        --button-border: #444;
+        --tab-highlight: rgba(255, 255, 255, 0.1);
+        --button-border: #444;
+        --key-disabled: linear-gradient(to bottom, #333, #222);
+
+        /* Dark Mode Components */
+        --top-bar-bg: rgba(26, 26, 26, 0.95);
+        --tab-nav-bg: rgba(26, 26, 26, 0.95);
+        --key-white: #333333;
+        --key-white-active: #404040;
+
+        /* Dark Mode Shadows */
+        --knob-box-shadow:
+            0 0 0 3px var(--knob-color-secondary),
+            0 5px 14px rgba(0, 0, 0, 0.3),
+            8px 0 16px rgba(0, 0, 0, 0.3),
+            0 8px 6px rgba(0, 0, 0, 0.3),
+            5px 0 4px rgba(0, 0, 0, 0.3),
+            0 2px 0 3px #333,
+            1px 0 0 3px #222,
+            -2px -2px 3px rgba(255, 255, 255, 0.05);
+        --tab-box-shadow: none;
+        --tab-hover-box-shadow: none;
+        --text-inverse: #1a1a1a;
+    }
 }
 
 *,
@@ -68,7 +178,7 @@ h1 {
     display: flex;
     flex-direction: column;
     border-bottom: 1px solid var(--knob-border);
-    background: rgba(226, 226, 228, 0.8);
+    background: var(--top-bar-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     z-index: 100;
@@ -113,7 +223,7 @@ h1 {
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(226, 226, 228, 0.95);
+    background: var(--top-bar-bg);
     border-top: 1px solid var(--knob-border);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -143,8 +253,7 @@ h1 {
     text-transform: uppercase;
     color: var(--text-color);
     opacity: 0.8;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6),
-        0 -1px 0 rgba(0, 0, 0, 0.2);
+    text-shadow: var(--header-text-shadow, 0 1px 0 rgba(255, 255, 255, 0.6));
 }
 
 .options-menu-wrapper {
@@ -273,6 +382,7 @@ h1 {
 
 .main-knob {
     flex: 0 0 auto;
+    align-self: flex-end;
 }
 
 .knob-wrapper {
@@ -283,23 +393,12 @@ h1 {
     gap: 0.4rem;
 }
 
-.main-knob {
-    align-self: flex-end;
-}
-
 .knob {
     background-color: var(--knob-color);
     border-radius: 50%;
     position: relative;
     border: 1px solid var(--knob-border);
-    box-shadow: 0 0 0 3px var(--knob-color-secondary),
-        0 5px 14px rgba(0, 0, 0, 0.1),
-        8px 0 16px rgba(0, 0, 0, 0.1),
-        0 8px 6px rgba(0, 0, 0, 0.1),
-        5px 0 4px rgba(0, 0, 0, 0.1),
-        0 2px 0 3px #ccc,
-        1px 0 0 3px #aaa,
-        -2px -2px 3px rgba(255, 255, 255, 0.1);
+    box-shadow: var(--knob-box-shadow);
     touch-action: none;
     cursor: pointer;
     overflow: visible;
@@ -321,7 +420,7 @@ h1 {
 }
 
 .rate-button {
-    border: 1px solid #555;
+    border: 1px solid var(--button-border);
     border-radius: 0.25rem;
     padding: 0.25rem 0.5rem;
     cursor: pointer;
@@ -346,7 +445,7 @@ h1 {
 .rate-button.active {
     background-color: var(--button-color);
     border-color: var(--button-color);
-    color: var(--bg-color);
+    color: var(--text-inverse);
     font-weight: bold;
 }
 
@@ -449,10 +548,6 @@ input:focus {
     box-shadow: 0 0.0625rem 0.125rem var(--knob-shadow),
         0 0.125rem 0.0625rem var(--bg-color),
         0 0.125rem 0.25rem var(--knob-shadow);
-}
-
-.volume-slider {
-    position: relative;
 }
 
 .volume-slider input[type="range"].slider-overlay {
@@ -754,7 +849,7 @@ header {
 
 .tab-navigation {
     display: flex;
-    background: rgba(208, 208, 211, 0.8);
+    background: var(--tab-nav-bg);
     border-top: 1px solid var(--knob-border);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -763,10 +858,10 @@ header {
 .tab-button {
     flex: 1;
     padding: 1rem;
-    background: linear-gradient(180deg, #f5f5f7 0%, #e8e8eb 30%, #d9d9dd 60%, #c9c9ce 100%);
-    border: 1px solid #b8b8bc;
-    border-bottom: 2px solid #a8a8ac;
-    border-right: 1px solid #c0c0c4;
+    background: var(--tab-bg);
+    border: 1px solid var(--tab-border);
+    border-bottom: 2px solid var(--tab-border-bottom);
+    border-right: 1px solid var(--tab-border-right);
     color: var(--text-color);
     font-size: 0.85rem;
     font-weight: 600;
@@ -774,10 +869,8 @@ header {
     cursor: pointer;
     transition: all 0.1s ease;
     position: relative;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12),
-        0 1px 2px rgba(0, 0, 0, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+    box-shadow: var(--tab-box-shadow);
+    text-shadow: var(--tab-text-shadow);
 }
 
 .tab-button::before {
@@ -787,15 +880,13 @@ header {
     left: 4px;
     right: 4px;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+    background: linear-gradient(90deg, transparent, var(--tab-highlight), transparent);
     border-radius: 50%;
 }
 
 .tab-button:hover {
-    background: linear-gradient(180deg, #fafafc 0%, #f0f0f4 30%, #e1e1e6 60%, #d1d1d7 100%);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15),
-        0 1px 2px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    background: var(--tab-bg-hover);
+    box-shadow: var(--tab-hover-box-shadow);
 }
 
 .tab-button:active {
@@ -805,15 +896,15 @@ header {
 }
 
 .tab-button.active {
-    background: linear-gradient(180deg, #d4d4d8 0%, #c5c5c9 40%, #b5b5bb 100%);
-    border-color: #a0a0a4;
-    border-bottom-color: #909094;
+    background: var(--tab-bg-active);
+    border-color: var(--tab-border-active, #a0a0a4);
+    border-bottom-color: var(--tab-border-active-bottom, #909094);
     box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.18),
         inset 0 1px 1px rgba(0, 0, 0, 0.15),
         inset 0 0 0 1px rgba(0, 0, 0, 0.1),
         0 1px 0 rgba(0, 0, 0, 0.05);
     color: var(--button-color);
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+    text-shadow: var(--tab-text-shadow-active, 0 1px 0 rgba(255, 255, 255, 0.3));
     transform: translateY(2px);
 }
 
@@ -860,7 +951,7 @@ header {
 
 .fx-channel-radio-label:has(input:checked) {
     background: var(--button-color);
-    color: white;
+    color: var(--text-inverse);
 }
 
 /* Orange background for FX II radio label */
@@ -1045,8 +1136,7 @@ header {
     gap: 0.5rem;
 }
 
-.slider-with-switcher .master-channel-section {
-    grid-column: auto;
+.master-channel-section {
     writing-mode: vertical-lr;
     text-orientation: mixed;
     margin: 0;
@@ -1056,18 +1146,19 @@ header {
     position: relative;
 }
 
-.slider-with-switcher .master-channel-section::after {
+.master-channel-section::after {
     content: '';
     position: absolute;
-    bottom: -2rem;
+    bottom: -1.5rem;
     left: 50%;
-    transform: translateX(-50%);
+    transform: rotateZ(-35deg);
+    transform-origin: top center;
     width: 1px;
-    height: 2rem;
+    height: 3rem;
     background: var(--border-color, #ccc);
 }
 
-.slider-with-switcher .master-channel-section::before {
+.master-channel-section::before {
     content: '';
     position: absolute;
     right: -1.5rem;
@@ -1086,19 +1177,12 @@ header {
     writing-mode: horizontal-tb;
 }
 
-.master-channel-section {
-    grid-column: span 3;
-    display: flex;
-    justify-content: center;
-    margin-bottom: 0.5rem;
-}
-
 .master-channel-radio-group {
     display: flex;
     flex-direction: row;
     gap: 0;
-    height: 100%;
-    justify-content: space-evenly;
+    height: calc(100% - 1.5rem);
+    justify-content: space-between;
     background: var(--select-bg);
     border-radius: 62.4375rem;
     padding: 0.4rem 0.25rem;
@@ -1120,7 +1204,7 @@ header {
 
 .master-channel-radio-label:has(input:checked) {
     background: var(--button-color);
-    color: white;
+    color: var(--text-inverse);
 }
 
 .master-channel-radio {
@@ -1156,7 +1240,7 @@ header {
 
 .track-button.active {
     background: var(--button-color);
-    color: white;
+    color: var(--text-inverse);
 }
 
 .track-button.active:hover {
@@ -1239,9 +1323,10 @@ header {
 }
 
 .fx-button {
-    --background-color: var(--button-color);
-    color: white;
-    border: none;
+    --active-color: var(--button-color);
+    background-color: var(--knob-color);
+    color: var(--text-inverse);
+    border: 1px solid var(--knob-border);
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
     border-radius: 50%;
@@ -1265,7 +1350,7 @@ header {
     position: absolute;
     top: 35%;
     left: 15%;
-    background-color: var(--background-color);
+    background-color: var(--active-color);
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
@@ -1283,11 +1368,23 @@ header {
 }
 
 .fx-button.orange {
-    --background-color: var(--button-orange);
+    --active-color: var(--button-orange);
 }
 
 .fx-button.white {
-    --background-color: white;
+    --active-color: var(--key-white);
+    /* Ensure text color adapts if active background is white */
+}
+
+.fx-button.active {
+    background-color: var(--active-color);
+    border-color: var(--active-color);
+    box-shadow: inset 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.3);
+}
+
+/* Inner button inherits background from parent when active due to shared var usage layout */
+
+.fx-button.white.active {
     color: var(--button-color);
 }
 
@@ -1346,10 +1443,7 @@ header {
     box-shadow: inset 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.2), 0 0.0625rem 0.0625rem rgba(0, 0, 0, 0.02);
 }
 
-.fx-button.active {
-    box-shadow: inset 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.3);
-    background-color: var(--background-color);
-}
+/* removed duplicate .active rule */
 
 /* FX engine select specific styles */
 .fx-engine-select option {
@@ -1474,7 +1568,7 @@ header {
 
 .key {
     flex: 1;
-    background: white;
+    background: var(--key-white);
     border: 1px solid var(--knob-border);
     border-radius: 0 0 0.25rem 0.25rem;
     cursor: pointer;
@@ -1493,12 +1587,14 @@ header {
     transform-style: preserve-3d;
 }
 
-.key:hover {
-    background: #f0f0f0;
+@media (hover: hover) {
+    .key:hover {
+        background: var(--key-white-hover);
+    }
 }
 
 .key:active {
-    background: #e0e0e0;
+    background: var(--key-white-active);
     transform: translateY(-2px) rotateX(-2deg) scaleY(0.98);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15),
         inset 0 2px 3px rgba(0, 0, 0, 0.1);
@@ -1518,8 +1614,10 @@ header {
     transform-style: preserve-3d;
 }
 
-.black-key:hover {
-    background: linear-gradient(to bottom, #3a3a3a, #2a2a2a);
+@media (hover: hover) {
+    .black-key:hover {
+        background: linear-gradient(to bottom, #3a3a3a, #2a2a2a);
+    }
 }
 
 .black-key:active {
@@ -1548,18 +1646,150 @@ header {
 }
 
 .black-key.disabled {
-    background: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
+    background: var(--key-disabled);
     opacity: 0.3;
     cursor: not-allowed;
     pointer-events: none;
 }
 
 .black-key.disabled:hover {
-    background: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
+    background: var(--key-disabled);
     transform: none;
 }
 
 .black-key.disabled:active {
-    background: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
+    background: var(--key-disabled);
     transform: none;
+}
+
+.light-theme {
+    --bg-color: #e2e2e4;
+    --bg-color-darker: #d0d0d3;
+    --text-color: #50514f;
+    --knob-color: #f5f5f5;
+    --knob-color-secondary: #eee;
+    --knob-border: rgba(0, 0, 0, 0.1);
+    --knob-shine: rgba(255, 255, 255, 0.6);
+    --knob-shadow: rgba(0, 0, 0, 0.2);
+    --slider-track: var(--accent-color-blue);
+    --accent-color: #e2e2e4;
+    --accent-color-orange: #ff9500;
+    --accent-color-white: #ffffff;
+    --accent-color-blue: #110237;
+    --eq-center-color: #ff9500;
+    --button-color: #110237;
+    --button-color-secondary: #080031ee;
+    --button-hover: #221247;
+    --button-active: #110237;
+    --button-orange: #ff9500;
+    --button-orange-hover: #ff8000;
+    --button-orange-active: #e67e00;
+    --label-color: #110237;
+    --select-bg: #f0f0f2;
+    --select-border: rgba(0, 0, 0, 0.1);
+    --border-color: #ccc;
+    --text-inverse: #ffffff;
+
+    --knob-box-shadow:
+        0 0 0 3px var(--knob-color-secondary),
+        0 5px 14px rgba(0, 0, 0, 0.1),
+        8px 0 16px rgba(0, 0, 0, 0.1),
+        0 8px 6px rgba(0, 0, 0, 0.1),
+        5px 0 4px rgba(0, 0, 0, 0.1),
+        0 2px 0 3px #ccc,
+        1px 0 0 3px #aaa,
+        -2px -2px 3px rgba(255, 255, 255, 0.1);
+    --tab-box-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.12),
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    --tab-hover-box-shadow:
+        0 3px 6px rgba(0, 0, 0, 0.15),
+        0 1px 2px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+
+    --top-bar-bg: rgba(226, 226, 228, 0.95);
+    --tab-nav-bg: rgba(208, 208, 211, 0.8);
+    --key-white: #ffffff;
+    --key-white-active: #e0e0e0;
+    --key-white-hover: #f0f0f0;
+
+    --tab-bg: linear-gradient(180deg, #f5f5f7 0%, #e8e8eb 30%, #d9d9dd 60%, #c9c9ce 100%);
+    --tab-bg-hover: linear-gradient(180deg, #fafafc 0%, #f0f0f4 30%, #e1e1e6 60%, #d1d1d7 100%);
+    --tab-bg-active: linear-gradient(180deg, #d4d4d8 0%, #c5c5c9 40%, #b5b5bb 100%);
+    --tab-border: #b8b8bc;
+    --tab-border-bottom: #b8b8bc;
+    --tab-border-right: #c0c0c4;
+    --tab-border-active: #b8b8bc;
+    --tab-border-active-bottom: #b8b8bc;
+    --tab-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+    --tab-highlight: rgba(255, 255, 255, 0.5);
+    --button-border: #555;
+    --key-disabled: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
+}
+
+.dark-theme {
+    --bg-color: #1a1a1a;
+    --bg-color-darker: #111;
+    --text-color: #b0b0b0;
+    --knob-color: #2a2a2a;
+    --knob-color-secondary: #333;
+    --knob-border: rgba(255, 255, 255, 0.1);
+    --knob-shine: rgba(255, 255, 255, 0.1);
+    --knob-shadow: rgba(0, 0, 0, 0.4);
+    --slider-track: #444;
+    --accent-color: #aaa;
+    --accent-color-orange: #aaa;
+    --accent-color-white: #aaa;
+    --accent-color-blue: #aaa;
+    --eq-center-color: #888;
+    --button-color: #888;
+    --button-color-secondary: #666;
+    --button-hover: #999;
+    --button-active: #777;
+    --button-orange: #888;
+    --button-orange-hover: #999;
+    --button-orange-active: #777;
+    --label-color: #aaa;
+    --select-bg: #2a2a2a;
+    --select-border: rgba(255, 0, 0, 0.0);
+    /* fixed border? */
+    --select-border: rgba(255, 255, 255, 0.1);
+    --border-color: #444;
+    --key-white-hover: #3a3a3a;
+    --text-inverse: #1a1a1a;
+
+    --tab-bg: #2a2a2a;
+    --tab-bg-hover: #333;
+    --tab-bg-active: #1a1a1a;
+    --tab-border: #333;
+    --tab-border-bottom: #333;
+    --tab-border-right: #333;
+    --tab-border-active: #333;
+    --tab-border-active-bottom: #1a1a1a;
+    --tab-text-shadow: none;
+    --tab-highlight: rgba(255, 255, 255, 0.1);
+    --button-border: #444;
+    --key-disabled: linear-gradient(to bottom, #333, #222);
+
+    --knob-box-shadow:
+        0 0 0 3px var(--knob-color-secondary),
+        0 5px 14px rgba(0, 0, 0, 0.3),
+        8px 0 16px rgba(0, 0, 0, 0.3),
+        0 8px 6px rgba(0, 0, 0, 0.3),
+        5px 0 4px rgba(0, 0, 0, 0.3),
+        0 2px 0 3px #333,
+        1px 0 0 3px #222,
+        -2px -2px 3px rgba(255, 255, 255, 0.05);
+    --tab-box-shadow: none;
+    --tab-hover-box-shadow: none;
+
+    --top-bar-bg: rgba(26, 26, 26, 0.95);
+    --tab-nav-bg: rgba(26, 26, 26, 0.95);
+    --key-white: #333333;
+    --key-white-active: #404040;
+}
+
+.dark-theme h1 {
+    text-shadow: none;
 }

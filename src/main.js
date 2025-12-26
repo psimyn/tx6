@@ -445,6 +445,7 @@ Alpine.data('tx6Controller', () => ({
     settingsView: null,
     currentView: Alpine.$persist('main').as('tx6-currentView'),
     showOptionsMenu: false,
+    currentTheme: 'system',
     masterChannel: Alpine.$persist('volume').as('tx6-masterChannel'),
     currentLfoIndex: Alpine.$persist(0).as('tx6-currentLfoIndex'),
     lfoPhases: [],  // Synced with globalLfos.length in init()
@@ -606,27 +607,25 @@ Alpine.data('tx6Controller', () => ({
     },
 
     init() {
+        this.initTheme();
         this.midi = createMidiController();
         this.initializeTrackValues();
         this.setupFullscreenListener();
         this.initializeLfoRates();
 
-        // Schema versioning - check if migration is needed
+        // Schema versioning
         const storedVersion = localStorage.getItem('tx6-schema-version');
         if (storedVersion !== String(SCHEMA_VERSION)) {
             console.log(`Schema migration: ${storedVersion || 'none'} → ${SCHEMA_VERSION}`);
-            // Add migration logic here when SCHEMA_VERSION is incremented
             localStorage.setItem('tx6-schema-version', String(SCHEMA_VERSION));
         }
 
-        // Sync lfoPhases array with globalLfos length
         this.lfoPhases = Array(this.globalLfos.length).fill(0);
 
         this.currentEqMode = Number(this.currentEqMode);
         this.currentFxMode = Number(this.currentFxMode);
         this.currentSliderMode = Number(this.currentSliderMode);
 
-        // Always start with FX buttons inactive
         this.fx.fx1Active = false;
         this.fx.fx2Active = false;
 
@@ -639,8 +638,7 @@ Alpine.data('tx6Controller', () => ({
             const fxValue = this.trackValues[fxKey] !== undefined ? this.trackValues[fxKey] : MIDI.MIN;
             this.knobs.fx1.value = fxValue;
 
-            // Initialize master volume knob from current channel's stored value
-            this.knobs.masterVolume.value = this.masterChannelValues[this.masterChannel] || MIDI.MIN;
+            this.knobs.masterVolume.value = this.masterChannelValues[this.masterChannel];
         });
 
         this.updateLfoKnobs();
@@ -664,14 +662,12 @@ Alpine.data('tx6Controller', () => ({
             if (this._switchingChannel) return;
             this._switchingChannel = true;
 
-            // Save current value to old channel before switching
             if (oldChannel) {
                 this.masterChannelValues = {
                     ...this.masterChannelValues,
                     [oldChannel]: this.knobs.masterVolume.value
                 };
             }
-            // Load value from new channel
             this.knobs.masterVolume.value = this.masterChannelValues[newChannel] ?? MIDI.MIN;
 
             const sliderModeMap = {
@@ -765,6 +761,45 @@ Alpine.data('tx6Controller', () => ({
         } finally {
             this.connecting = false;
         }
+        if (this.currentView === 'synth') {
+            this.updateSynthKnobConfig();
+        }
+    },
+
+    initTheme() {
+        const savedTheme = localStorage.getItem('tx6-theme');
+        if (savedTheme) {
+            this.currentTheme = savedTheme;
+            document.documentElement.classList.add(savedTheme === 'dark' ? 'dark-theme' : 'light-theme');
+        } else {
+            this.currentTheme = 'system';
+        }
+    },
+
+    toggleTheme() {
+        const root = document.documentElement;
+        let isDark;
+        if (this.currentTheme === 'system') {
+            isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        } else {
+            isDark = this.currentTheme === 'dark';
+        }
+
+        // Remove both classes to start fresh
+        root.classList.remove('dark-theme', 'light-theme');
+
+        // Toggle
+        if (isDark) {
+            // Switch to light
+            this.currentTheme = 'light';
+            root.classList.add('light-theme');
+        } else {
+            // Switch to dark
+            this.currentTheme = 'dark';
+            root.classList.add('dark-theme');
+        }
+
+        localStorage.setItem('tx6-theme', this.currentTheme);
     },
 
     selectTrack(trackIndex) {
@@ -1131,6 +1166,9 @@ Alpine.data('tx6Controller', () => ({
         const height = canvas.height;
         const centerY = height / 2;
 
+        const computedStyle = getComputedStyle(document.documentElement);
+        const textColor = computedStyle.getPropertyValue('--text-color').trim();
+
         ctx.clearRect(0, 0, width, height);
 
         const currentLfo = this.globalLfos[this.currentLfoIndex];
@@ -1143,20 +1181,24 @@ Alpine.data('tx6Controller', () => ({
         const timeSpan = 60 / this.bpm * 4;
         const cycles = hz * timeSpan;
 
-        ctx.strokeStyle = 'rgba(80, 81, 79, 0.3)';
+        ctx.strokeStyle = textColor;
+        ctx.globalAlpha = 0.3;
         ctx.lineWidth = 1;
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
         ctx.moveTo(0, centerY);
         ctx.lineTo(width, centerY);
         ctx.stroke();
+        ctx.globalAlpha = 1.0;
         ctx.setLineDash([]);
 
-        ctx.fillStyle = 'rgba(80, 81, 79, 0.6)';
+        ctx.fillStyle = textColor;
+        ctx.globalAlpha = 0.6;
         ctx.font = '12px Arial';
 
         ctx.textAlign = 'right';
         ctx.fillText(`${hz.toFixed(2)} Hz`, width - 5, 15);
+        ctx.globalAlpha = 1.0;
 
         ctx.textAlign = 'left';
         ctx.fillText(`Amt: ${amount}`, 5, 15);
