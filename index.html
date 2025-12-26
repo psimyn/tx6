@@ -531,7 +531,9 @@
                             <span class="octave-display" x-text="synthSettings.octave"></span>
                             <div class="keyboard">
                                 <template x-for="(note, index) in keyboardNotes" :key="index">
-                                    <button @click="playNote(note)" class="key"
+                                    <button @mousedown="noteOn(note)" @touchstart.prevent="noteOn(note)"
+                                        @mouseup="noteOff(note)" @touchend="noteOff(note)" @touchcancel="noteOff(note)"
+                                        @mouseleave="noteOff(note)" @contextmenu.prevent class="key"
                                         :class="{ 'black-key': note.isBlack, 'disabled': note.isDisabled }"
                                         :style="note.isBlack ? `left: ${note.position}%` : ''"
                                         :disabled="note.isDisabled" x-text="note.isBlack ? '' : note.label">

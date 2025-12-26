@@ -65,6 +65,8 @@
     --tab-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
     --tab-highlight: rgba(255, 255, 255, 0.5);
     --button-border: #555;
+    --key-border: rgba(0, 0, 0, 0.2);
+    --key-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     --key-disabled: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
 }
 
@@ -113,6 +115,8 @@
         --tab-highlight: rgba(255, 255, 255, 0.1);
         --button-border: #444;
         --key-disabled: linear-gradient(to bottom, #333, #222);
+        --key-border: #000;
+        --key-shadow: none;
 
         /* Dark Mode Components */
         --top-bar-bg: rgba(26, 26, 26, 0.95);
@@ -1569,7 +1573,7 @@ header {
 .key {
     flex: 1;
     background: var(--key-white);
-    border: 1px solid var(--knob-border);
+    border: 1px solid var(--key-border);
     border-radius: 0 0 0.25rem 0.25rem;
     cursor: pointer;
     transition: all 0.08s ease-out;
@@ -1580,7 +1584,7 @@ header {
     align-items: flex-end;
     justify-content: center;
     padding-bottom: 0.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--key-shadow);
     position: relative;
     z-index: 1;
     transform-origin: bottom center;
@@ -1662,7 +1666,9 @@ header {
     transform: none;
 }
 
-.light-theme {
+:root.light-theme,
+html.light-theme,
+body.light-theme {
     --bg-color: #e2e2e4;
     --bg-color-darker: #d0d0d3;
     --text-color: #50514f;
@@ -1725,10 +1731,14 @@ header {
     --tab-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
     --tab-highlight: rgba(255, 255, 255, 0.5);
     --button-border: #555;
+    --key-border: rgba(0, 0, 0, 0.2);
+    --key-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     --key-disabled: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
 }
 
-.dark-theme {
+:root.dark-theme,
+html.dark-theme,
+body.dark-theme {
     --bg-color: #1a1a1a;
     --bg-color-darker: #111;
     --text-color: #b0b0b0;
@@ -1737,7 +1747,7 @@ header {
     --knob-border: rgba(255, 255, 255, 0.1);
     --knob-shine: rgba(255, 255, 255, 0.1);
     --knob-shadow: rgba(0, 0, 0, 0.4);
-    --slider-track: #444;
+    --slider-track: #000;
     --accent-color: #aaa;
     --accent-color-orange: #aaa;
     --accent-color-white: #aaa;
@@ -1771,6 +1781,8 @@ header {
     --tab-highlight: rgba(255, 255, 255, 0.1);
     --button-border: #444;
     --key-disabled: linear-gradient(to bottom, #333, #222);
+    --key-border: #000;
+    --key-shadow: none;
 
     --knob-box-shadow:
         0 0 0 3px var(--knob-color-secondary),

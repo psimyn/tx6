@@ -19,6 +19,8 @@ const MIDI = {
     MAX: 127,
     MID: 64,
     CC_STATUS: 0xB0,
+    NOTE_ON: 0x90,
+    NOTE_OFF: 0x80,
     REALTIME_THRESHOLD: 0xF8,
     SYSTEM_REALTIME: { START: 0xFA, CONTINUE: 0xFB, STOP: 0xFC, CLOCK: 0xF8 }
 };
@@ -287,6 +289,8 @@ const createMidiController = () => {
     };
 
     const sendCC = (channel, controller, value) => sendMidiData([MIDI.CC_STATUS + channel, controller, value]);
+    const sendNoteOn = (channel, note, velocity = 100) => sendMidiData([MIDI.NOTE_ON + channel, note, velocity]);
+    const sendNoteOff = (channel, note) => sendMidiData([MIDI.NOTE_OFF + channel, note, 0]);
     const sendSystemRealTime = (message) => sendMidiData([message]);
 
     const processMidiMessage = (data) => {
@@ -421,7 +425,7 @@ const createMidiController = () => {
     };
 
     return {
-        sendCC, sendSystemRealTime, connectBle, connectUsb,
+        sendCC, sendNoteOn, sendNoteOff, sendSystemRealTime, connectBle, connectUsb,
         addClockListener: (cb) => clockListeners.push(cb),
         removeClockListener: (cb) => clockListeners.splice(clockListeners.indexOf(cb), 1),
         getClockStatus: () => ({ isReceivingClock, clockCount })
@@ -613,6 +617,11 @@ Alpine.data('tx6Controller', () => ({
         this.setupFullscreenListener();
         this.initializeLfoRates();
 
+        // Clear any hanging notes on page unload
+        window.addEventListener('beforeunload', () => {
+            this.allNotesOff();
+        });
+
         // Schema versioning
         const storedVersion = localStorage.getItem('tx6-schema-version');
         if (storedVersion !== String(SCHEMA_VERSION)) {
@@ -760,9 +769,6 @@ Alpine.data('tx6Controller', () => ({
             setTimeout(() => this.status = '', TIME.CONNECTION_ERROR_DISPLAY);
         } finally {
             this.connecting = false;
-        }
-        if (this.currentView === 'synth') {
-            this.updateSynthKnobConfig();
         }
     },
 
@@ -1564,7 +1570,9 @@ Alpine.data('tx6Controller', () => ({
         });
     },
 
-    playNote(noteData) {
+    activeNotes: new Set(),  // Track currently held notes
+
+    noteOn(noteData) {
         if (noteData.isDisabled) return;
 
         const currentWaveform = this.waveformLabels[Math.floor(this.synthSettings.waveform / SYNTH.WAVEFORM_DIVIDE)];
@@ -1578,6 +1586,32 @@ Alpine.data('tx6Controller', () => ({
             const midiValue = Math.ceil(noteValue * MIDI.MAX / SYNTH.MIDI_NOTE_MAX);
             this.sendValidatedCC(this.currentTrack, 89, midiValue);
         }
+
+        // Send MIDI Note On
+        if (this.isConnected && !this.activeNotes.has(noteData.midiNote)) {
+            this.activeNotes.add(noteData.midiNote);
+            this.midi.sendNoteOn(this.currentTrack, noteData.midiNote);
+        }
+    },
+
+    noteOff(noteData) {
+        if (noteData.isDisabled) return;
+
+        // Send MIDI Note Off
+        if (this.isConnected && this.activeNotes.has(noteData.midiNote)) {
+            this.activeNotes.delete(noteData.midiNote);
+            this.midi.sendNoteOff(this.currentTrack, noteData.midiNote);
+        }
+    },
+
+    allNotesOff() {
+        // Send Note Off for all active notes
+        if (this.isConnected) {
+            this.activeNotes.forEach(note => {
+                this.midi.sendNoteOff(this.currentTrack, note);
+            });
+        }
+        this.activeNotes.clear();
     },
 
     increaseOctave() {
