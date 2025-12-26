@@ -1,15 +1,7 @@
-const CACHE_NAME = 'tx6-cache-v2';
-const OFFLINE_URLS = [
-  '/',
-  'index.html'
-];
+const CACHE_NAME = 'tx6-cache-v3';
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(OFFLINE_URLS);
-    })
-  );
+  // Force immediate activation
   self.skipWaiting();
 });
 
@@ -22,22 +14,31 @@ self.addEventListener('activate', event => {
       );
     })
   );
+  // Take control of all clients immediately
   self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   
-  // Network-first for CSS and JS assets
-  if (url.pathname.match(/\.(css|js)$/)) {
+  // Ignore cross-origin requests (like Cloudflare Analytics)
+  if (url.origin !== location.origin) {
+    return;
+  }
+  
+  // Network-first for HTML, CSS, and JS assets
+  if (url.pathname === '/' || url.pathname.endsWith('.html') || 
+      url.pathname.match(/\.(css|js)$/)) {
     event.respondWith(
       fetch(event.request)
         .then(response => {
-          // Cache the fresh response
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseClone);
-          });
+          // Only cache successful responses
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseClone);
+            });
+          }
           return response;
         })
         .catch(() => {
@@ -48,13 +49,17 @@ self.addEventListener('fetch', event => {
     return;
   }
   
-  // Cache-first for everything else
+  // Cache-first for other assets (images, manifest, etc.)
   event.respondWith(
     caches.match(event.request).then(response => {
-      return response || fetch(event.request).catch(() => {
-        if (event.request.mode === 'navigate') {
-          return caches.match('index.html');
+      return response || fetch(event.request).then(response => {
+        if (response && response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
+          });
         }
+        return response;
       });
     })
   );
