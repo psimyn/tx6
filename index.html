@@ -94,15 +94,38 @@
     <!-- Main View -->
     <div class="view-container knob-container" x-show="currentView === 'main'">
 
-        <div class="knob-wrapper">
-            <div class="volume-slider">
-                <input type="range" min="0" max="127" :value="sliderValue" @input="handleSliderChange($event)"
-                    @wheel="event.preventDefault()">
-                <input type="range" min="0" max="127" x-model="sliderOutputValue" class="slider-overlay" readonly
-                    tabindex="-1" @wheel="event.preventDefault()">
+        <div class="slider-with-switcher">
+            <!-- Master Channel Radio Group (left side, vertical text) -->
+            <div class="master-channel-section">
+                <div class="master-channel-radio-group">
+                    <label class="master-channel-radio-label">
+                        <input type="radio" name="master-channel" value="aux" x-model="masterChannel"
+                            class="master-channel-radio">
+                        <span>AUX</span>
+                    </label>
+                    <label class="master-channel-radio-label">
+                        <input type="radio" name="master-channel" value="cue" x-model="masterChannel"
+                            class="master-channel-radio">
+                        <span>CUE</span>
+                    </label>
+                    <label class="master-channel-radio-label">
+                        <input type="radio" name="master-channel" value="volume" x-model="masterChannel"
+                            class="master-channel-radio">
+                        <span>MASTER</span>
+                    </label>
+                </div>
             </div>
-            <div class="value-display">
-                <span class="knob-value value-large" x-text="Math.floor(sliderValue * 100 / 127)"></span>
+            <!-- Volume Slider (right side, stacked) -->
+            <div class="knob-wrapper">
+                <div class="volume-slider">
+                    <input type="range" min="0" max="127" :value="sliderValue" @input="handleSliderChange($event)"
+                        @wheel="event.preventDefault()">
+                    <input type="range" min="0" max="127" x-model="sliderOutputValue" class="slider-overlay" readonly
+                        tabindex="-1" @wheel="event.preventDefault()">
+                </div>
+                <div class="value-display">
+                    <span class="knob-value value-large" x-text="Math.floor(sliderValue * 100 / 127)"></span>
+                </div>
             </div>
         </div>
 
@@ -123,6 +146,7 @@
                 </select>
             </div>
         </div>
+
         <div class="knob-wrapper">
             <div x-data="knob(knobConfigs.fx1)" class="knob knob-orange" @mousedown="startDrag($event)"
                 @touchstart="startDrag($event)" x-init="knobData.value = knobs.fx1.value"
@@ -138,27 +162,6 @@
                             x-text="`${option.label}  ${option.displayValue}`"></option>
                     </template>
                 </select>
-            </div>
-        </div>
-
-        <!-- Master Channel Radio Group -->
-        <div class="master-channel-section">
-            <div class="master-channel-radio-group">
-                <label class="master-channel-radio-label">
-                    <input type="radio" name="master-channel" value="aux" x-model="masterChannel"
-                        class="master-channel-radio">
-                    <span>AUX</span>
-                </label>
-                <label class="master-channel-radio-label">
-                    <input type="radio" name="master-channel" value="cue" x-model="masterChannel"
-                        class="master-channel-radio">
-                    <span>CUE</span>
-                </label>
-                <label class="master-channel-radio-label">
-                    <input type="radio" name="master-channel" value="volume" x-model="masterChannel"
-                        class="master-channel-radio">
-                    <span>MASTER</span>
-                </label>
             </div>
         </div>
 
