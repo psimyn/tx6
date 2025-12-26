@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tx6-cache-v1';
+const CACHE_NAME = 'tx6-cache-v2';
 const OFFLINE_URLS = [
   '/',
   'index.html'
@@ -26,6 +26,29 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  
+  // Network-first for CSS and JS assets
+  if (url.pathname.match(/\.(css|js)$/)) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Cache the fresh response
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache if offline
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+  
+  // Cache-first for everything else
   event.respondWith(
     caches.match(event.request).then(response => {
       return response || fetch(event.request).catch(() => {
