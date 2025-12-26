@@ -693,7 +693,25 @@ Alpine.data('tx6Controller', () => ({
             });
         }
 
+
+
+        // Validate and migrate globalLfos structure
+        this.globalLfos.forEach(lfo => {
+            if (lfo.assignedTrack === undefined || lfo.assignedTrack === null) {
+                lfo.assignedTrack = 0; // Default to T1
+            }
+            if (!lfo.target) {
+                lfo.target = Object.keys(LFO_TARGETS.track)[0];
+            }
+        });
+
         this.lfoPhases = Array(this.globalLfos.length).fill(0);
+
+        // Ensure valid currentLfoIndex from persisted storage
+        if (this.currentLfoIndex >= this.globalLfos.length) {
+            this.currentLfoIndex = 0;
+        }
+        this.updateLfoKnobs();
 
         this.currentEqMode = Number(this.currentEqMode);
         this.currentFxMode = Number(this.currentFxMode);
@@ -1886,7 +1904,95 @@ Alpine.data('tx6Controller', () => ({
         if (this.synthSettings.octave > SYNTH.OCTAVE_MIN) {
             this.synthSettings.octave--;
         }
+    },
+
+    /**
+     * Finds an LFO that's actively modulating a specific channel/CC pair.
+     * Returns the LFO output value if found, or null if no modulation.
+     */
+    _getLfoModulationValue(channel, cc) {
+        if (!this.startStopActive && !this.isConnected) return null;
+
+        const lfo = this.globalLfos.find(l => {
+            if (!l.enabled || l.amount === 50) return false;
+            if (Number(l.assignedTrack) !== Number(channel)) return false;
+
+            let targetConfig;
+            if (l.assignedTrack <= 5) targetConfig = LFO_TARGETS.track[l.target];
+            else if (l.assignedTrack === 7) targetConfig = LFO_TARGETS.fx1[l.target];
+            else if (l.assignedTrack === 8) targetConfig = LFO_TARGETS.fx2[l.target];
+
+            return targetConfig && targetConfig.cc === cc;
+        });
+
+        if (lfo) {
+            const key = `${channel}-${cc}`;
+            return this.lfoOutputValues[key] ?? null;
+        }
+        return null;
+    },
+
+    /**
+     * Returns the ghost knob position for LFO-modulated controls.
+     * Uses context-aware mapping based on current mode selections.
+     */
+    getGhostKnobValue(knobType) {
+        // Control-to-CC mapping with context resolution
+        const mappings = {
+            eq: () => {
+                if (this.currentEqMode === CC.FILTER) return { channel: this.currentTrack, cc: CC.FILTER };
+                if (this.currentEqMode === CC.PAN) return { channel: this.currentTrack, cc: CC.PAN };
+                return null;
+            },
+            fx1: () => {
+                if (this.currentFxMode === CC.COMPRESSOR) return { channel: this.currentTrack, cc: CC.COMPRESSOR };
+                return null;
+            },
+            fxParam1: () => ({ channel: this.fx.currentChannel, cc: CC.FX_PARAM1 }),
+            fxParam2: () => this.fx.currentChannel === TRACKS.FX2
+                ? { channel: this.fx.currentChannel, cc: CC.FX_PARAM2 }
+                : null,
+            fxReturn: () => this.fx.currentChannel === TRACKS.FX1
+                ? { channel: this.fx.currentChannel, cc: CC.FX_RETURN }
+                : null,
+            synthDet: () => ({ channel: this.currentTrack, cc: CC.DETUNE }),
+            synthLen: () => ({ channel: this.currentTrack, cc: CC.SYNTH_LEN })
+        };
+
+        const resolver = mappings[knobType];
+        if (!resolver) return null;
+
+        const target = resolver();
+        if (!target) return null;
+
+        return this._getLfoModulationValue(target.channel, target.cc);
+    },
+
+    /**
+     * Checks if a param button in a grid should show ghost highlight.
+     */
+    isFxParamGhostActive(paramType, index, totalOptions) {
+        if (paramType !== 'param1') return false;
+
+        const ghostValue = this.getGhostKnobValue('fxParam1');
+        if (ghostValue === null) return false;
+
+        const projectedIndex = Math.round((ghostValue / MIDI.MAX) * (totalOptions - 1));
+        return projectedIndex === index;
+    },
+
+    /**
+     * Returns the ghost modulation intensity for FX toggle button (0-1 scale).
+     * Returns null if no modulation, number indicating current intensity otherwise.
+     */
+    getGhostFxActive(fxChannel) {
+        const value = this._getLfoModulationValue(fxChannel, CC.FX);
+        if (value === null) return null;
+        // Return normalized value (0-1) for opacity/intensity styling
+        return value / MIDI.MAX;
     }
+
+
 }));
 
 Alpine.start();

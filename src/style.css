@@ -837,6 +837,34 @@ input:focus {
     background-color: var(--accent-color-orange);
 }
 
+.knob-ghost-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0.1875rem;
+    height: 50%;
+    /* Same as regular indicator length? No, regular is often smaller? */
+    /* Regular indicator .indicator-small is height: 50% */
+    background-color: var(--accent-color);
+    opacity: 0.3;
+    transform-origin: bottom center;
+    z-index: 1;
+    /* Below the main indicator if overlapping, but main is z-index 2 usually */
+    pointer-events: none;
+    transition: transform 0.05s linear;
+    /* Smooth movement */
+    margin-top: -50%;
+    /* Align pivot to center */
+}
+
+.knob-blue .knob-ghost-indicator {
+    background-color: var(--accent-color-blue);
+}
+
+.knob-orange .knob-ghost-indicator {
+    background-color: var(--accent-color-orange);
+}
+
 .connection-info {
     margin-top: var(--space-2xl);
     font-size: 0.9rem;
@@ -1413,6 +1441,30 @@ header {
 .fx-button.white.active {
     color: var(--button-color);
 }
+
+.fx-param-button.ghost {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 1px var(--button-color);
+    opacity: 0.6;
+    color: var(--button-color);
+}
+
+/* Ghost state for FX button - semi-transparent overlay for "half-active" look */
+.fx-button.ghost::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background-color: var(--active-color);
+    opacity: var(--ghost-intensity, 0.3);
+    pointer-events: none;
+    transition: opacity 0.1s ease;
+}
+
+.fx-button.ghost .fx-button-inner {
+    opacity: 0.5;
+}
+
 
 .start-stop-button {
     color: var(--text-color);
