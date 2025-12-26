@@ -25,7 +25,6 @@
     --select-border: rgba(0, 0, 0, 0.1);
     --border-color: #ccc;
     --text-inverse: #ffffff;
-    --header-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6), 0 0 20px rgba(255, 255, 255, 0.2);
 
     /* Shadow Variables */
     --knob-box-shadow:
@@ -74,78 +73,73 @@
         -0.125rem -0.125rem 0.1875rem rgba(255, 255, 255, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg-color: #1a1a1a;
-        --bg-color-darker: #111;
-        --text-color: #b0b0b0;
-        --knob-color: #2a2a2a;
-        --knob-color-secondary: #333;
-        --knob-border: rgba(255, 255, 255, 0.1);
-        --knob-shine: rgba(255, 255, 255, 0.1);
-        --knob-shadow: rgba(0, 0, 0, 0.4);
-        --slider-track: #000;
-        --accent-color: #aaa;
-        --accent-color-orange: #aaa;
-        --accent-color-white: #aaa;
-        --accent-color-blue: #aaa;
-        --eq-center-color: #888;
-        --button-color: #888;
-        --button-color-secondary: #666;
-        --button-hover: #999;
-        --button-active: #777;
-        --button-orange: #888;
-        --button-orange-hover: #999;
-        --button-orange-active: #777;
-        --label-color: #aaa;
-        --select-bg: #2a2a2a;
-        --select-border: rgba(255, 255, 255, 0.1);
-        --border-color: #444;
-        --key-white-hover: #3a3a3a;
-        --header-text-shadow: none;
 
-        /* Dark Mode Tab Variables - Simple flat look as requested */
-        --tab-bg: #2a2a2a;
-        --tab-bg-hover: #333;
-        --tab-bg-active: #1a1a1a;
-        --tab-border: #333;
-        --tab-border-bottom: #333;
-        --tab-border-right: #333;
-        --tab-border-active: #333;
-        --tab-border-active-bottom: #1a1a1a;
-        --tab-text-shadow: none;
-        --tab-highlight: rgba(255, 255, 255, 0.1);
-        --button-border: #444;
-        --tab-highlight: rgba(255, 255, 255, 0.1);
-        --button-border: #444;
-        --key-disabled: linear-gradient(to bottom, #333, #222);
-        --key-border: #000;
-        --key-shadow: none;
-        --key-disabled-bg: #1a1a1a;
-        --key-disabled-color: #444;
-        --slider-overlay-opacity: 0.9;
-        --play-button-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.5);
+:root.dark-theme,
+html.dark-theme,
+body.dark-theme {
+    --bg-color: #1a1a1a;
+    --bg-color-darker: #111;
+    --text-color: #b0b0b0;
+    --knob-color: #2a2a2a;
+    --knob-color-secondary: #333;
+    --knob-border: rgba(255, 255, 255, 0.1);
+    --knob-shine: rgba(255, 255, 255, 0.1);
+    --knob-shadow: rgba(0, 0, 0, 0.4);
+    --slider-track: #000;
+    --accent-color: #aaa;
+    --accent-color-orange: #aaa;
+    --accent-color-white: #aaa;
+    --accent-color-blue: #aaa;
+    --eq-center-color: #888;
+    --button-color: #888;
+    --button-color-secondary: #666;
+    --button-hover: #999;
+    --button-active: #777;
+    --button-orange: #888;
+    --button-orange-hover: #999;
+    --button-orange-active: #777;
+    --label-color: #aaa;
+    --select-bg: #2a2a2a;
+    --select-border: rgba(255, 255, 255, 0.1);
+    --border-color: #444;
+    --key-white-hover: #3a3a3a;
+    --text-inverse: #1a1a1a;
 
-        /* Dark Mode Components */
-        --top-bar-bg: rgba(26, 26, 26, 0.95);
-        --tab-nav-bg: rgba(26, 26, 26, 0.95);
-        --key-white: #333333;
-        --key-white-active: #404040;
+    --tab-bg: #2a2a2a;
+    --tab-bg-hover: #333;
+    --tab-bg-active: #1a1a1a;
+    --tab-border: #333;
+    --tab-border-bottom: #333;
+    --tab-border-right: #333;
+    --tab-border-active: #333;
+    --tab-border-active-bottom: #1a1a1a;
+    --tab-text-shadow: none;
+    --tab-highlight: rgba(255, 255, 255, 0.1);
+    --button-border: #444;
+    --key-disabled: linear-gradient(to bottom, #333, #222);
+    --key-border: #000;
+    --key-shadow: none;
+    --key-disabled-bg: #1a1a1a;
+    --key-disabled-color: #444;
+    --slider-overlay-opacity: 0.6;
+    --play-button-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.5);
 
-        /* Dark Mode Shadows */
-        --knob-box-shadow:
-            0 0 0 3px var(--knob-color-secondary),
-            0 5px 14px rgba(0, 0, 0, 0.3),
-            8px 0 16px rgba(0, 0, 0, 0.3),
-            0 8px 6px rgba(0, 0, 0, 0.3),
-            5px 0 4px rgba(0, 0, 0, 0.3),
-            0 2px 0 3px #333,
-            1px 0 0 3px #222,
-            -2px -2px 3px rgba(255, 255, 255, 0.05);
-        --tab-box-shadow: none;
-        --tab-hover-box-shadow: none;
-        --text-inverse: #1a1a1a;
-    }
+    --knob-box-shadow:
+        0 0 0 3px var(--knob-color-secondary),
+        0 5px 14px rgba(0, 0, 0, 0.3),
+        8px 0 16px rgba(0, 0, 0, 0.3),
+        0 8px 6px rgba(0, 0, 0, 0.3),
+        5px 0 4px rgba(0, 0, 0, 0.3),
+        0 2px 0 3px #333,
+        1px 0 0 3px #222,
+        -2px -2px 3px rgba(255, 255, 255, 0.05);
+    --tab-box-shadow: none;
+    --tab-hover-box-shadow: none;
+
+    --top-bar-bg: rgba(26, 26, 26, 0.95);
+    --tab-nav-bg: rgba(26, 26, 26, 0.95);
+    --key-white: #333333;
+    --key-white-active: #404040;
 }
 
 *,
@@ -278,7 +272,6 @@ h1 {
     text-transform: uppercase;
     color: var(--text-color);
     opacity: 0.8;
-    text-shadow: var(--header-text-shadow, 0 1px 0 rgba(255, 255, 255, 0.6));
 }
 
 .options-menu-wrapper {
@@ -384,20 +377,7 @@ h1 {
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
 }
 
-#connect-btn {
-    background-color: var(--button-color);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
 
-#connect-btn:hover {
-    background-color: var(--button-hover);
-}
 
 .knob-container {
     max-width: 20rem;
@@ -682,8 +662,9 @@ input:focus {
     width: auto;
 }
 
-/* LFO Navigation Buttons */
-.lfo-nav-btn {
+/* LFO Navigation and Octave Buttons */
+.lfo-nav-btn,
+.octave-button {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -698,16 +679,19 @@ input:focus {
     padding: 0;
 }
 
-.lfo-nav-btn:hover:not(:disabled) {
+.lfo-nav-btn:hover:not(:disabled),
+.octave-button:hover:not(:disabled) {
     border-color: var(--button-color);
 }
 
-.lfo-nav-btn:disabled {
+.lfo-nav-btn:disabled,
+.octave-button:disabled {
     opacity: 0.3;
     cursor: not-allowed;
 }
 
-.lfo-nav-btn svg {
+.lfo-nav-btn svg,
+.octave-button svg {
     width: 14px;
     height: 14px;
 }
@@ -1471,7 +1455,7 @@ header {
     box-shadow: inset 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.2), 0 0.0625rem 0.0625rem rgba(0, 0, 0, 0.02);
 }
 
-/* removed duplicate .active rule */
+
 
 /* FX engine select specific styles */
 .fx-engine-select option {
@@ -1536,18 +1520,6 @@ header {
 }
 
 .octave-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    background: var(--knob-color);
-    border: 1px solid var(--knob-border);
-    border-radius: 0.25rem;
-    color: var(--text-color);
-    cursor: pointer;
-    transition: all 0.15s ease;
-    padding: 0;
     position: absolute;
     top: 1.5rem;
     transform: translateY(-100%);
@@ -1562,19 +1534,6 @@ header {
     right: 0;
 }
 
-.octave-button:hover {
-    border-color: var(--button-color);
-}
-
-.octave-button:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-.octave-button svg {
-    width: 14px;
-    height: 14px;
-}
 
 .octave-display {
     font-size: 0.9rem;
@@ -1693,149 +1652,9 @@ header {
     transform: none;
 }
 
-:root.light-theme,
-html.light-theme,
-body.light-theme {
-    --bg-color: #e2e2e4;
-    --bg-color-darker: #d0d0d3;
-    --text-color: #50514f;
-    --knob-color: #f5f5f5;
-    --knob-color-secondary: #eee;
-    --knob-border: rgba(0, 0, 0, 0.1);
-    --knob-shine: rgba(255, 255, 255, 0.6);
-    --knob-shadow: rgba(0, 0, 0, 0.2);
-    --slider-track: var(--accent-color-blue);
-    --accent-color: #e2e2e4;
-    --accent-color-orange: #ff9500;
-    --accent-color-white: #ffffff;
-    --accent-color-blue: #110237;
-    --eq-center-color: #ff9500;
-    --button-color: #110237;
-    --button-color-secondary: #080031ee;
-    --button-hover: #221247;
-    --button-active: #110237;
-    --button-orange: #ff9500;
-    --button-orange-hover: #ff8000;
-    --button-orange-active: #e67e00;
-    --label-color: #110237;
-    --select-bg: #f0f0f2;
-    --select-border: rgba(0, 0, 0, 0.1);
-    --border-color: #ccc;
-    --text-inverse: #ffffff;
 
-    --knob-box-shadow:
-        0 0 0 3px var(--knob-color-secondary),
-        0 5px 14px rgba(0, 0, 0, 0.1),
-        8px 0 16px rgba(0, 0, 0, 0.1),
-        0 8px 6px rgba(0, 0, 0, 0.1),
-        5px 0 4px rgba(0, 0, 0, 0.1),
-        0 2px 0 3px #ccc,
-        1px 0 0 3px #aaa,
-        -2px -2px 3px rgba(255, 255, 255, 0.1);
-    --tab-box-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.12),
-        0 1px 2px rgba(0, 0, 0, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    --tab-hover-box-shadow:
-        0 3px 6px rgba(0, 0, 0, 0.15),
-        0 1px 2px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.7);
 
-    --top-bar-bg: rgba(226, 226, 228, 0.95);
-    --tab-nav-bg: rgba(208, 208, 211, 0.8);
-    --key-white: #ffffff;
-    --key-white-active: #e0e0e0;
-    --key-white-hover: #f0f0f0;
 
-    --tab-bg: linear-gradient(180deg, #f5f5f7 0%, #e8e8eb 30%, #d9d9dd 60%, #c9c9ce 100%);
-    --tab-bg-hover: linear-gradient(180deg, #fafafc 0%, #f0f0f4 30%, #e1e1e6 60%, #d1d1d7 100%);
-    --tab-bg-active: linear-gradient(180deg, #d4d4d8 0%, #c5c5c9 40%, #b5b5bb 100%);
-    --tab-border: #b8b8bc;
-    --tab-border-bottom: #b8b8bc;
-    --tab-border-right: #c0c0c4;
-    --tab-border-active: #b8b8bc;
-    --tab-border-active-bottom: #b8b8bc;
-    --tab-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
-    --tab-highlight: rgba(255, 255, 255, 0.5);
-    --button-border: #555;
-    --key-border: rgba(0, 0, 0, 0.2);
-    --key-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    --key-disabled: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
-}
-
-:root.dark-theme,
-html.dark-theme,
-body.dark-theme {
-    --bg-color: #1a1a1a;
-    --bg-color-darker: #111;
-    --text-color: #b0b0b0;
-    --knob-color: #2a2a2a;
-    --knob-color-secondary: #333;
-    --knob-border: rgba(255, 255, 255, 0.1);
-    --knob-shine: rgba(255, 255, 255, 0.1);
-    --knob-shadow: rgba(0, 0, 0, 0.4);
-    --slider-track: #000;
-    --accent-color: #aaa;
-    --accent-color-orange: #aaa;
-    --accent-color-white: #aaa;
-    --accent-color-blue: #aaa;
-    --eq-center-color: #888;
-    --button-color: #888;
-    --button-color-secondary: #666;
-    --button-hover: #999;
-    --button-active: #777;
-    --button-orange: #888;
-    --button-orange-hover: #999;
-    --button-orange-active: #777;
-    --label-color: #aaa;
-    --select-bg: #2a2a2a;
-    --select-border: rgba(255, 0, 0, 0.0);
-    /* fixed border? */
-    --select-border: rgba(255, 255, 255, 0.1);
-    --border-color: #444;
-    --key-white-hover: #3a3a3a;
-    --text-inverse: #1a1a1a;
-
-    --tab-bg: #2a2a2a;
-    --tab-bg-hover: #333;
-    --tab-bg-active: #1a1a1a;
-    --tab-border: #333;
-    --tab-border-bottom: #333;
-    --tab-border-right: #333;
-    --tab-border-active: #333;
-    --tab-border-active-bottom: #1a1a1a;
-    --tab-text-shadow: none;
-    --tab-highlight: rgba(255, 255, 255, 0.1);
-    --button-border: #444;
-    --key-disabled: linear-gradient(to bottom, #333, #222);
-    --key-border: #000;
-    --key-shadow: none;
-    --key-disabled-bg: #1a1a1a;
-    --key-disabled-color: #444;
-    --slider-overlay-opacity: 0.6;
-    --play-button-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.5);
-
-    --knob-box-shadow:
-        0 0 0 3px var(--knob-color-secondary),
-        0 5px 14px rgba(0, 0, 0, 0.3),
-        8px 0 16px rgba(0, 0, 0, 0.3),
-        0 8px 6px rgba(0, 0, 0, 0.3),
-        5px 0 4px rgba(0, 0, 0, 0.3),
-        0 2px 0 3px #333,
-        1px 0 0 3px #222,
-        -2px -2px 3px rgba(255, 255, 255, 0.05);
-    --tab-box-shadow: none;
-    --tab-hover-box-shadow: none;
-
-    --top-bar-bg: rgba(26, 26, 26, 0.95);
-    --tab-nav-bg: rgba(26, 26, 26, 0.95);
-    --key-white: #333333;
-    --key-white-active: #404040;
-}
-
-.dark-theme h1 {
-    text-shadow: none;
-}
 
 .fx-param-grid {
     display: grid;

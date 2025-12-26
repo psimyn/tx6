@@ -844,15 +844,35 @@ Alpine.data('tx6Controller', () => ({
 
     initTheme() {
         const savedTheme = localStorage.getItem('tx6-theme');
+
+        const applyThemeClass = (theme) => {
+            const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+            document.documentElement.classList.remove('dark-theme', 'light-theme');
+            if (isDark) {
+                document.documentElement.classList.add('dark-theme');
+            } else {
+                document.documentElement.classList.add('light-theme');
+            }
+
+            const themeColor = isDark ? '#1a1a1a' : '#e2e2e4';
+            document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColor);
+        };
+
         if (savedTheme) {
             this.currentTheme = savedTheme;
-            document.documentElement.classList.add(savedTheme === 'dark' ? 'dark-theme' : 'light-theme');
-            // Update theme-color meta tag for Android system bar
-            const themeColor = savedTheme === 'dark' ? '#1a1a1a' : '#e2e2e4';
-            document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColor);
         } else {
             this.currentTheme = 'system';
         }
+
+        applyThemeClass(this.currentTheme);
+
+        // Listen for system changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (this.currentTheme === 'system') {
+                applyThemeClass('system');
+            }
+        });
     },
 
     toggleTheme() {
@@ -1590,8 +1610,8 @@ Alpine.data('tx6Controller', () => ({
 
     get fx1DropdownOptions() {
         return [
+            { value: 93, label: 'CMP', displayValue: this.getStoredFx1DisplayValue(93) },
             { value: 91, label: 'FX1', displayValue: this.getStoredFx1DisplayValue(91) },
-            { value: 93, label: 'CMP', displayValue: this.getStoredFx1DisplayValue(93) }
         ];
     },
 
