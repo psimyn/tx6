@@ -764,9 +764,15 @@ Alpine.data('tx6Controller', () => ({
 
             if (clockData.type === 'clock') {
                 const detectedBpm = Math.round(clockData.bpm * 10) / 10;
-                this.bpm = Math.round(detectedBpm);
-                this.clockStatus.bpm = detectedBpm;
                 this.clockStatus.clockCount = clockData.clockCount;
+                this.clockStatus.bpm = detectedBpm;
+
+                if (Math.abs(this.bpm - detectedBpm) >= 1) { // Only update if significant change to avoid jitter
+                    this.bpm = Math.round(detectedBpm);
+                    if (this.timingWorklet) {
+                        this.timingWorklet.port.postMessage({ type: 'setBpm', data: { bpm: this.bpm } });
+                    }
+                }
 
                 if (!this.startStopActive) {
                     await this.startTimingSystem(false);
@@ -1120,6 +1126,16 @@ Alpine.data('tx6Controller', () => ({
         } else {
             this.stopTimingSystem();
         }
+    },
+
+    updateBpm() {
+        if (this.timingWorklet) {
+            this.timingWorklet.port.postMessage({
+                type: 'setBpm',
+                data: { bpm: this.bpm }
+            });
+        }
+        this.drawLfoWaveform();
     },
 
     handleEqChange(value) {
