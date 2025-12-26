@@ -452,6 +452,7 @@ Alpine.data('tx6Controller', () => ({
     lastTapTime: 0,
     trackValues: Alpine.$persist({}).as('tx6-trackValues'),
     midi: null,
+    _switchingChannel: false,  // Guard flag to prevent watcher re-entrancy
 
     /** Creates standardized knob change handler - reduces boilerplate */
     createKnobHandler(knobType, customHandler) {
@@ -637,6 +638,9 @@ Alpine.data('tx6Controller', () => ({
             const fxKey = `${this.currentTrack}-${this.currentFxMode}`;
             const fxValue = this.trackValues[fxKey] !== undefined ? this.trackValues[fxKey] : MIDI.MIN;
             this.knobs.fx1.value = fxValue;
+
+            // Initialize master volume knob from current channel's stored value
+            this.knobs.masterVolume.value = this.masterChannelValues[this.masterChannel] || MIDI.MIN;
         });
 
         this.updateLfoKnobs();
@@ -656,10 +660,19 @@ Alpine.data('tx6Controller', () => ({
         });
 
         this.$watch('masterChannel', (newChannel, oldChannel) => {
+            // Prevent re-entrancy - the knobs.masterVolume.value assignment can trigger this again
+            if (this._switchingChannel) return;
+            this._switchingChannel = true;
+
+            // Save current value to old channel before switching
             if (oldChannel) {
-                this.masterChannelValues[oldChannel] = this.knobs.masterVolume.value;
+                this.masterChannelValues = {
+                    ...this.masterChannelValues,
+                    [oldChannel]: this.knobs.masterVolume.value
+                };
             }
-            this.knobs.masterVolume.value = this.masterChannelValues[newChannel];
+            // Load value from new channel
+            this.knobs.masterVolume.value = this.masterChannelValues[newChannel] ?? MIDI.MIN;
 
             const sliderModeMap = {
                 aux: 92,
@@ -669,6 +682,11 @@ Alpine.data('tx6Controller', () => ({
             if (sliderModeMap[newChannel]) {
                 this.currentSliderMode = sliderModeMap[newChannel];
             }
+
+            // Reset guard after next tick to allow future switches
+            this.$nextTick(() => {
+                this._switchingChannel = false;
+            });
         });
 
         this.midi.addClockListener(async (clockData) => {
