@@ -1402,15 +1402,6 @@ Alpine.data('tx6Controller', () => ({
         return Math.floor(value * 100 / MIDI.MAX);
     },
 
-    get eqIndicatorColor() {
-        const colors = {
-            [CC.EQ_MID]: 'var(--accent-color-orange)',
-            [CC.EQ_LOW]: 'var(--accent-color-white)',
-            [CC.FILTER]: 'var(--accent-color)'
-        };
-        return colors[this.currentEqMode] || 'var(--accent-color-blue)';
-    },
-
     get fxParam1DisplayValue() {
         const channelData = this.fx.channels[this.fx.currentChannel];
         const currentType = channelData.types[Math.floor(this.fx.channels[this.fx.currentChannel].engine / ((MIDI.MAX + 1) / channelData.types.length))];

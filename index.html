@@ -107,11 +107,11 @@
         </div>
 
         <div class="knob-wrapper">
-            <div x-data="knob(knobConfigs.eq)" class="knob" @mousedown="startDrag($event)"
+            <div x-data="knob(knobConfigs.eq)" class="knob knob-blue" @mousedown="startDrag($event)"
                 @touchstart="startDrag($event)" x-init="knobData.value = knobs.eq.value"
                 x-effect="knobData.value = knobs.eq.value">
                 <div class="knob-indicator indicator-small"
-                    :style="`background: ${eqIndicatorColor}; transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
+                    :style="`background: var(--accent-color-blue); transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                 </div>
             </div>
             <div class="value-display">
@@ -124,7 +124,7 @@
             </div>
         </div>
         <div class="knob-wrapper">
-            <div x-data="knob(knobConfigs.fx1)" class="knob" @mousedown="startDrag($event)"
+            <div x-data="knob(knobConfigs.fx1)" class="knob knob-orange" @mousedown="startDrag($event)"
                 @touchstart="startDrag($event)" x-init="knobData.value = knobs.fx1.value"
                 x-effect="knobData.value = knobs.fx1.value">
                 <div class="knob-indicator indicator-small"
