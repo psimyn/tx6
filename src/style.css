@@ -68,6 +68,10 @@
     --key-border: rgba(0, 0, 0, 0.2);
     --key-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     --key-disabled: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
+    --slider-overlay-opacity: 0.3;
+    --play-button-shadow: inset 0 -0.0625rem 0.25rem rgba(0, 0, 0, 0.02),
+        0 0.125rem 0.25rem rgba(0, 0, 0, 0.2),
+        -0.125rem -0.125rem 0.1875rem rgba(255, 255, 255, 0.1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -117,6 +121,10 @@
         --key-disabled: linear-gradient(to bottom, #333, #222);
         --key-border: #000;
         --key-shadow: none;
+        --key-disabled-bg: #1a1a1a;
+        --key-disabled-color: #444;
+        --slider-overlay-opacity: 0.9;
+        --play-button-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.5);
 
         /* Dark Mode Components */
         --top-bar-bg: rgba(26, 26, 26, 0.95);
@@ -152,6 +160,11 @@
 .no-transitions *:before,
 .no-transitions *:after {
     transition: none !important;
+}
+
+/* Remove focus outlines from buttons */
+button:focus {
+    outline: none;
 }
 
 html,
@@ -571,7 +584,7 @@ input:focus {
 
 .volume-slider input[type="range"].slider-overlay {
     position: absolute;
-    opacity: 0.3;
+    opacity: var(--slider-overlay-opacity);
     pointer-events: none;
     z-index: 1;
     background: none;
@@ -1414,9 +1427,7 @@ header {
     transition: all 0.2s ease;
     width: 3.25rem;
     height: 3.25rem;
-    box-shadow: inset 0 -0.0625rem 0.25rem rgba(0, 0, 0, 0.02),
-        0 0.125rem 0.25rem rgba(0, 0, 0, 0.2),
-        -0.125rem -0.125rem 0.1875rem rgba(255, 255, 255, 0.1);
+    box-shadow: var(--play-button-shadow);
     position: relative;
     --background-color: var(--knob-color);
     background: linear-gradient(to bottom right, var(--background-color), var(--knob-color-secondary));
@@ -1648,20 +1659,20 @@ header {
 }
 
 .key.disabled {
-    background: #d0d0d0;
-    color: #a0a0a0;
+    background: var(--key-disabled-bg, #d0d0d0);
+    color: var(--key-disabled-color, #a0a0a0);
     cursor: not-allowed;
     opacity: 0.4;
     pointer-events: none;
 }
 
 .key.disabled:hover {
-    background: #d0d0d0;
+    background: var(--key-disabled-bg, #d0d0d0);
     transform: none;
 }
 
 .key.disabled:active {
-    background: #d0d0d0;
+    background: var(--key-disabled-bg, #d0d0d0);
     transform: none;
 }
 
@@ -1799,6 +1810,10 @@ body.dark-theme {
     --key-disabled: linear-gradient(to bottom, #333, #222);
     --key-border: #000;
     --key-shadow: none;
+    --key-disabled-bg: #1a1a1a;
+    --key-disabled-color: #444;
+    --slider-overlay-opacity: 0.6;
+    --play-button-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.5);
 
     --knob-box-shadow:
         0 0 0 3px var(--knob-color-secondary),

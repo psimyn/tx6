@@ -496,6 +496,7 @@ Alpine.data('tx6Controller', () => ({
                 onChange: this.createKnobHandler('lfoAmount')
             },
             lfoPhase: { knobType: 'lfoPhase', onChange: this.createKnobHandler('lfoPhase') },
+            lfoPwm: { knobType: 'lfoPwm', minValue: 0, maxValue: 100, sensitivity: UI.SLIDER_SENSITIVITY, doubleClickReset: 50, onChange: this.createKnobHandler('lfoPwm') },
             synthFreq: { knobType: 'synthFreq', minValue: SYNTH.FREQ_MIN, maxValue: SYNTH.FREQ_MAX, sensitivity: UI.SLIDER_SENSITIVITY, onChange: this.createKnobHandler('synthFreq') },
             synthDet: { knobType: 'synthDet', doubleClickReset: MIDI.MID, onChange: this.createKnobHandler('synthDet') },
             synthLen: { knobType: 'synthLen', onChange: this.createKnobHandler('synthLen') }
@@ -507,7 +508,7 @@ Alpine.data('tx6Controller', () => ({
         fx1: { value: MIDI.MIN },
         fxParam1: { value: MIDI.MIN }, fxParam2: { value: MIDI.MIN },
         fxReturn: { value: MIDI.MIN }, lfoRate: { value: LFO.RATE_DEFAULT }, lfoAmount: { value: MIDI.MIN },
-        lfoPhase: { value: MIDI.MIN }, synthFreq: { value: SYNTH.FREQ_DEFAULT }, synthLen: { value: MIDI.MIN }
+        lfoPhase: { value: MIDI.MIN }, lfoPwm: { value: 50 }, synthFreq: { value: SYNTH.FREQ_DEFAULT }, synthLen: { value: MIDI.MIN }
     }).as('tx6-knobs'),
 
     masterChannelValues: Alpine.$persist({
@@ -524,6 +525,7 @@ Alpine.data('tx6Controller', () => ({
         rate: 1.0,
         amount: LFO.AMOUNT_DEFAULT,
         phase: MIDI.MIN,
+        pwm: 50,  // Pulse width modulation (0-100, default 50%)
         assignedTrack: MIDI.MIN
     }))).as('tx6-globalLfos'),
 
@@ -923,13 +925,17 @@ Alpine.data('tx6Controller', () => ({
             return;
         }
 
-        this.knobs[knobType].value = value;
-
-        if (['lfoRate', 'lfoAmount', 'lfoPhase'].includes(knobType)) {
+        // Update LFO state directly (this must happen even if knobs entry doesn't exist)
+        if (['lfoRate', 'lfoAmount', 'lfoPhase', 'lfoPwm'].includes(knobType)) {
             const prop = knobType.replace('lfo', '').toLowerCase();
             this.globalLfos[this.currentLfoIndex][prop] = value;
             this.$nextTick(() => this.drawLfoWaveform());
         }
+
+        // Skip knobs update if entry doesn't exist in persisted state (migration safety)
+        if (!this.knobs[knobType]) return;
+
+        this.knobs[knobType].value = value;
     },
 
     /**
@@ -1130,13 +1136,53 @@ Alpine.data('tx6Controller', () => ({
                 const phaseOffset = (lfo.phase / MIDI.MAX) * 2 * Math.PI;
                 const effectivePhase = (absolutePhase + phaseOffset) % (2 * Math.PI);
 
+                // PWM value (0-100) normalized to threshold (0-1)
+                const pwm = (lfo.pwm ?? 50) / 100;
+                // Normalized position within current cycle (0-1)
+                const cyclePos = effectivePhase / (2 * Math.PI);
+
                 let shapeVal = 0;
                 const shapes = {
-                    sine: () => Math.sin(effectivePhase),
-                    triangle: () => 2 * Math.abs((effectivePhase / Math.PI) % 2 - 1) - 1,
-                    square: () => Math.sign(Math.sin(effectivePhase)),
-                    saw: () => 2 * ((effectivePhase / (2 * Math.PI)) % 1) - 1,
-                    revsaw: () => 1 - 2 * ((effectivePhase / (2 * Math.PI)) % 1),
+                    sine: () => {
+                        const skewedPos = cyclePos < pwm
+                            ? (cyclePos / pwm) * 0.5
+                            : 0.5 + ((cyclePos - pwm) / (1 - pwm)) * 0.5;
+                        return Math.sin(skewedPos * 2 * Math.PI);
+                    },
+                    triangle: () => {
+                        if (cyclePos < pwm) {
+                            return -1 + (cyclePos / pwm) * 2;
+                        } else {
+                            return 1 - ((cyclePos - pwm) / (1 - pwm)) * 2;
+                        }
+                    },
+                    square: () => cyclePos < pwm ? 1 : -1,
+                    saw: () => {
+                        if (pwm <= 0.5) {
+                            const delay = (0.5 - pwm) * 2;
+                            if (cyclePos < delay) return 0;
+                            const sawPos = (cyclePos - delay) / (1 - delay);
+                            return -1 + sawPos * 2;
+                        } else {
+                            const sawDuration = (1 - pwm) * 2;
+                            if (cyclePos > sawDuration) return 0;
+                            const sawPos = cyclePos / sawDuration;
+                            return -1 + sawPos * 2;
+                        }
+                    },
+                    revsaw: () => {
+                        if (pwm <= 0.5) {
+                            const delay = (0.5 - pwm) * 2;
+                            if (cyclePos < delay) return 0;
+                            const sawPos = (cyclePos - delay) / (1 - delay);
+                            return 1 - sawPos * 2;
+                        } else {
+                            const sawDuration = (1 - pwm) * 2;
+                            if (cyclePos > sawDuration) return 0;
+                            const sawPos = cyclePos / sawDuration;
+                            return 1 - sawPos * 2;
+                        }
+                    },
                     noise: () => Math.random() * 2 - 1
                 };
 
@@ -1183,6 +1229,7 @@ Alpine.data('tx6Controller', () => ({
         this.knobs.lfoRate.value = currentLfo.rate;
         this.knobs.lfoAmount.value = currentLfo.amount;
         this.knobs.lfoPhase.value = currentLfo.phase;
+        if (this.knobs.lfoPwm) this.knobs.lfoPwm.value = currentLfo.pwm ?? 50;
 
         this.$nextTick(() => this.drawLfoWaveform());
     },
@@ -1254,6 +1301,9 @@ Alpine.data('tx6Controller', () => ({
         const phaseDegrees = Math.floor((currentLfo.phase / MIDI.MAX) * 360);
         ctx.fillText(`Phase: ${phaseDegrees}°`, 5, height - 5);
 
+        // PWM value (0-100) normalized to threshold (0-1)
+        const pwm = (currentLfo.pwm ?? 50) / 100;
+
         ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--button-color');
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -1263,13 +1313,57 @@ Alpine.data('tx6Controller', () => ({
             const phaseOffset = (currentLfo.phase / MIDI.MAX) * 2 * Math.PI;
             const phase = basePhase + phaseOffset;
 
+            // Normalized position within current cycle (0-1)
+            const cyclePos = ((phase / (2 * Math.PI)) % 1 + 1) % 1;
+
             let y = 0;
             const shapes = {
-                sine: () => Math.sin(phase),
-                triangle: () => 2 * Math.abs((phase / Math.PI) % 2 - 1) - 1,
-                square: () => Math.sign(Math.sin(phase)),
-                saw: () => 2 * ((phase / (2 * Math.PI)) % 1) - 1,
-                revsaw: () => 1 - 2 * ((phase / (2 * Math.PI)) % 1),
+                sine: () => {
+                    // PWM for sine: skew the phase mapping
+                    const skewedPos = cyclePos < pwm
+                        ? (cyclePos / pwm) * 0.5
+                        : 0.5 + ((cyclePos - pwm) / (1 - pwm)) * 0.5;
+                    return Math.sin(skewedPos * 2 * Math.PI);
+                },
+                triangle: () => {
+                    // PWM for triangle: move the peak position
+                    if (cyclePos < pwm) {
+                        return -1 + (cyclePos / pwm) * 2;
+                    } else {
+                        return 1 - ((cyclePos - pwm) / (1 - pwm)) * 2;
+                    }
+                },
+                square: () => cyclePos < pwm ? 1 : -1,
+                saw: () => {
+                    // PWM for saw: pulse-style - at 50% full saw, below delays start, above shortens end
+                    if (pwm <= 0.5) {
+                        // PWM 0-50%: delay start with silence, then full saw
+                        const delay = (0.5 - pwm) * 2;  // 0 at 50%, 1 at 0%
+                        if (cyclePos < delay) return 0;
+                        const sawPos = (cyclePos - delay) / (1 - delay);
+                        return -1 + sawPos * 2;
+                    } else {
+                        // PWM 50-100%: full saw then silence
+                        const sawDuration = (1 - pwm) * 2;  // 1 at 50%, 0 at 100%
+                        if (cyclePos > sawDuration) return 0;
+                        const sawPos = cyclePos / sawDuration;
+                        return -1 + sawPos * 2;
+                    }
+                },
+                revsaw: () => {
+                    // PWM for revsaw: pulse-style - at 50% full revsaw, below delays start, above shortens end
+                    if (pwm <= 0.5) {
+                        const delay = (0.5 - pwm) * 2;
+                        if (cyclePos < delay) return 0;
+                        const sawPos = (cyclePos - delay) / (1 - delay);
+                        return 1 - sawPos * 2;
+                    } else {
+                        const sawDuration = (1 - pwm) * 2;
+                        if (cyclePos > sawDuration) return 0;
+                        const sawPos = cyclePos / sawDuration;
+                        return 1 - sawPos * 2;
+                    }
+                },
                 noise: () => Math.random() * 2 - 1
             };
 

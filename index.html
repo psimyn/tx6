@@ -357,9 +357,10 @@
                 <div style="display:flex;align-items:center;gap:1rem;position:relative;">
                     <select x-model="globalLfos[currentLfoIndex].shape" class="fx-engine-select lfo-shape"
                         @change="$nextTick(() => drawLfoWaveform())" style="writing-mode:horizontal-tb;">
-                        <template x-for="shape in ['sine', 'triangle', 'square', 'saw', 'revsaw', 'noise']">
-                            <option :value="shape" :selected="globalLfos[currentLfoIndex].shape === shape"
-                                x-text="shape.charAt(0).toUpperCase() + shape.slice(1)"></option>
+                        <template
+                            x-for="[value, label] in [['sine','SIN'],['triangle','TRI'],['square','SQR'],['saw','SAW'],['revsaw','RSAW'],['noise','NSE']]">
+                            <option :value="value" :selected="globalLfos[currentLfoIndex].shape === value"
+                                x-text="label"></option>
                         </template>
                     </select>
                     <canvas id="lfo-canvas" width="300" height="100"
@@ -402,10 +403,16 @@
                             <span class="knob-value" x-text="getLfoKnobDisplay('lfoAmount')"></span>
                             <span class="knob-label" x-text="getLfoKnobUnit('lfoAmount')"></span>
                         </div>
-                        <div>
-                            <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()"
-                                class="bpm-input" min="40" max="400">
-                            <div class="knob-label">BPM</div>
+                        <label class="knob-label" style="margin-top: 0.5rem;">PWM</label>
+                        <div x-data="knob(knobConfigs.lfoPwm)" class="knob" @mousedown="startDrag($event)"
+                            @touchstart="startDrag($event)"
+                            x-effect="knobData.value = globalLfos[currentLfoIndex].pwm ?? 50">
+                            <div class="knob-indicator indicator-small"
+                                :style="`transform: translateX(-50%) rotate(${-150 + (knobData.value / 100) * 300}deg)`">
+                            </div>
+                        </div>
+                        <div class="value-display">
+                            <span class="knob-value" x-text="(globalLfos[currentLfoIndex].pwm ?? 50) + '%'"></span>
                         </div>
                     </div>
 
@@ -422,14 +429,23 @@
                             <span class="knob-value" x-text="getLfoKnobDisplay('lfoPhase')"></span>
                             <span class="knob-label" x-text="getLfoKnobUnit('lfoPhase')"></span>
                         </div>
-                        <button @click="togglePlay()" class="start-stop-button" :class="{ active: startStopActive }">
-                            <svg class="play-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M8 5v14l11-7z" />
-                            </svg>
-                            <svg class="stop-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M6 6h12v12H6z" />
-                            </svg>
-                        </button>
+                        <div
+                            style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                            <button @click="togglePlay()" class="start-stop-button"
+                                :class="{ active: startStopActive }">
+                                <svg class="play-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                                <svg class="stop-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M6 6h12v12H6z" />
+                                </svg>
+                            </button>
+                            <div>
+                                <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()"
+                                    class="bpm-input" min="40" max="400">
+                                <div class="knob-label">BPM</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
