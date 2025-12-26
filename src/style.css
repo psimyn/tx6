@@ -1053,6 +1053,29 @@ header {
     flex-shrink: 0;
     display: flex;
     align-items: center;
+    position: relative;
+}
+
+.slider-with-switcher .master-channel-section::after {
+    content: '';
+    position: absolute;
+    bottom: -2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 2rem;
+    background: var(--border-color, #ccc);
+}
+
+.slider-with-switcher .master-channel-section::before {
+    content: '';
+    position: absolute;
+    right: -1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.5rem;
+    height: 1px;
+    background: var(--border-color, #ccc);
 }
 
 .slider-with-switcher .volume-slider {
