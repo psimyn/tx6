@@ -145,8 +145,7 @@
 
         <div class="knob-wrapper">
             <div x-data="knob(knobConfigs.eq)" class="knob knob-blue" @mousedown="startDrag($event)"
-                @touchstart="startDrag($event)" x-init="knobData.value = knobs.eq.value"
-                x-effect="knobData.value = knobs.eq.value">
+                @touchstart="startDrag($event)" x-effect="knobData.value = knobs.eq.value">
                 <div class="knob-indicator indicator-small"
                     :style="`background: var(--accent-color-blue); transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                 </div>
@@ -163,8 +162,7 @@
 
         <div class="knob-wrapper">
             <div x-data="knob(knobConfigs.fx1)" class="knob knob-orange" @mousedown="startDrag($event)"
-                @touchstart="startDrag($event)" x-init="knobData.value = knobs.fx1.value"
-                x-effect="knobData.value = knobs.fx1.value">
+                @touchstart="startDrag($event)" x-effect="knobData.value = knobs.fx1.value">
                 <div class="knob-indicator indicator-small"
                     :style="`background: var(--accent-color-orange); transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                 </div>
@@ -182,8 +180,7 @@
         <!-- Master knob -->
         <div class="knob-wrapper main-knob">
             <div x-data="knob(knobConfigs.masterVolume)" class="knob" @mousedown="startDrag($event)"
-                @touchstart="startDrag($event)" x-init="knobData.value = knobs.masterVolume.value"
-                x-effect="knobData.value = knobs.masterVolume.value">
+                @touchstart="startDrag($event)" x-effect="knobData.value = knobs.masterVolume.value">
                 <div class="knob-indicator indicator-small"
                     :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                 </div>
@@ -254,8 +251,7 @@
                     <template x-if="fx.currentChannel === 7">
                         <div>
                             <div x-data="knob(knobConfigs.fxReturn)" class="knob" @mousedown="startDrag($event)"
-                                @touchstart="startDrag($event)" x-init="knobData.value = knobs.fxReturn.value"
-                                x-effect="knobData.value = knobs.fxReturn.value">
+                                @touchstart="startDrag($event)" x-effect="knobData.value = knobs.fxReturn.value">
                                 <div class="knob-indicator indicator-small"
                                     :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                                 </div>
@@ -285,8 +281,7 @@
                 <!-- FX Param1 -->
                 <div class="knob-wrapper">
                     <div x-data="knob(knobConfigs.fxParam1)" class="knob" @mousedown="startDrag($event)"
-                        @touchstart="startDrag($event)" x-init="knobData.value = knobs.fxParam1.value"
-                        x-effect="knobData.value = knobs.fxParam1.value">
+                        @touchstart="startDrag($event)" x-effect="knobData.value = knobs.fxParam1.value">
                         <div class="knob-indicator indicator-small"
                             :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                         </div>
@@ -300,8 +295,7 @@
                 <!-- FX Param2 -->
                 <div class="knob-wrapper" x-show="fxParam2Visibility">
                     <div x-data="knob(knobConfigs.fxParam2)" class="knob" @mousedown="startDrag($event)"
-                        @touchstart="startDrag($event)" x-init="knobData.value = knobs.fxParam2.value"
-                        x-effect="knobData.value = knobs.fxParam2.value">
+                        @touchstart="startDrag($event)" x-effect="knobData.value = knobs.fxParam2.value">
                         <div class="knob-indicator indicator-small"
                             :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                         </div>
@@ -375,7 +369,7 @@
                     <div class="knob-wrapper">
                         <label class="knob-label">RATE</label>
                         <div x-data="knob(knobConfigs.lfoRate)" class="knob" @mousedown="startDrag($event)"
-                            @touchstart="startDrag($event)" x-init="knobData.value = globalLfos[currentLfoIndex].rate"
+                            @touchstart="startDrag($event)"
                             x-effect="knobData.value = globalLfos[currentLfoIndex].rate">
                             <div class="knob-indicator indicator-small"
                                 :style="`transform: translateX(-50%) rotate(${getKnobAngle('lfoRate', knobData.value)}deg)`">
@@ -397,7 +391,7 @@
                     <div class="knob-wrapper">
                         <label class="knob-label">AMOUNT</label>
                         <div x-data="knob(knobConfigs.lfoAmount)" class="knob" @mousedown="startDrag($event)"
-                            @touchstart="startDrag($event)" x-init="knobData.value = globalLfos[currentLfoIndex].amount"
+                            @touchstart="startDrag($event)"
                             x-effect="knobData.value = globalLfos[currentLfoIndex].amount">
                             <div class="knob-indicator indicator-small"
                                 :style="`transform: translateX(-50%) rotate(${getKnobAngle('lfoAmount', knobData.value)}deg)`">
@@ -417,7 +411,7 @@
                     <div class="knob-wrapper">
                         <label class="knob-label">PHASE</label>
                         <div x-data="knob(knobConfigs.lfoPhase)" class="knob" @mousedown="startDrag($event)"
-                            @touchstart="startDrag($event)" x-init="knobData.value = globalLfos[currentLfoIndex].phase"
+                            @touchstart="startDrag($event)"
                             x-effect="knobData.value = globalLfos[currentLfoIndex].phase">
                             <div class="knob-indicator indicator-small"
                                 :style="`transform: translateX(-50%) rotate(${getKnobAngle('lfoPhase', knobData.value)}deg)`">
@@ -488,8 +482,7 @@
                         <div class="knob-wrapper">
                             <label class="knob-label">FREQ</label>
                             <div x-data="knob(knobConfigs.synthFreq)" class="knob" @mousedown="startDrag($event)"
-                                @touchstart="startDrag($event)" x-init="knobData.value = synthSettings.freq"
-                                x-effect="knobData.value = synthSettings.freq">
+                                @touchstart="startDrag($event)" x-effect="knobData.value = synthSettings.freq">
                                 <div class="knob-indicator indicator-small"
                                     :style="`transform: translateX(-50%) rotate(${synthFreqToAngle(knobData.value)}deg)`">
                                 </div>
@@ -502,8 +495,7 @@
                         <div class="knob-wrapper">
                             <label class="knob-label">DET</label>
                             <div x-data="knob(knobConfigs.synthDet)" class="knob" @mousedown="startDrag($event)"
-                                @touchstart="startDrag($event)" x-init="knobData.value = synthSettings.det"
-                                x-effect="knobData.value = synthSettings.det">
+                                @touchstart="startDrag($event)" x-effect="knobData.value = synthSettings.det">
                                 <div class="knob-indicator indicator-small"
                                     :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                                 </div>
@@ -516,8 +508,7 @@
                         <div class="knob-wrapper">
                             <label class="knob-label">LEN</label>
                             <div x-data="knob(knobConfigs.synthLen)" class="knob" @mousedown="startDrag($event)"
-                                @touchstart="startDrag($event)" x-init="knobData.value = synthSettings.len"
-                                x-effect="knobData.value = synthSettings.len">
+                                @touchstart="startDrag($event)" x-effect="knobData.value = synthSettings.len">
                                 <div class="knob-indicator indicator-small"
                                     :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                                 </div>

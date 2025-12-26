@@ -78,7 +78,7 @@
         --knob-border: rgba(255, 255, 255, 0.1);
         --knob-shine: rgba(255, 255, 255, 0.1);
         --knob-shadow: rgba(0, 0, 0, 0.4);
-        --slider-track: #444;
+        --slider-track: #000;
         --accent-color: #aaa;
         --accent-color-orange: #aaa;
         --accent-color-white: #aaa;

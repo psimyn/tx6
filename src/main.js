@@ -487,9 +487,9 @@ Alpine.data('tx6Controller', () => ({
                 onChange: this.createKnobHandler('lfoAmount')
             },
             lfoPhase: { knobType: 'lfoPhase', onChange: this.createKnobHandler('lfoPhase') },
-            synthFreq: { knobType: 'synthFreq', minValue: SYNTH.FREQ_MIN, maxValue: SYNTH.FREQ_MAX, sensitivity: UI.SLIDER_SENSITIVITY, onChange: (v) => { this.handleKnobChange('synthFreq', v); this.synthSettings.freq = v; } },
-            synthDet: { knobType: 'synthDet', doubleClickReset: MIDI.MID, onChange: (v) => { this.handleKnobChange('synthDet', v); this.synthSettings.det = v; } },
-            synthLen: { knobType: 'synthLen', onChange: (v) => { this.handleKnobChange('synthLen', v); this.synthSettings.len = v; } }
+            synthFreq: { knobType: 'synthFreq', minValue: SYNTH.FREQ_MIN, maxValue: SYNTH.FREQ_MAX, sensitivity: UI.SLIDER_SENSITIVITY, onChange: this.createKnobHandler('synthFreq') },
+            synthDet: { knobType: 'synthDet', doubleClickReset: MIDI.MID, onChange: this.createKnobHandler('synthDet') },
+            synthLen: { knobType: 'synthLen', onChange: this.createKnobHandler('synthLen') }
         };
     },
 
@@ -872,6 +872,14 @@ Alpine.data('tx6Controller', () => ({
         if (knobType === 'lfoAmount') {
             value = Math.max(LFO.AMOUNT_MIN, Math.min(LFO.AMOUNT_MAX, value));
         }
+
+        // Synth knobs update synthSettings directly (no entry in knobs object)
+        if (['synthFreq', 'synthDet', 'synthLen'].includes(knobType)) {
+            const prop = knobType.replace('synth', '').toLowerCase();
+            this.synthSettings[prop] = value;
+            return;
+        }
+
         this.knobs[knobType].value = value;
 
         if (['lfoRate', 'lfoAmount', 'lfoPhase'].includes(knobType)) {
@@ -955,11 +963,8 @@ Alpine.data('tx6Controller', () => ({
             this.sendValidatedCC(this.fx.currentChannel, ccType, value);
             const prop = this.fx.currentChannel === TRACKS.FX1 ? 'return' : 'track';
             this.fx.channels[this.fx.currentChannel].values[prop] = value;
-        } else if (['lfoRate', 'lfoAmount', 'lfoPhase'].includes(knobType)) {
-            const prop = knobType.replace('lfo', '').toLowerCase();
-            this.globalLfos[this.currentLfoIndex][prop] = value;
-            this.$nextTick(() => this.drawLfoWaveform());
         }
+        // Note: LFO knob updates are handled by setKnobValue to avoid duplication
     },
 
     async startTimingSystem(sendMidiClock = true) {
