@@ -7,9 +7,9 @@ Alpine.plugin(persist);
 const CC = {
     VOLUME: 7, AUX: 14, CUE: 15, FX: 82, EQ_HIGH: 85, EQ_MID: 86, EQ_LOW: 87,
     FILTER: 74, START_STOP: 46, BPM: 47, FX_ENGINE: 15, FX_PARAM1: 12,
-    FX_PARAM2: 13, FX_RETURN: 7, FX_TRACK_SELECT: 9,
+    FX_PARAM2: 13, FX_RETURN: 7, FX_TRACK_SELECT: 9, PAN: 8,
     // Additional CC numbers used in LFO targets
-    AUX_SEND: 92, COMPRESSOR: 93, DETUNE: 95
+    AUX_SEND: 92, COMPRESSOR: 93, DETUNE: 95, SYNTH_LEN: 90
 };
 
 const CHANNELS = { MASTER: 6, FX1: 7, FX2: 8 };
@@ -50,13 +50,15 @@ const FX_ENGINES = {
 
 /** Centralized LFO target definitions with CC mappings */
 const LFO_TARGETS = {
-    // Track targets (channels 0-5)
+    // Track targets (channels 0-5) - ordered: VOL, FLT, CMP, PAN, LEN, DET, AUX
     track: {
         vol: { cc: CC.VOLUME, defaultBase: 0, label: 'VOL' },
-        aux: { cc: CC.AUX_SEND, defaultBase: 0, label: 'AUX' },
         flt: { cc: CC.FILTER, defaultBase: 64, label: 'FLT' },
+        cmp: { cc: CC.COMPRESSOR, defaultBase: 0, label: 'CMP' },
+        pan: { cc: CC.PAN, defaultBase: 64, label: 'PAN' },
+        len: { cc: CC.SYNTH_LEN, defaultBase: 0, label: 'LEN' },
         det: { cc: CC.DETUNE, defaultBase: 0, label: 'DET' },
-        cmp: { cc: CC.COMPRESSOR, defaultBase: 0, label: 'CMP' }
+        aux: { cc: CC.AUX_SEND, defaultBase: 0, label: 'AUX' }
     },
     // FX1 targets (channel 7)
     fx1: {
@@ -428,7 +430,7 @@ Alpine.data('tx6Controller', () => ({
     lfoOutputValues: {},
     currentSliderMode: Alpine.$persist(7).as('tx6-currentSliderMode'),
     currentEqMode: Alpine.$persist(74).as('tx6-currentEqMode'),
-    currentFxMode: Alpine.$persist(91).as('tx6-currentFxMode'),
+    currentFxMode: Alpine.$persist(93).as('tx6-currentFxMode'),
     bpm: Alpine.$persist(100).as('tx6-bpm'),
     startStopActive: false,
     isFullscreen: false,
@@ -799,13 +801,15 @@ Alpine.data('tx6Controller', () => ({
     },
 
     /**
-     * Sends a validated MIDI CC message with bounds checking and connection verification
+     * Sends a validated MIDI CC message with bounds checking and connection verification.
+     * Automatically stores value in trackValues for LFO base value lookup.
      * @param {number} channel - MIDI channel (0-15)
      * @param {number} cc - CC number (0-127)
      * @param {number} value - CC value (0-127)
+     * @param {boolean} isLfoGenerated - If true, skip trackValues storage (LFO-generated values shouldn't overwrite base)
      * @returns {boolean} True if message was sent, false if validation failed or not connected
      */
-    sendValidatedCC(channel, cc, value) {
+    sendValidatedCC(channel, cc, value, isLfoGenerated = false) {
         // Validate inputs
         if (!Number.isInteger(channel) || channel < 0 || channel > 15) {
             console.warn('Invalid MIDI channel:', channel);
@@ -817,6 +821,11 @@ Alpine.data('tx6Controller', () => ({
         }
         // Clamp value to valid range
         const clampedValue = Math.max(MIDI.MIN, Math.min(MIDI.MAX, Math.round(value)));
+
+        // Store in trackValues for LFO base value lookup (unless LFO-generated)
+        if (!isLfoGenerated) {
+            this.trackValues[`${channel}-${cc}`] = clampedValue;
+        }
 
         // Check connection state
         if (!this.isConnected) {
@@ -1003,7 +1012,11 @@ Alpine.data('tx6Controller', () => ({
                 };
 
                 shapeVal = shapes[lfo.shape] ? shapes[lfo.shape]() : 0;
-                const amt = lfo.amount - LFO.AMOUNT_DEFAULT;
+
+                // Amount centered at 50 (displays 0), range 0-100 (displays -50 to +50)
+                // Scale from display units to CC: max amount (50 display) = ±64 CC
+                const distanceFromCenter = Math.abs(lfo.amount - LFO.AMOUNT_DEFAULT);
+                const scaledAmount = distanceFromCenter * (MIDI.MID / 50);
 
                 // Get target config from centralized LFO_TARGETS
                 let targetConfig, channel;
@@ -1022,12 +1035,14 @@ Alpine.data('tx6Controller', () => ({
 
                 const { cc, defaultBase } = targetConfig;
                 const base = Number(this.trackValues[`${channel}-${cc}`]) || defaultBase;
-                const lfoValue = Math.max(MIDI.MIN, Math.min(MIDI.MAX, base + amt * shapeVal));
+
+                // LFO oscillates around base value, clamped to MIDI range
+                const lfoValue = Math.max(MIDI.MIN, Math.min(MIDI.MAX, base + scaledAmount * shapeVal));
 
                 const outputKey = `${channel}-${cc}`;
                 this.lfoOutputValues[outputKey] = lfoValue;
 
-                this.sendValidatedCC(channel, cc, Math.round(lfoValue));
+                this.sendValidatedCC(channel, cc, Math.round(lfoValue), true);
             } catch (error) {
                 console.error('Error processing LFO:', error);
             }
@@ -1277,6 +1292,7 @@ Alpine.data('tx6Controller', () => ({
     get eqDropdownOptions() {
         return [
             { value: CC.FILTER, label: 'FLT', displayValue: this.getStoredEqDisplayValue(CC.FILTER) },
+            { value: CC.PAN, label: 'PAN', displayValue: this.getStoredEqDisplayValue(CC.PAN) },
             { value: CC.EQ_HIGH, label: 'HIGH', displayValue: this.getStoredEqDisplayValue(CC.EQ_HIGH) },
             { value: CC.EQ_MID, label: 'MID', displayValue: this.getStoredEqDisplayValue(CC.EQ_MID) },
             { value: CC.EQ_LOW, label: 'LOW', displayValue: this.getStoredEqDisplayValue(CC.EQ_LOW) }
@@ -1324,6 +1340,11 @@ Alpine.data('tx6Controller', () => ({
             const allValues = [...UI.FILTER_VALUES, '-', ...UI.FILTER_VALUES];
             const index = Math.round(value / MIDI.MAX * 100);
             return allValues[index];
+        } else if (ccNumber === CC.PAN) {
+            // PAN: C for center (64), L1-50 for left, R1-50 for right
+            if (value === MIDI.MID) return 'C';
+            if (value < MIDI.MID) return `L${Math.round((MIDI.MID - value) * 50 / MIDI.MID)}`;
+            return `R${Math.round((value - MIDI.MID) * 50 / (MIDI.MAX - MIDI.MID))}`;
         } else {
             return midiToEqDisplay(value);
         }
