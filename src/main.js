@@ -125,6 +125,9 @@ const EQ = {
     DB_MULTIPLIER: 18 / 64
 };
 
+/** Schema version for persisted state - increment when data structure changes */
+const SCHEMA_VERSION = 1;
+
 const seqs = [
     '0000000000000000', '1000000000000000', '1000000010000000', '0010001000000000',
     '0000100000001000', '0000000000001100', '1000001010000000', '1000010010000000',
@@ -141,10 +144,15 @@ const LFO_TRACK_OPTIONS = [
     { value: 7, label: 'FX1' }, { value: 8, label: 'FX2' }
 ];
 
-const midiToAngle = (value) => KNOB_ANGLE.MIN_ANGLE + (value / MIDI.MAX) * KNOB_ANGLE.TOTAL_RANGE;
-const lfoRateToAngle = (value) => KNOB_ANGLE.MIN_ANGLE + (value / LFO.RATE_MAX) * KNOB_ANGLE.TOTAL_RANGE;
-const lfoAmountToAngle = (value) => KNOB_ANGLE.MIN_ANGLE + (value / LFO.AMOUNT_MAX) * KNOB_ANGLE.TOTAL_RANGE;
-const synthFreqToAngle = (value) => KNOB_ANGLE.MIN_ANGLE + (value / SYNTH.FREQ_MAX) * KNOB_ANGLE.TOTAL_RANGE;
+/** Factory for angle conversion functions - maps value range to knob angle range */
+const createAngleConverter = (max) => (value) =>
+    KNOB_ANGLE.MIN_ANGLE + (value / max) * KNOB_ANGLE.TOTAL_RANGE;
+
+const midiToAngle = createAngleConverter(MIDI.MAX);
+const lfoRateToAngle = createAngleConverter(LFO.RATE_MAX);
+const lfoAmountToAngle = createAngleConverter(LFO.AMOUNT_MAX);
+const synthFreqToAngle = createAngleConverter(SYNTH.FREQ_MAX);
+
 const midiToEqDisplay = (value) => {
     const dbValue = Math.round((value - EQ.NEUTRAL_VALUE) * EQ.DB_MULTIPLIER);
     return dbValue === 0 ? "0dB" : (dbValue > 0 ? "+" + dbValue : dbValue) + "dB";
@@ -439,35 +447,44 @@ Alpine.data('tx6Controller', () => ({
     showOptionsMenu: false,
     masterChannel: Alpine.$persist('volume').as('tx6-masterChannel'),
     currentLfoIndex: Alpine.$persist(0).as('tx6-currentLfoIndex'),
-    lfoPhases: Array(10).fill(0),
+    lfoPhases: [],  // Synced with globalLfos.length in init()
     lfoStartTime: null,
     lastTapTime: 0,
     trackValues: Alpine.$persist({}).as('tx6-trackValues'),
     midi: null,
 
+    /** Creates standardized knob change handler - reduces boilerplate */
+    createKnobHandler(knobType, customHandler) {
+        return (v) => {
+            if (customHandler) customHandler(v);
+            else this.handleKnobChange(knobType, v);
+            this.setKnobValue(knobType, v);
+        };
+    },
+
     get knobConfigs() {
         return {
             eq: {
                 knobType: 'eq', minValue: MIDI.MIN, maxValue: MIDI.MAX, sensitivity: UI.SLIDER_SENSITIVITY, doubleClickReset: EQ.NEUTRAL_VALUE,
-                onChange: (v) => { this.handleEqChange(v); this.setKnobValue('eq', v); }
+                onChange: this.createKnobHandler('eq', (v) => this.handleEqChange(v))
             },
             fx1: {
                 knobType: 'fx1', minValue: MIDI.MIN, maxValue: MIDI.MAX, sensitivity: UI.SLIDER_SENSITIVITY,
-                onChange: (v) => { this.handleFx1Change(v); this.setKnobValue('fx1', v); }
+                onChange: this.createKnobHandler('fx1', (v) => this.handleFx1Change(v))
             },
-            masterVolume: { knobType: 'masterVolume', onChange: (v) => { this.handleMasterChannelChange(v); this.setKnobValue('masterVolume', v); } },
-            fxReturn: { knobType: 'fxReturn', onChange: (v) => { this.handleKnobChange('fxReturn', v); this.setKnobValue('fxReturn', v); } },
-            fxParam1: { knobType: 'fxParam1', onChange: (v) => { this.handleKnobChange('fxParam1', v); this.setKnobValue('fxParam1', v); } },
-            fxParam2: { knobType: 'fxParam2', onChange: (v) => { this.handleKnobChange('fxParam2', v); this.setKnobValue('fxParam2', v); } },
+            masterVolume: { knobType: 'masterVolume', onChange: this.createKnobHandler('masterVolume', (v) => this.handleMasterChannelChange(v)) },
+            fxReturn: { knobType: 'fxReturn', onChange: this.createKnobHandler('fxReturn') },
+            fxParam1: { knobType: 'fxParam1', onChange: this.createKnobHandler('fxParam1') },
+            fxParam2: { knobType: 'fxParam2', onChange: this.createKnobHandler('fxParam2') },
             lfoRate: {
                 knobType: 'lfoRate', minValue: LFO.RATE_MIN, maxValue: LFO.RATE_MAX, sensitivity: UI.LFO_SLIDER_SENSITIVITY,
-                onChange: (v) => { this.handleKnobChange('lfoRate', v); this.setKnobValue('lfoRate', v); }
+                onChange: this.createKnobHandler('lfoRate')
             },
             lfoAmount: {
                 knobType: 'lfoAmount', minValue: LFO.AMOUNT_MIN, maxValue: LFO.AMOUNT_MAX, sensitivity: UI.SLIDER_SENSITIVITY, doubleClickReset: LFO.AMOUNT_DEFAULT,
-                onChange: (v) => { this.handleKnobChange('lfoAmount', v); this.setKnobValue('lfoAmount', v); }
+                onChange: this.createKnobHandler('lfoAmount')
             },
-            lfoPhase: { knobType: 'lfoPhase', onChange: (v) => { this.handleKnobChange('lfoPhase', v); this.setKnobValue('lfoPhase', v); } },
+            lfoPhase: { knobType: 'lfoPhase', onChange: this.createKnobHandler('lfoPhase') },
             synthFreq: { knobType: 'synthFreq', minValue: SYNTH.FREQ_MIN, maxValue: SYNTH.FREQ_MAX, sensitivity: UI.SLIDER_SENSITIVITY, onChange: (v) => { this.handleKnobChange('synthFreq', v); this.synthSettings.freq = v; } },
             synthDet: { knobType: 'synthDet', doubleClickReset: MIDI.MID, onChange: (v) => { this.handleKnobChange('synthDet', v); this.synthSettings.det = v; } },
             synthLen: { knobType: 'synthLen', onChange: (v) => { this.handleKnobChange('synthLen', v); this.synthSettings.len = v; } }
@@ -490,7 +507,7 @@ Alpine.data('tx6Controller', () => ({
 
     globalLfos: Alpine.$persist(Array(LFO.COUNT).fill(null).map((_, i) => ({
         name: `LFO ${i + 1}`,
-        target: ['vol', 'aux', 'flt'][i % 3],
+        target: Object.keys(LFO_TARGETS.track)[0],  // Use first target from centralized config
         shape: ['sine', 'triangle', 'square', 'saw', 'sine'][i % 5],
         enabled: true,
         rate: 1.0,
@@ -592,6 +609,17 @@ Alpine.data('tx6Controller', () => ({
         this.initializeTrackValues();
         this.setupFullscreenListener();
         this.initializeLfoRates();
+
+        // Schema versioning - check if migration is needed
+        const storedVersion = localStorage.getItem('tx6-schema-version');
+        if (storedVersion !== String(SCHEMA_VERSION)) {
+            console.log(`Schema migration: ${storedVersion || 'none'} → ${SCHEMA_VERSION}`);
+            // Add migration logic here when SCHEMA_VERSION is incremented
+            localStorage.setItem('tx6-schema-version', String(SCHEMA_VERSION));
+        }
+
+        // Sync lfoPhases array with globalLfos length
+        this.lfoPhases = Array(this.globalLfos.length).fill(0);
 
         this.currentEqMode = Number(this.currentEqMode);
         this.currentFxMode = Number(this.currentFxMode);
@@ -1063,8 +1091,8 @@ Alpine.data('tx6Controller', () => ({
         const newIndex = this.globalLfos.length;
         this.globalLfos.push({
             name: `LFO ${newIndex + 1}`,
-            target: ['vol', 'aux', 'flt'][newIndex % 3],
-            shape: ['sine', 'triangle', 'square', 'saw', 'sine'][newIndex % 5],
+            target: Object.keys(LFO_TARGETS.track)[0],
+            shape: 'sine',
             enabled: true,
             rate: 1.0,
             amount: LFO.AMOUNT_DEFAULT,
