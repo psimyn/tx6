@@ -156,6 +156,10 @@ body.dark-theme {
     transition: none !important;
 }
 
+[x-cloak] {
+    display: none !important;
+}
+
 /* Remove focus outlines from buttons */
 button:focus {
     outline: none;
