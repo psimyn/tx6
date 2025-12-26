@@ -617,6 +617,49 @@ Alpine.data('tx6Controller', () => ({
         return labels[mult];
     },
 
+    getFxEngineName() {
+        const channelData = this.fx.channels[this.fx.currentChannel];
+        const engineValue = channelData.engine;
+        const totalEngines = channelData.types.length;
+        const index = Math.floor(engineValue / ((MIDI.MAX + 1) / totalEngines));
+        return channelData.types[Math.min(index, totalEngines - 1)] || '';
+    },
+
+    getFxParamOptions(paramName) {
+        const engineName = this.getFxEngineName();
+        const config = this.paramConfig[engineName];
+        if (config && config[paramName] && config[paramName].values) {
+            return config[paramName].values;
+        }
+        return null;
+    },
+
+    isFxParamList(paramName) {
+        return this.getFxParamOptions(paramName) !== null;
+    },
+
+    setFxParamValue(paramName, index, totalOptions) {
+        const value = this.calculateMidiValue(index, totalOptions);
+        const knobId = 'fx' + paramName.charAt(0).toUpperCase() + paramName.slice(1);
+        this.handleKnobChange(knobId, value);
+        this.setKnobValue(knobId, value);
+    },
+
+    isFxParamValueActive(paramName, index, totalOptions) {
+        const knobId = 'fx' + paramName.charAt(0).toUpperCase() + paramName.slice(1);
+        const currentValue = this.knobs[knobId].value;
+        const range = MIDI.MAX + 1;
+        const derivedIndex = Math.floor(currentValue * totalOptions / range);
+        return Math.min(derivedIndex, totalOptions - 1) === index;
+    },
+
+    getGridStyle(count) {
+        // Use 3 columns if more than 4 items (e.g. 5, 6, 9)
+        // Otherwise 2 columns (e.g. 3, 4)
+        const cols = count > 4 ? 3 : 2;
+        return `grid-template-columns: repeat(${cols}, 1fr); grid-template-rows: repeat(${Math.ceil(count / cols)}, 1fr)`;
+    },
+
     init() {
         this.initTheme();
         this.midi = createMidiController();

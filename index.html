@@ -280,17 +280,32 @@
                 </div>
 
                 <!-- FX Param1 -->
-                <div class="knob-wrapper">
-                    <div x-data="knob(knobConfigs.fxParam1)" class="knob" @mousedown="startDrag($event)"
-                        @touchstart="startDrag($event)" x-effect="knobData.value = knobs.fxParam1.value">
-                        <div class="knob-indicator indicator-small"
-                            :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
+                <div class="knob-wrapper" :class="{ 'col-span-2': isFxParamList('param1') }">
+                    <template x-if="!isFxParamList('param1')">
+                        <div style="display: contents">
+                            <div x-data="knob(knobConfigs.fxParam1)" class="knob" @mousedown="startDrag($event)"
+                                @touchstart="startDrag($event)" x-effect="knobData.value = knobs.fxParam1.value">
+                                <div class="knob-indicator indicator-small"
+                                    :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
+                                </div>
+                            </div>
+                            <div class="value-display">
+                                <span class="knob-value" x-text="getKnobDisplayValue('fxParam1')"></span>
+                                <span class="knob-label" x-text="getKnobLabel('fxParam1')"></span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="value-display">
-                        <span class="knob-value" x-text="getKnobDisplayValue('fxParam1')"></span>
-                        <span class="knob-label" x-text="getKnobLabel('fxParam1')"></span>
-                    </div>
+                    </template>
+                    <template x-if="isFxParamList('param1')">
+                        <div class="fx-param-grid" :style="getGridStyle(getFxParamOptions('param1').length)">
+                            <template x-for="(label, index) in getFxParamOptions('param1')" :key="index">
+                                <button class="fx-param-button"
+                                    :class="{ active: isFxParamValueActive('param1', index, getFxParamOptions('param1').length) }"
+                                    @click="setFxParamValue('param1', index, getFxParamOptions('param1').length)"
+                                    x-text="label">
+                                </button>
+                            </template>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- FX Param2 -->
@@ -391,7 +406,7 @@
                     </div>
 
                     <div class="knob-wrapper">
-                        <label class="knob-label">AMOUNT</label>
+                        <label class="knob-label">AMT</label>
                         <div x-data="knob(knobConfigs.lfoAmount)" class="knob" @mousedown="startDrag($event)"
                             @touchstart="startDrag($event)"
                             x-effect="knobData.value = globalLfos[currentLfoIndex].amount">
@@ -417,7 +432,7 @@
                     </div>
 
                     <div class="knob-wrapper">
-                        <label class="knob-label">PHASE</label>
+                        <label class="knob-label">PHS</label>
                         <div x-data="knob(knobConfigs.lfoPhase)" class="knob" @mousedown="startDrag($event)"
                             @touchstart="startDrag($event)"
                             x-effect="knobData.value = globalLfos[currentLfoIndex].phase">
