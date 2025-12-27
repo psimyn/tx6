@@ -264,10 +264,11 @@
                     <!-- Show knob for FX I (Return) -->
                     <template x-if="fx.currentChannel === 7">
                         <div>
-                            <div x-data="knob(knobConfigs.fxReturn)" class="knob" @mousedown="startDrag($event)"
-                                @touchstart="startDrag($event)" x-effect="knobData.value = knobs.fxReturn.value">
+                            <div x-data="knob(knobConfigs.fxReturn)" class="knob knob-blue"
+                                @mousedown="startDrag($event)" @touchstart="startDrag($event)"
+                                x-effect="knobData.value = knobs.fxReturn.value">
                                 <div class="knob-indicator indicator-small"
-                                    :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
+                                    :style="`background: var(--accent-color-blue); transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                                 </div>
                                 <template x-if="getGhostKnobValue('fxReturn') !== null">
                                     <div class="knob-ghost-indicator"
@@ -301,10 +302,12 @@
                 <div class="knob-wrapper" :class="{ 'col-span-2': isFxParamList('param1') }">
                     <template x-if="!isFxParamList('param1')">
                         <div style="display: contents">
-                            <div x-data="knob(knobConfigs.fxParam1)" class="knob" @mousedown="startDrag($event)"
-                                @touchstart="startDrag($event)" x-effect="knobData.value = knobs.fxParam1.value">
+                            <div x-data="knob(knobConfigs.fxParam1)" class="knob"
+                                :class="fx.currentChannel === 8 ? 'knob-orange' : 'knob-blue'"
+                                @mousedown="startDrag($event)" @touchstart="startDrag($event)"
+                                x-effect="knobData.value = knobs.fxParam1.value">
                                 <div class="knob-indicator indicator-small"
-                                    :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
+                                    :style="`background: var(${fx.currentChannel === 8 ? '--accent-color-orange' : '--accent-color-blue'}); transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                                 </div>
                                 <template x-if="getGhostKnobValue('fxParam1') !== null">
                                     <div class="knob-ghost-indicator"
@@ -335,10 +338,11 @@
 
                 <!-- FX Param2 -->
                 <div class="knob-wrapper" x-show="fxParam2Visibility">
-                    <div x-data="knob(knobConfigs.fxParam2)" class="knob" @mousedown="startDrag($event)"
+                    <div x-data="knob(knobConfigs.fxParam2)" class="knob"
+                        :class="fx.currentChannel === 8 ? 'knob-orange' : 'knob-blue'" @mousedown="startDrag($event)"
                         @touchstart="startDrag($event)" x-effect="knobData.value = knobs.fxParam2.value">
                         <div class="knob-indicator indicator-small"
-                            :style="`transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
+                            :style="`background: var(${fx.currentChannel === 8 ? '--accent-color-orange' : '--accent-color-blue'}); transform: translateX(-50%) rotate(${midiToAngle(knobData.value)}deg)`">
                         </div>
                         <template x-if="getGhostKnobValue('fxParam2') !== null">
                             <div class="knob-ghost-indicator"

@@ -436,8 +436,8 @@ h1 {
 
 .rate-buttons {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
     gap: var(--space-sm);
     margin-top: var(--space-sm);
     width: 100%;
@@ -851,7 +851,7 @@ input:focus {
     /* Same as regular indicator length? No, regular is often smaller? */
     /* Regular indicator .indicator-small is height: 50% */
     background-color: var(--accent-color);
-    opacity: 0.3;
+    opacity: 0.5;
     transform-origin: bottom center;
     z-index: 1;
     /* Below the main indicator if overlapping, but main is z-index 2 usually */

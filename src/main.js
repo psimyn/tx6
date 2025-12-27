@@ -228,6 +228,7 @@ const createMidiController = () => {
     let isSending = false;
     let sendQueue = [];
     let clockListeners = [];
+    let disconnectListener = null;
     let lastClockTime = 0;
     let clockCount = 0;
     let isReceivingClock = false;
@@ -394,6 +395,13 @@ const createMidiController = () => {
             }
         });
 
+        // Listen for disconnect
+        bluetoothDevice.addEventListener('gattserverdisconnected', () => {
+            connectionType = null;
+            midiCharacteristic = null;
+            if (disconnectListener) disconnectListener('ble');
+        });
+
         return bluetoothDevice;
     };
 
@@ -432,6 +440,17 @@ const createMidiController = () => {
         }
 
         connectionType = 'usb';
+
+        // Listen for USB MIDI device disconnect
+        midiAccess.onstatechange = (event) => {
+            if (event.port === midiOutput && event.port.state === 'disconnected') {
+                connectionType = null;
+                midiOutput = null;
+                midiInput = null;
+                if (disconnectListener) disconnectListener('usb');
+            }
+        };
+
         return midiOutput;
     };
 
@@ -439,6 +458,7 @@ const createMidiController = () => {
         sendCC, sendNoteOn, sendNoteOff, sendSystemRealTime, connectBle, connectUsb,
         addClockListener: (cb) => clockListeners.push(cb),
         removeClockListener: (cb) => clockListeners.splice(clockListeners.indexOf(cb), 1),
+        setDisconnectListener: (cb) => disconnectListener = cb,
         getClockStatus: () => ({ isReceivingClock, clockCount })
     };
 };
@@ -842,6 +862,16 @@ Alpine.data('tx6Controller', () => ({
                 this.startStopActive = true;
             }
         });
+
+        // Handle disconnection
+        this.midi.setDisconnectListener((type) => {
+            this.isConnected = false;
+            this.stopTimingSystem();
+            this.startStopActive = false;
+            this.lastSentCCValues = {};
+            this.status = `${type === 'ble' ? 'Bluetooth' : 'USB'} disconnected`;
+            setTimeout(() => this.status = '', TIME.CONNECTION_ERROR_DISPLAY);
+        });
     },
 
     initializeTrackValues() {
@@ -1196,6 +1226,8 @@ Alpine.data('tx6Controller', () => ({
         if (this.timingWorklet) {
             this.timingWorklet.port.postMessage({ type: 'stop' });
         }
+        // Clear LFO output values to prevent stale ghost indicators
+        this.lfoOutputValues = {};
     },
 
     async togglePlay() {
@@ -1960,7 +1992,8 @@ Alpine.data('tx6Controller', () => ({
      * Returns the LFO output value if found, or null if no modulation.
      */
     _getLfoModulationValue(channel, cc) {
-        if (!this.startStopActive && !this.isConnected) return null;
+        // Ghost indicators only show when LFOs are actively running
+        if (!this.startStopActive) return null;
 
         const lfo = this.globalLfos.find(l => {
             if (!l.enabled || l.amount === 50) return false;
