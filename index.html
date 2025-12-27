@@ -250,8 +250,7 @@
                                 active: fx[`fx${fx.currentChannel === 7 ? 1 : 2}Active`], 
                                 orange: fx.currentChannel === 8,
                                 ghost: getGhostFxActive(fx.currentChannel) !== null
-                            }"
-                            :style="getGhostFxActive(fx.currentChannel) !== null ? `--ghost-intensity: ${getGhostFxActive(fx.currentChannel)}` : ''">
+                            }">
                             <span class="fx-button-inner" x-text="`FX${fx.currentChannel === 7 ? 'I' : 'II'}`"></span>
                         </button>
                     </div>
@@ -362,12 +361,14 @@
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;width:100%;gap:2rem;">
                     <div class="flex gap-1">
                         <select x-model.number="globalLfos[currentLfoIndex].assignedTrack"
-                            @change="handleLfoTrackChange(currentLfoIndex)" class="fx-engine-select">
+                            @change="handleLfoTrackChange(currentLfoIndex)" class="fx-engine-select"
+                            x-effect="$nextTick(() => { $el.value = globalLfos[currentLfoIndex].assignedTrack })">
                             <template x-for="opt in getLfoTrackOptions()" :key="opt.value">
                                 <option :value="opt.value" x-text="opt.label"></option>
                             </template>
                         </select>
-                        <select x-model="globalLfos[currentLfoIndex].target" class="fx-engine-select">
+                        <select x-model="globalLfos[currentLfoIndex].target" class="fx-engine-select"
+                            x-effect="$nextTick(() => { $el.value = globalLfos[currentLfoIndex].target })">
                             <template x-for="opt in getLfoTargetOptions(globalLfos[currentLfoIndex].assignedTrack)"
                                 :key="opt.value">
                                 <option :value="opt.value" x-text="opt.label"></option>

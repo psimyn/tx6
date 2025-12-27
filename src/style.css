@@ -1449,20 +1449,22 @@ header {
     color: var(--button-color);
 }
 
-/* Ghost state for FX button - semi-transparent overlay for "half-active" look */
-.fx-button.ghost::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background-color: var(--active-color);
-    opacity: var(--ghost-intensity, 0.3);
-    pointer-events: none;
-    transition: opacity 0.1s ease;
+/* Ghost state for FX button - subtle pulse animation for LFO modulation */
+.fx-button.ghost {
+    animation: fx-ghost-pulse 1.5s ease-in-out infinite;
 }
 
-.fx-button.ghost .fx-button-inner {
-    opacity: 0.5;
+@keyframes fx-ghost-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0.125rem 0.5rem var(--active-color),
+            0 0 0.75rem color-mix(in srgb, var(--active-color) 40%, transparent);
+    }
 }
 
 

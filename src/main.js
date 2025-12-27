@@ -503,12 +503,13 @@ Alpine.data('tx6Controller', () => ({
         };
     },
 
+    // Note: synth knobs (freq, det, len) are stored in trackSynthSettings, not here
     knobs: Alpine.$persist({
         eq: { value: EQ.NEUTRAL_VALUE }, masterVolume: { value: MIDI.MIN },
         fx1: { value: MIDI.MIN },
         fxParam1: { value: MIDI.MIN }, fxParam2: { value: MIDI.MIN },
         fxReturn: { value: MIDI.MIN }, lfoRate: { value: LFO.RATE_DEFAULT }, lfoAmount: { value: MIDI.MIN },
-        lfoPhase: { value: MIDI.MIN }, lfoPwm: { value: 50 }, synthFreq: { value: SYNTH.FREQ_DEFAULT }, synthLen: { value: MIDI.MIN }
+        lfoPhase: { value: MIDI.MIN }, lfoPwm: { value: 50 }
     }).as('tx6-knobs'),
 
     masterChannelValues: Alpine.$persist({
@@ -697,11 +698,26 @@ Alpine.data('tx6Controller', () => ({
 
         // Validate and migrate globalLfos structure
         this.globalLfos.forEach(lfo => {
+            // Ensure assignedTrack has a valid value
             if (lfo.assignedTrack === undefined || lfo.assignedTrack === null) {
                 lfo.assignedTrack = 0; // Default to T1
             }
-            if (!lfo.target) {
-                lfo.target = Object.keys(LFO_TARGETS.track)[0];
+            // Coerce to number for consistent comparison
+            lfo.assignedTrack = Number(lfo.assignedTrack);
+
+            // Get valid targets for this track
+            let validTargets;
+            if (lfo.assignedTrack === TRACKS.FX1) {
+                validTargets = LFO_TARGETS.fx1;
+            } else if (lfo.assignedTrack === TRACKS.FX2) {
+                validTargets = LFO_TARGETS.fx2;
+            } else {
+                validTargets = LFO_TARGETS.track;
+            }
+
+            // Reset target if missing or invalid for current track
+            if (!lfo.target || !validTargets[lfo.target]) {
+                lfo.target = Object.keys(validTargets)[0];
             }
         });
 
@@ -730,6 +746,9 @@ Alpine.data('tx6Controller', () => ({
             this.knobs.fx1.value = fxValue;
 
             this.knobs.masterVolume.value = this.masterChannelValues[this.masterChannel];
+
+            // Restore FX channel knobs (param1, param2, return)
+            this.updateFxDisplay();
         });
 
         this.updateLfoKnobs();
