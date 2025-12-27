@@ -1,16 +1,17 @@
 :root {
-    --bg-color: #e2e2e4;
-    --bg-color-darker: #d0d0d3;
-    --text-color: #50514f;
-    --knob-color: #f5f5f5;
-    --knob-color-secondary: #eee;
-    --knob-border: rgba(0, 0, 0, 0.1);
-    --knob-shine: rgba(255, 255, 255, 0.6);
-    --knob-shadow: rgba(0, 0, 0, 0.2);
+    /* Warm cream/beige palette */
+    --bg-color: #e6e1dc;
+    --bg-color-darker: #d9d4cf;
+    --text-color: #4a4845;
+    --knob-color: #f5f2ed;
+    --knob-color-secondary: #ebe7e2;
+    --knob-border: rgba(80, 70, 60, 0.12);
+    --knob-shine: rgba(255, 252, 248, 0.6);
+    --knob-shadow: rgba(60, 50, 40, 0.18);
     --slider-track: var(--accent-color-blue);
-    --accent-color: #e2e2e4;
+    --accent-color: #e6e1dc;
     --accent-color-orange: #ff9500;
-    --accent-color-white: #ffffff;
+    --accent-color-white: #faf8f5;
     --accent-color-blue: #110237;
     --eq-center-color: #ff9500;
     --button-color: #110237;
@@ -21,10 +22,10 @@
     --button-orange-hover: #ff8000;
     --button-orange-active: #e67e00;
     --label-color: #110237;
-    --select-bg: #f0f0f2;
-    --select-border: rgba(0, 0, 0, 0.1);
-    --border-color: #ccc;
-    --text-inverse: #ffffff;
+    --select-bg: #f0ece7;
+    --select-border: rgba(80, 70, 60, 0.12);
+    --border-color: #c9c4bf;
+    --text-inverse: #fffcf9;
 
     --space-xxs: 0.125rem;
     --space-xs: 0.25rem;
@@ -37,43 +38,43 @@
 
     --knob-box-shadow:
         0 0 0 3px var(--knob-color-secondary),
-        0 5px 14px rgba(0, 0, 0, 0.1),
-        8px 0 16px rgba(0, 0, 0, 0.1),
-        0 8px 6px rgba(0, 0, 0, 0.1),
-        5px 0 4px rgba(0, 0, 0, 0.1),
-        0 2px 0 3px #ccc,
-        1px 0 0 3px #aaa,
-        -2px -2px 3px rgba(255, 255, 255, 0.1);
+        0 5px 14px rgba(60, 50, 40, 0.1),
+        8px 0 16px rgba(60, 50, 40, 0.1),
+        0 8px 6px rgba(60, 50, 40, 0.1),
+        5px 0 4px rgba(60, 50, 40, 0.1),
+        0 2px 0 3px #c9c4bf,
+        1px 0 0 3px #b0aba6,
+        -2px -2px 3px rgba(255, 252, 248, 0.1);
     --tab-box-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.12),
-        0 1px 2px rgba(0, 0, 0, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        0 2px 4px rgba(60, 50, 40, 0.12),
+        0 1px 2px rgba(60, 50, 40, 0.08),
+        inset 0 1px 0 rgba(255, 252, 248, 0.5);
     --tab-hover-box-shadow:
-        0 3px 6px rgba(0, 0, 0, 0.15),
-        0 1px 2px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        0 3px 6px rgba(60, 50, 40, 0.15),
+        0 1px 2px rgba(60, 50, 40, 0.1),
+        inset 0 1px 0 rgba(255, 252, 248, 0.7);
 
     /* Component Variables */
-    --top-bar-bg: rgba(226, 226, 228, 0.95);
-    --tab-nav-bg: rgba(208, 208, 211, 0.8);
-    --key-white: #ffffff;
-    --key-white-active: #e0e0e0;
-    --key-white-hover: #f0f0f0;
+    --top-bar-bg: rgba(230, 225, 220, 0.95);
+    --tab-nav-bg: rgba(217, 212, 207, 0.8);
+    --key-white: #faf8f5;
+    --key-white-active: #e5e0db;
+    --key-white-hover: #f0ece7;
 
     /* Tab Button Variables */
-    --tab-bg: linear-gradient(180deg, #f5f5f7 0%, #e8e8eb 30%, #d9d9dd 60%, #c9c9ce 100%);
-    --tab-bg-hover: linear-gradient(180deg, #fafafc 0%, #f0f0f4 30%, #e1e1e6 60%, #d1d1d7 100%);
-    --tab-bg-active: linear-gradient(180deg, #d4d4d8 0%, #c5c5c9 40%, #b5b5bb 100%);
-    --tab-border: #b8b8bc;
-    --tab-border-bottom: #b8b8bc;
-    --tab-border-right: #c0c0c4;
-    --tab-border-active: #b8b8bc;
-    --tab-border-active-bottom: #b8b8bc;
-    --tab-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
-    --tab-highlight: rgba(255, 255, 255, 0.5);
+    --tab-bg: linear-gradient(180deg, #f5f2ed 0%, #e9e5e0 30%, #dbd7d2 60%, #cac6c1 100%);
+    --tab-bg-hover: linear-gradient(180deg, #faf8f5 0%, #f0ece7 30%, #e3dfd9 60%, #d3cfc9 100%);
+    --tab-bg-active: linear-gradient(180deg, #d6d2cd 0%, #c7c3be 40%, #b7b3ae 100%);
+    --tab-border: #bdb8b3;
+    --tab-border-bottom: #bdb8b3;
+    --tab-border-right: #c5c0bb;
+    --tab-border-active: #bdb8b3;
+    --tab-border-active-bottom: #bdb8b3;
+    --tab-text-shadow: 0 1px 0 rgba(255, 252, 248, 0.4);
+    --tab-highlight: rgba(255, 252, 248, 0.5);
     --button-border: #555;
-    --key-border: rgba(0, 0, 0, 0.2);
-    --key-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --key-border: rgba(80, 70, 60, 0.2);
+    --key-shadow: 0 2px 4px rgba(60, 50, 40, 0.1);
     --key-disabled: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
     --slider-overlay-opacity: 0.3;
     --play-button-shadow: inset 0 -0.0625rem 0.25rem rgba(0, 0, 0, 0.02),

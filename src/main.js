@@ -1789,9 +1789,9 @@ Alpine.data('tx6Controller', () => ({
 
     get masterChannelLabel() {
         const labels = {
-            aux: 'Aux',
-            cue: 'Cue',
-            volume: 'Volume'
+            aux: 'AUX',
+            cue: 'CUE',
+            volume: 'VOL'
         };
         return labels[this.masterChannel];
     },
