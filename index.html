@@ -72,7 +72,7 @@
         <!-- Tab Navigation -->
         <nav class="tab-navigation">
             <button class="tab-button" :class="{ active: currentView === 'main' }"
-                @click="switchView('main')">MAIN</button>
+                @click="switchView('main')">MIX</button>
             <button class="tab-button" :class="{ active: currentView === 'fx' }" @click="switchView('fx')">FX</button>
             <button class="tab-button" :class="{ active: currentView === 'synth' }"
                 @click="switchView('synth')">SYNTH</button>
@@ -323,7 +323,8 @@
                             <template x-for="(label, index) in getFxParamOptions('param1')" :key="index">
                                 <button class="fx-param-button" :class="{ 
                                         active: isFxParamValueActive('param1', index, getFxParamOptions('param1').length),
-                                        ghost: isFxParamGhostActive('param1', index, getFxParamOptions('param1').length)
+                                        ghost: isFxParamGhostActive('param1', index, getFxParamOptions('param1').length),
+                                        orange: fx.currentChannel === 8
                                     }" @click="setFxParamValue('param1', index, getFxParamOptions('param1').length)"
                                     x-text="label">
                                 </button>
@@ -409,8 +410,7 @@
                                 x-text="label"></option>
                         </template>
                     </select>
-                    <canvas id="lfo-canvas" width="300" height="100"
-                        style="border: 1px solid var(--knob-border); border-radius: 4px;"></canvas>
+                    <canvas id="lfo-canvas" width="300" height="100"></canvas>
                 </div>
 
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;justify-items:center;">
@@ -635,26 +635,28 @@
                 <p>Connect Bluetooth or USB to get started.</p>
                 <p>Make sure your TX-6 has MIDI CTRL IN enabled, and BLE set to ACCEPT (if needed)</p>
 
-                <h3>Main</h3>
+                <h3 id="mix">MIX</h3>
                 <ul>
                     <li>Select track (T1-T6) from top row</li>
                     <li>knob 1 controls filter and EQ</li>
                     <li>Master knob controls aux, cue, or master volume</li>
                 </ul>
 
-                <h3>FX</h3>
+                <h3 id="fx">FX</h3>
                 <ul>
                     <li>Switch between FX I/II, select engine, adjust parameters</li>
                 </ul>
+                <p>When FX1 is selected, select track from top row, then move the slider to adjust FX amount for that
+                    track.</p>
 
-                <h3>LFO</h3>
+                <h3 id="lfo">LFO</h3>
                 <p>Note: these only work while play is pressed</p>
                 <ul>
-                    <li>Configure 10 LFOs with waveform, rate, amount, phase</li>
+                    <li>Configure LFOs with waveform, rate, amount, phase</li>
                     <li>Control BPM and transport (play/stop)</li>
                 </ul>
 
-                <h3>Synth</h3>
+                <h3 id="synth">Synth</h3>
                 <ul>
                     <li>Set sequence pattern, waveform, frequency, and length</li>
                 </ul>
@@ -668,14 +670,14 @@
         <div class="view-content">
             <h2 class="view-title">About</h2>
             <div class="info-text">
-                <p>Remote control for your TX-6. Control with Bluetooth or USB.</p>
+                <p>Remote control for TX-6 using Bluetooth or USB.</p>
 
                 <h3>Features</h3>
                 <ul>
-                    <li>10 assignable LFOs for params</li>
-                    <li>Per-track volume, FX, and EQ control</li>
-                    <li>Synth sequencer config</li>
-                    <li>Control FX settings</li>
+                    <li>LFOs for most parameters</li>
+                    <li>Track volume, FX, and EQ control</li>
+                    <li>Synth config and tiny keyboard for live playing</li>
+                    <li>Change FX settings, buttons to jump straight between</li>
                 </ul>
 
                 <h3>Version Info</h3>

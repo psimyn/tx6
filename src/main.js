@@ -64,15 +64,15 @@ const LFO_TARGETS = {
     },
     // FX1 targets (channel 7)
     fx1: {
-        fx1_active: { cc: CC.FX, defaultBase: 0, label: 'Active' },
-        fx1_param: { cc: CC.FX_PARAM1, defaultBase: 0, label: 'Param' },
-        fx1_return: { cc: CC.FX_RETURN, defaultBase: 0, label: 'Return' }
+        fx1_active: { cc: CC.FX, defaultBase: 0, label: 'ON' },
+        fx1_param: { cc: CC.FX_PARAM1, defaultBase: 0, label: 'P1' },
+        fx1_return: { cc: CC.FX_RETURN, defaultBase: 0, label: 'RET' }
     },
     // FX2 targets (channel 8)
     fx2: {
-        fx2_active: { cc: CC.FX, defaultBase: 0, label: 'Active' },
-        fx2_param1: { cc: CC.FX_PARAM1, defaultBase: 0, label: 'Param1' },
-        fx2_param2: { cc: CC.FX_PARAM2, defaultBase: 0, label: 'Param2' }
+        fx2_active: { cc: CC.FX, defaultBase: 0, label: 'ON' },
+        fx2_param1: { cc: CC.FX_PARAM1, defaultBase: 0, label: 'P1' },
+        fx2_param2: { cc: CC.FX_PARAM2, defaultBase: 0, label: 'P2' }
     }
 };
 
@@ -681,10 +681,10 @@ Alpine.data('tx6Controller', () => ({
         }
 
         // Populate version info for about page
-        const scripts = document.querySelectorAll('script[src*="main"]');
-        this.jsFileName = scripts.length ? scripts[0].src.split('/').pop() : 'main.js';
-        const styles = document.querySelectorAll('link[rel="stylesheet"][href*="style"]');
-        this.cssFileName = styles.length ? styles[0].href.split('/').pop() : 'style.css';
+        const scripts = document.querySelectorAll('script[src*="index"]');
+        this.jsFileName = scripts.length ? scripts[0].src.split('/').pop() : '';
+        const styles = document.querySelectorAll('link[rel="stylesheet"][href*="index"]');
+        this.cssFileName = styles.length ? styles[0].href.split('/').pop() : '';
 
         // Get cache version from service worker
         if ('caches' in window) {
