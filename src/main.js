@@ -106,7 +106,8 @@ const TIME = {
     CONNECTION_SUCCESS_DISPLAY: 2000,
     CONNECTION_ERROR_DISPLAY: 5000,
     CLOCK_QUARTER_NOTE: 24,
-    BPM_HISTORY_SIZE: 4,
+    BPM_HISTORY_SIZE: 16, // Larger window for BLE jitter smoothing
+    BPM_OUTLIER_THRESHOLD: 0.15, // Reject readings >15% from median
     MIDI_TIMESTAMP_MASK: 8191,
     MIDI_TIMESTAMP_SHIFT: 7,
     MIDI_STATUS_MASK: 0xBF,
@@ -306,16 +307,48 @@ const createMidiController = () => {
             if (clockCount % TIME.CLOCK_QUARTER_NOTE === 0) {
                 if (lastClockTime > 0) {
                     const instantBpm = 60000 / (now - lastClockTime);
-                    bpmHistory.push(instantBpm);
+
+                    // Outlier rejection for BLE jitter
+                    if (bpmHistory.length >= 3) {
+                        const sorted = [...bpmHistory].sort((a, b) => a - b);
+                        const median = sorted[Math.floor(sorted.length / 2)];
+                        const deviation = Math.abs(instantBpm - median) / median;
+
+                        // Only accept readings within threshold of median
+                        if (deviation <= TIME.BPM_OUTLIER_THRESHOLD) {
+                            bpmHistory.push(instantBpm);
+                        }
+                    } else {
+                        // Build initial history without filtering
+                        bpmHistory.push(instantBpm);
+                    }
+
                     if (bpmHistory.length > TIME.BPM_HISTORY_SIZE) {
                         bpmHistory.shift();
                     }
 
-                    // Skip first unstable reading, average subsequent readings
-                    if (bpmHistory.length >= 2) {
-                        const avgBpm = bpmHistory.reduce((sum, val) => sum + val, 0) / bpmHistory.length;
+                    // Use weighted average favoring recent values for responsiveness
+                    if (bpmHistory.length >= 4) {
+                        let weightedSum = 0;
+                        let weightTotal = 0;
+                        for (let i = 0; i < bpmHistory.length; i++) {
+                            const weight = i + 1; // More recent = higher weight
+                            weightedSum += bpmHistory[i] * weight;
+                            weightTotal += weight;
+                        }
+                        const avgBpm = weightedSum / weightTotal;
+
                         clockListeners.forEach(cb => {
-                            try { cb({ type: 'clock', bpm: avgBpm, clockCount, timestamp: now }); }
+                            try {
+                                cb({
+                                    type: 'clock',
+                                    bpm: avgBpm,
+                                    clockCount,
+                                    timestamp: now,
+                                    // Phase sync info for drift correction
+                                    quarterNoteTime: now - lastClockTime
+                                });
+                            }
                             catch (e) { console.error('Error in clock listener:', e); }
                         });
                     }
@@ -841,6 +874,17 @@ Alpine.data('tx6Controller', () => ({
                     if (this.timingWorklet) {
                         this.timingWorklet.port.postMessage({ type: 'setBpm', data: { bpm: this.bpm } });
                     }
+                }
+
+                // Send phase sync to correct drift (especially important for BLE)
+                if (this.timingWorklet && clockData.quarterNoteTime) {
+                    this.timingWorklet.port.postMessage({
+                        type: 'syncPhase',
+                        data: {
+                            externalTime: clockData.timestamp,
+                            quarterNoteDuration: clockData.quarterNoteTime
+                        }
+                    });
                 }
 
                 if (!this.startStopActive) {
