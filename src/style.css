@@ -1,17 +1,17 @@
 :root {
-    /* Warm cream/beige palette */
-    --bg-color: #e6e1dc;
-    --bg-color-darker: #d9d4cf;
+    /* Warm cream palette based on #f0efea */
+    --bg-color: #f0efea;
+    --bg-color-darker: #e4e3de;
     --text-color: #4a4845;
-    --knob-color: #f5f2ed;
-    --knob-color-secondary: #ebe7e2;
-    --knob-border: rgba(80, 70, 60, 0.12);
-    --knob-shine: rgba(255, 252, 248, 0.6);
-    --knob-shadow: rgba(60, 50, 40, 0.18);
+    --knob-color: #faf9f6;
+    --knob-color-secondary: #f3f2ed;
+    --knob-border: rgba(80, 70, 60, 0.10);
+    --knob-shine: rgba(255, 254, 252, 0.7);
+    --knob-shadow: rgba(60, 50, 40, 0.15);
     --slider-track: var(--accent-color-blue);
-    --accent-color: #e6e1dc;
+    --accent-color: #f0efea;
     --accent-color-orange: #ff9500;
-    --accent-color-white: #faf8f5;
+    --accent-color-white: #fcfbf8;
     --accent-color-blue: #110237;
     --eq-center-color: #ff9500;
     --button-color: #110237;
@@ -22,10 +22,10 @@
     --button-orange-hover: #ff8000;
     --button-orange-active: #e67e00;
     --label-color: #110237;
-    --select-bg: #f0ece7;
-    --select-border: rgba(80, 70, 60, 0.12);
-    --border-color: #c9c4bf;
-    --text-inverse: #fffcf9;
+    --select-bg: #f7f6f2;
+    --select-border: rgba(80, 70, 60, 0.10);
+    --border-color: #d4d3ce;
+    --text-inverse: #fffefa;
 
     --space-xxs: 0.125rem;
     --space-xs: 0.25rem;
@@ -38,48 +38,48 @@
 
     --knob-box-shadow:
         0 0 0 3px var(--knob-color-secondary),
-        0 5px 14px rgba(60, 50, 40, 0.1),
-        8px 0 16px rgba(60, 50, 40, 0.1),
-        0 8px 6px rgba(60, 50, 40, 0.1),
-        5px 0 4px rgba(60, 50, 40, 0.1),
-        0 2px 0 3px #c9c4bf,
-        1px 0 0 3px #b0aba6,
-        -2px -2px 3px rgba(255, 252, 248, 0.1);
+        0 5px 14px rgba(60, 50, 40, 0.08),
+        8px 0 16px rgba(60, 50, 40, 0.08),
+        0 8px 6px rgba(60, 50, 40, 0.08),
+        5px 0 4px rgba(60, 50, 40, 0.08),
+        0 2px 0 3px #d4d3ce,
+        1px 0 0 3px #c0bfba,
+        -2px -2px 3px rgba(255, 254, 252, 0.15);
     --tab-box-shadow:
-        0 2px 4px rgba(60, 50, 40, 0.12),
-        0 1px 2px rgba(60, 50, 40, 0.08),
-        inset 0 1px 0 rgba(255, 252, 248, 0.5);
+        0 2px 4px rgba(60, 50, 40, 0.10),
+        0 1px 2px rgba(60, 50, 40, 0.06),
+        inset 0 1px 0 rgba(255, 254, 252, 0.6);
     --tab-hover-box-shadow:
-        0 3px 6px rgba(60, 50, 40, 0.15),
-        0 1px 2px rgba(60, 50, 40, 0.1),
-        inset 0 1px 0 rgba(255, 252, 248, 0.7);
+        0 3px 6px rgba(60, 50, 40, 0.12),
+        0 1px 2px rgba(60, 50, 40, 0.08),
+        inset 0 1px 0 rgba(255, 254, 252, 0.8);
 
     /* Component Variables */
-    --top-bar-bg: rgba(230, 225, 220, 0.95);
-    --tab-nav-bg: rgba(217, 212, 207, 0.8);
-    --key-white: #faf8f5;
-    --key-white-active: #e5e0db;
-    --key-white-hover: #f0ece7;
+    --top-bar-bg: rgba(240, 239, 234, 0.95);
+    --tab-nav-bg: rgba(228, 227, 222, 0.85);
+    --key-white: #fcfbf8;
+    --key-white-active: #ebebea;
+    --key-white-hover: #f5f4f0;
 
     /* Tab Button Variables */
-    --tab-bg: linear-gradient(180deg, #f5f2ed 0%, #e9e5e0 30%, #dbd7d2 60%, #cac6c1 100%);
-    --tab-bg-hover: linear-gradient(180deg, #faf8f5 0%, #f0ece7 30%, #e3dfd9 60%, #d3cfc9 100%);
-    --tab-bg-active: linear-gradient(180deg, #d6d2cd 0%, #c7c3be 40%, #b7b3ae 100%);
-    --tab-border: #bdb8b3;
-    --tab-border-bottom: #bdb8b3;
-    --tab-border-right: #c5c0bb;
-    --tab-border-active: #bdb8b3;
-    --tab-border-active-bottom: #bdb8b3;
-    --tab-text-shadow: 0 1px 0 rgba(255, 252, 248, 0.4);
-    --tab-highlight: rgba(255, 252, 248, 0.5);
+    --tab-bg: linear-gradient(180deg, #faf9f6 0%, #f0efea 30%, #e4e3de 60%, #d6d5d0 100%);
+    --tab-bg-hover: linear-gradient(180deg, #fcfbf8 0%, #f5f4f0 30%, #eae9e4 60%, #dcdbd6 100%);
+    --tab-bg-active: linear-gradient(180deg, #e0dfda 0%, #d2d1cc 40%, #c4c3be 100%);
+    --tab-border: #c8c7c2;
+    --tab-border-bottom: #c8c7c2;
+    --tab-border-right: #d0cfca;
+    --tab-border-active: #c8c7c2;
+    --tab-border-active-bottom: #c8c7c2;
+    --tab-text-shadow: 0 1px 0 rgba(255, 254, 252, 0.5);
+    --tab-highlight: rgba(255, 254, 252, 0.6);
     --button-border: #555;
-    --key-border: rgba(80, 70, 60, 0.2);
-    --key-shadow: 0 2px 4px rgba(60, 50, 40, 0.1);
+    --key-border: rgba(80, 70, 60, 0.15);
+    --key-shadow: 0 2px 4px rgba(60, 50, 40, 0.08);
     --key-disabled: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
     --slider-overlay-opacity: 0.3;
     --play-button-shadow: inset 0 -0.0625rem 0.25rem rgba(0, 0, 0, 0.02),
-        0 0.125rem 0.25rem rgba(0, 0, 0, 0.2),
-        -0.125rem -0.125rem 0.1875rem rgba(255, 255, 255, 0.1);
+        0 0.125rem 0.25rem rgba(0, 0, 0, 0.15),
+        -0.125rem -0.125rem 0.1875rem rgba(255, 255, 255, 0.15);
 }
 
 
@@ -896,7 +896,6 @@ header {
     flex-direction: column;
     gap: var(--space-sm);
     align-items: center;
-    padding: 0 var(--space-sm);
 }
 
 .view-title {

@@ -376,11 +376,22 @@ const createMidiController = () => {
         midiCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
             const value = event.target.value;
             const data = new Uint8Array(value.buffer);
-            let midiData = [];
+
+            // BLE MIDI packet format: [header, timestamp, status, data...]
+            // Parse BLE MIDI messages properly, handling system realtime
             for (let i = 1; i < data.length; i++) {
-                if ((data[i] & 0x80) === 0) midiData.push(data[i]);
+                const byte = data[i];
+
+                // System realtime messages (0xF8-0xFF) are single-byte and can appear anywhere
+                if (byte >= MIDI.REALTIME_THRESHOLD) {
+                    processMidiMessage([byte]);
+                }
+                // Skip timestamp bytes (high bit set but not status), process other status bytes
+                else if ((byte & 0x80) !== 0 && (byte & 0xF0) !== 0x80) {
+                    // This is a timestamp byte, skip it
+                    continue;
+                }
             }
-            if (midiData.length > 0) processMidiMessage(midiData);
         });
 
         return bluetoothDevice;
@@ -440,6 +451,7 @@ Alpine.data('tx6Controller', () => ({
     currentTrack: Alpine.$persist(0).as('tx6-currentTrack'),
 
     lfoOutputValues: {},
+    lastSentCCValues: {},  // Cache to prevent duplicate MIDI sends
     currentSliderMode: Alpine.$persist(7).as('tx6-currentSliderMode'),
     currentEqMode: Alpine.$persist(74).as('tx6-currentEqMode'),
     currentFxMode: Alpine.$persist(93).as('tx6-currentFxMode'),
@@ -869,6 +881,8 @@ Alpine.data('tx6Controller', () => ({
         try {
             await (type === 'ble' ? this.midi.connectBle() : this.midi.connectUsb());
             this.isConnected = true;
+            // Clear CC cache so values get resent on reconnect
+            this.lastSentCCValues = {};
             this.status = `Connected to TX-6 via ${connectionName}`;
             setTimeout(() => this.status = '', TIME.CONNECTION_SUCCESS_DISPLAY);
         } catch (error) {
@@ -1063,20 +1077,28 @@ Alpine.data('tx6Controller', () => ({
             console.warn('Invalid CC number:', cc);
             return false;
         }
+
         // Clamp value to valid range
         const clampedValue = Math.max(MIDI.MIN, Math.min(MIDI.MAX, Math.round(value)));
+        const key = `${channel}-${cc}`;
+
+        // Deduplication: skip if same as last sent value (reduces MIDI traffic for LFOs)
+        if (this.lastSentCCValues[key] === clampedValue) {
+            return false;
+        }
 
         // Store in trackValues for LFO base value lookup (unless LFO-generated)
         if (!isLfoGenerated) {
-            this.trackValues[`${channel}-${cc}`] = clampedValue;
+            this.trackValues[key] = clampedValue;
         }
 
         // Check connection state
         if (!this.isConnected) {
-            // Silently skip if not connected (common during startup)
             return false;
         }
 
+        // Update cache and send
+        this.lastSentCCValues[key] = clampedValue;
         this.midi.sendCC(channel, cc, clampedValue);
         return true;
     },
@@ -1234,7 +1256,16 @@ Alpine.data('tx6Controller', () => ({
     },
 
     runLfo(trackIdx, dt, audioTime) {
-        const assignedLfos = this.globalLfos.filter(lfo => Number(lfo.assignedTrack) === trackIdx);
+        // Filter LFOs early: only process enabled LFOs with non-zero effect
+        const assignedLfos = this.globalLfos.filter(lfo =>
+            Number(lfo.assignedTrack) === trackIdx &&
+            lfo.enabled &&
+            lfo.amount !== LFO.AMOUNT_DEFAULT
+        );
+
+        // Early exit if no active LFOs for this track
+        if (assignedLfos.length === 0) return;
+
         // Use AudioContext time for precise timing
         const currentTime = audioTime || (this.audioContext ? this.audioContext.currentTime : performance.now() / 1000);
         const elapsedTime = currentTime - this.lfoStartTime;
@@ -1242,7 +1273,6 @@ Alpine.data('tx6Controller', () => ({
         assignedLfos.forEach((lfo) => {
             try {
                 const globalLfoIndex = this.globalLfos.indexOf(lfo);
-                if (lfo.amount === LFO.AMOUNT_DEFAULT) return;
 
                 const hz = lfo.rate / LFO.PHASE_MULTIPLIER;
 
