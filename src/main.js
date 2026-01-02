@@ -161,6 +161,38 @@ const midiToEqDisplay = (value) => {
     return dbValue === 0 ? "0dB" : (dbValue > 0 ? "+" + dbValue : dbValue) + "dB";
 };
 
+/** Clamp a value to valid MIDI range (0-127), rounding to integer */
+const clampMidiValue = (value) => Math.max(MIDI.MIN, Math.min(MIDI.MAX, Math.round(value)));
+
+/** Create a unique key for track/CC value storage */
+const createTrackValueKey = (track, cc) => `${track}-${cc}`;
+
+/** Detect if running in iOS Safari (not a BLE-capable browser like Bluefy) */
+const isIosSafari = () => {
+    const ua = navigator.userAgent;
+    const isIos = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS|Chrome/.test(ua);
+    // Bluefy and WebBLE browsers typically have Web Bluetooth API available
+    const hasBle = 'bluetooth' in navigator;
+    const hasMidi = 'requestMIDIAccess' in navigator;
+    return isIos && isSafari && !hasBle && !hasMidi;
+};
+
+/** Calculate LFO modulation output value */
+const calculateLfoModulation = (baseValue, amount, shapeValue) => {
+    const distanceFromCenter = Math.abs(amount - LFO.AMOUNT_DEFAULT);
+    const scaledAmount = distanceFromCenter * (MIDI.MID / 50);
+    return clampMidiValue(baseValue + scaledAmount * shapeValue);
+};
+
+/** Calculate LFO rate from BPM and multiplier */
+const calculateBpmSyncRate = (bpm, multiplier) => {
+    const quarterNoteDuration = 60 / bpm;
+    const noteDuration = quarterNoteDuration / multiplier;
+    const targetHz = 1 / noteDuration;
+    return Math.max(LFO.RATE_MIN, Math.min(LFO.RATE_MAX, Math.round(targetHz * LFO.PHASE_MULTIPLIER)));
+};
+
 // Angle conversion functions exposed via Alpine component methods below
 
 Alpine.data('knob', (config) => ({
@@ -529,6 +561,8 @@ Alpine.data('tx6Controller', () => ({
     jsFileName: '',
     cssFileName: '',
 
+    showIosSafariWarning: false,
+
     /** Creates standardized knob change handler - reduces boilerplate */
     createKnobHandler(knobType, customHandler) {
         return (v) => {
@@ -732,6 +766,9 @@ Alpine.data('tx6Controller', () => ({
         this.initializeTrackValues();
         this.setupFullscreenListener();
         this.initializeLfoRates();
+
+        // Check for iOS Safari and show warning if BLE/MIDI not supported
+        this.showIosSafariWarning = isIosSafari();
 
         // Clear any hanging notes on page unload
         window.addEventListener('beforeunload', () => {
@@ -2126,3 +2163,33 @@ Alpine.start();
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/service-worker.js');
 }
+
+export {
+    CC,
+    CHANNELS,
+    MIDI,
+    KNOB_ANGLE,
+    BPM,
+    TRACKS,
+    FX_ENGINES,
+    LFO_TARGETS,
+    LFO,
+    SYNTH,
+    TIME,
+    UI,
+    EQ,
+    SCHEMA_VERSION,
+    seqs,
+    LFO_TRACK_OPTIONS,
+
+    createAngleConverter,
+    midiToAngle,
+    lfoRateToAngle,
+    lfoAmountToAngle,
+    synthFreqToAngle,
+    midiToEqDisplay,
+    clampMidiValue,
+    createTrackValueKey,
+    calculateLfoModulation,
+    calculateBpmSyncRate
+};

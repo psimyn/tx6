@@ -390,7 +390,49 @@ h1 {
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
 }
 
+.ios-safari-warning {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 0.5rem;
+    padding: var(--space-md) var(--space-lg);
+    font-size: 0.85rem;
+    color: #856404;
+    text-align: left;
+    max-width: 100%;
+}
 
+.ios-safari-warning .warning-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.ios-safari-warning a {
+    color: #533f03;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.ios-safari-warning a:hover {
+    color: #3d2e02;
+}
+
+/* Dark mode support for warning */
+:root.dark-theme .ios-safari-warning,
+html.dark-theme .ios-safari-warning,
+body.dark-theme .ios-safari-warning {
+    background: #332701;
+    border-color: #664d00;
+    color: #ffc107;
+}
+
+:root.dark-theme .ios-safari-warning a,
+html.dark-theme .ios-safari-warning a,
+body.dark-theme .ios-safari-warning a {
+    color: #ffda6a;
+}
 
 .knob-container {
     max-width: 20rem;

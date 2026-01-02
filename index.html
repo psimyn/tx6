@@ -84,8 +84,13 @@
     <!-- Connection Footer -->
     <footer class="connection-footer" x-show="!isConnected">
         <div class="connection-footer-content">
+            <!-- iOS Safari Warning -->
+            <div class="ios-safari-warning" x-show="showIosSafariWarning">
+                <span class="warning-icon">⚠️</span>
+                <span>BLE and MIDI are not supported in Safari on iOS. Try <a href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener">Bluefy</a> browser instead.</span>
+            </div>
             <div class="status" x-show="status" x-text="status"></div>
-            <div class="connection-buttons">
+            <div class="connection-buttons" x-show="!showIosSafariWarning">
                 <template x-for="type in ['ble', 'usb']">
                     <button @click="connect(type)" class="connect-btn" :disabled="connecting"
                         x-text="`Connect ${type === 'ble' ? 'BLE' : 'USB'}`">
