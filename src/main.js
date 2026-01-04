@@ -338,7 +338,8 @@ const createMidiController = () => {
             // Only notify listeners every quarter note (24 clock messages)
             if (clockCount % TIME.CLOCK_QUARTER_NOTE === 0) {
                 if (lastClockTime > 0) {
-                    const instantBpm = 60000 / (now - lastClockTime);
+                    const quarterInterval = now - lastClockTime;
+                    const instantBpm = 60000 / quarterInterval;
 
                     // Outlier rejection for BLE jitter
                     if (bpmHistory.length >= 3) {
@@ -346,7 +347,6 @@ const createMidiController = () => {
                         const median = sorted[Math.floor(sorted.length / 2)];
                         const deviation = Math.abs(instantBpm - median) / median;
 
-                        // Only accept readings within threshold of median
                         if (deviation <= TIME.BPM_OUTLIER_THRESHOLD) {
                             bpmHistory.push(instantBpm);
                         }
@@ -378,7 +378,7 @@ const createMidiController = () => {
                                     clockCount,
                                     timestamp: now,
                                     // Phase sync info for drift correction
-                                    quarterNoteTime: now - lastClockTime
+                                    quarterNoteTime: quarterInterval
                                 });
                             }
                             catch (e) { console.error('Error in clock listener:', e); }
@@ -443,19 +443,41 @@ const createMidiController = () => {
             const value = event.target.value;
             const data = new Uint8Array(value.buffer);
 
-            // BLE MIDI packet format: [header, timestamp, status, data...]
-            // Parse BLE MIDI messages properly, handling system realtime
+            // BLE MIDI packet format: [header, timestamp, status/data...]
+            // Timestamps have high bit set (0x80-0xFF)
+            // System realtime (0xF8-0xFF) can appear BETWEEN timestamp and status bytes
+            // Key insight: after a timestamp byte, we expect either:
+            //   - A status byte (0x80-0xEF for channel messages, 0xF0-0xF7 for system common)
+            //   - A system realtime byte (0xF8-0xFF) which is processed and doesn't consume the timestamp
+            //   - Data bytes (0x00-0x7F)
+
+            let expectingTimestamp = true;  // First byte after header is timestamp
+
             for (let i = 1; i < data.length; i++) {
                 const byte = data[i];
 
-                // System realtime messages (0xF8-0xFF) are single-byte and can appear anywhere
-                if (byte >= MIDI.REALTIME_THRESHOLD) {
-                    processMidiMessage([byte]);
-                }
-                // Skip timestamp bytes (high bit set but not status), process other status bytes
-                else if ((byte & 0x80) !== 0 && (byte & 0xF0) !== 0x80) {
-                    // This is a timestamp byte, skip it
-                    continue;
+                if (expectingTimestamp) {
+                    // This should be a timestamp byte (high bit set)
+                    if (byte & 0x80) {
+                        // Valid timestamp, next byte should be status or data
+                        expectingTimestamp = false;
+                    }
+                    // If high bit not set, packet is malformed - skip
+                } else {
+                    // After timestamp, check what kind of byte this is
+                    if (byte >= MIDI.REALTIME_THRESHOLD) {
+                        // System realtime message (0xF8-0xFF) - single byte, can appear anywhere
+                        // These are genuinely interleaved and don't affect parsing state
+                        processMidiMessage([byte]);
+                        // Still expecting the actual status/data byte after this
+                    } else if (byte & 0x80) {
+                        // Status byte (0x80-0xF7) - marks start of a new MIDI message
+                        // Next byte could be another timestamp or continued data
+                        expectingTimestamp = true;
+                    } else {
+                        // Data byte (0x00-0x7F) - part of running status
+                        // Continue expecting data or next timestamp
+                    }
                 }
             }
         });
