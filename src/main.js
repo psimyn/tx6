@@ -106,8 +106,8 @@ const TIME = {
     CONNECTION_SUCCESS_DISPLAY: 2000,
     CONNECTION_ERROR_DISPLAY: 5000,
     CLOCK_QUARTER_NOTE: 24,
-    BPM_HISTORY_SIZE: 16, // Larger window for BLE jitter smoothing
-    BPM_OUTLIER_THRESHOLD: 0.15, // Reject readings >15% from median
+    BPM_HISTORY_SIZE: 6, // Smaller window for faster response
+    BPM_OUTLIER_THRESHOLD: 0.10, // Reject readings >10% from median
     MIDI_TIMESTAMP_MASK: 8191,
     MIDI_TIMESTAMP_SHIFT: 7,
     MIDI_STATUS_MASK: 0xBF,
@@ -341,15 +341,21 @@ const createMidiController = () => {
                     const quarterInterval = now - lastClockTime;
                     const instantBpm = 60000 / quarterInterval;
 
-                    // Outlier rejection for BLE jitter
-                    if (bpmHistory.length >= 3) {
+                    // Outlier rejection - but detect tempo changes
+                    if (bpmHistory.length >= 2) {
                         const sorted = [...bpmHistory].sort((a, b) => a - b);
                         const median = sorted[Math.floor(sorted.length / 2)];
                         const deviation = Math.abs(instantBpm - median) / median;
 
                         if (deviation <= TIME.BPM_OUTLIER_THRESHOLD) {
+                            // Normal variation, add to history
                             bpmHistory.push(instantBpm);
+                        } else if (deviation > 0.20) {
+                            // Large change (>20%) - likely intentional tempo change
+                            // Clear history and start fresh with new tempo
+                            bpmHistory = [instantBpm];
                         }
+                        // Else: outlier between 10-20% - ignore it
                     } else {
                         // Build initial history without filtering
                         bpmHistory.push(instantBpm);
@@ -359,16 +365,10 @@ const createMidiController = () => {
                         bpmHistory.shift();
                     }
 
-                    // Use weighted average favoring recent values for responsiveness
-                    if (bpmHistory.length >= 4) {
-                        let weightedSum = 0;
-                        let weightTotal = 0;
-                        for (let i = 0; i < bpmHistory.length; i++) {
-                            const weight = i + 1; // More recent = higher weight
-                            weightedSum += bpmHistory[i] * weight;
-                            weightTotal += weight;
-                        }
-                        const avgBpm = weightedSum / weightTotal;
+                    // Report BPM after just 2 samples for quick initial response
+                    if (bpmHistory.length >= 2) {
+                        // Simple average - weighted average was adding latency
+                        const avgBpm = bpmHistory.reduce((a, b) => a + b, 0) / bpmHistory.length;
 
                         clockListeners.forEach(cb => {
                             try {
