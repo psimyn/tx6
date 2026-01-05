@@ -9,7 +9,7 @@
     --knob-shine: rgba(255, 254, 252, 0.7);
     --knob-shadow: rgba(60, 50, 40, 0.15);
     --slider-track: var(--accent-color-blue);
-    --accent-color: #f0efea;
+    --accent-color: #dddcd7;
     --accent-color-orange: #ff9500;
     --accent-color-white: #fcfbf8;
     --accent-color-blue: #110237;
@@ -37,14 +37,31 @@
     --space-3xl: 3rem;
 
     --knob-box-shadow:
-        0 0 0 3px var(--knob-color-secondary),
-        0 5px 14px rgba(60, 50, 40, 0.08),
-        8px 0 16px rgba(60, 50, 40, 0.08),
-        0 8px 6px rgba(60, 50, 40, 0.08),
-        5px 0 4px rgba(60, 50, 40, 0.08),
-        0 2px 0 3px #d4d3ce,
-        1px 0 0 3px #c0bfba,
-        -2px -2px 3px rgba(255, 254, 252, 0.15);
+        /* Outer bezel ring */
+        0 0 0 2px var(--knob-color-secondary),
+        0 0 0 4px rgba(180, 175, 165, 0.4),
+        /* Realistic drop shadow (soft, diffused) */
+        0 4px 8px rgba(60, 50, 40, 0.12),
+        0 8px 16px rgba(60, 50, 40, 0.08),
+        0 2px 4px rgba(60, 50, 40, 0.15),
+        /* Subtle ambient shadow for depth */
+        4px 4px 12px rgba(60, 50, 40, 0.06),
+        -2px -2px 8px rgba(255, 254, 252, 0.4);
+
+    /* Knob surface gradient for 3D curvature */
+    --knob-gradient: radial-gradient(ellipse 80% 50% at 50% 15%,
+            rgba(255, 254, 252, 0.9) 0%,
+            rgba(255, 254, 252, 0.3) 25%,
+            transparent 60%),
+        radial-gradient(ellipse 100% 100% at 50% 100%,
+            rgba(60, 50, 40, 0.08) 0%,
+            transparent 50%),
+        /* Subtle brushed metal texture */
+        repeating-linear-gradient(0deg,
+            transparent 0px,
+            rgba(0, 0, 0, 0.01) 1px,
+            transparent 2px),
+        var(--knob-color);
     --tab-box-shadow:
         0 2px 4px rgba(60, 50, 40, 0.10),
         0 1px 2px rgba(60, 50, 40, 0.06),
@@ -134,14 +151,26 @@ body.dark-theme {
     --play-button-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.5);
 
     --knob-box-shadow:
-        0 0 0 3px var(--knob-color-secondary),
-        0 5px 14px rgba(0, 0, 0, 0.3),
-        8px 0 16px rgba(0, 0, 0, 0.3),
-        0 8px 6px rgba(0, 0, 0, 0.3),
-        5px 0 4px rgba(0, 0, 0, 0.3),
-        0 2px 0 3px #333,
-        1px 0 0 3px #222,
-        -2px -2px 3px rgba(255, 255, 255, 0.05);
+        /* Outer bezel ring */
+        0 0 0 2px var(--knob-color-secondary),
+        0 0 0 4px rgba(0, 0, 0, 0.3),
+        /* Realistic drop shadow */
+        0 4px 8px rgba(0, 0, 0, 0.25),
+        0 8px 16px rgba(0, 0, 0, 0.2),
+        0 2px 4px rgba(0, 0, 0, 0.3),
+        /* Subtle ambient */
+        4px 4px 12px rgba(0, 0, 0, 0.15),
+        -2px -2px 8px rgba(255, 255, 255, 0.03);
+
+    /* Dark mode knob gradient - more subtle */
+    --knob-gradient: radial-gradient(ellipse 80% 50% at 50% 15%,
+            rgba(255, 255, 255, 0.06) 0%,
+            rgba(255, 255, 255, 0.02) 30%,
+            transparent 50%),
+        radial-gradient(ellipse 100% 100% at 50% 100%,
+            rgba(0, 0, 0, 0.12) 0%,
+            transparent 50%),
+        var(--knob-color);
     --tab-box-shadow: none;
     --tab-hover-box-shadow: none;
 
@@ -510,7 +539,7 @@ body.dark-theme .ios-safari-warning a {
 }
 
 .knob {
-    background-color: var(--knob-color);
+    background: var(--knob-gradient);
     border-radius: 50%;
     position: relative;
     border: 1px solid var(--knob-border);
