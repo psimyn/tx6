@@ -434,6 +434,55 @@ body.dark-theme .ios-safari-warning a {
     color: #ffda6a;
 }
 
+/* Update Available Banner */
+.update-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    background: var(--bg-color-darker);
+    border-bottom: 1px solid var(--knob-border);
+    color: var(--text-color);
+    padding: var(--space-sm) var(--space-lg);
+    font-size: 0.85rem;
+    z-index: 1000;
+}
+
+.update-banner .update-btn {
+    background: var(--button-color);
+    color: var(--text-inverse);
+    border: none;
+    border-radius: 0.25rem;
+    padding: var(--space-xs) var(--space-md);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.update-banner .update-btn:hover {
+    background: var(--button-hover);
+}
+
+.update-banner .dismiss-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: var(--space-xs);
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.update-banner .dismiss-btn:hover {
+    opacity: 1;
+}
+
 .knob-container {
     max-width: 20rem;
     width: 100%;

@@ -16,6 +16,12 @@
 </head>
 
 <body x-data="tx6Controller()" x-init="init()" x-cloak>
+    <!-- Update Available Banner -->
+    <div class="update-banner" x-show="updateAvailable" x-transition>
+        <span>Update available</span>
+        <button @click="applyUpdate()" class="update-btn">Refresh</button>
+    </div>
+
     <!-- Top Bar -->
     <div class="top-bar">
         <div class="top-bar-header">
@@ -87,7 +93,9 @@
             <!-- iOS Safari Warning -->
             <div class="ios-safari-warning" x-show="showIosSafariWarning">
                 <span class="warning-icon">⚠️</span>
-                <span>BLE and MIDI are not supported in Safari on iOS. Try <a href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener">Bluefy</a> browser instead.</span>
+                <span>BLE and MIDI are not supported in Safari on iOS. Try <a
+                        href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" target="_blank"
+                        rel="noopener">Bluefy</a> browser instead.</span>
             </div>
             <div class="status" x-show="status" x-text="status"></div>
             <div class="connection-buttons" x-show="!showIosSafariWarning">

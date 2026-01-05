@@ -297,12 +297,23 @@ const createMidiController = () => {
                 const bleMidiData = new Uint8Array(midiEncoder(msg.data));
                 midiCharacteristic.writeValue(bleMidiData)
                     .then(() => { msg.resolve(); sendNext(); })
-                    .catch(error => { console.error('BLE send error:', error); msg.reject(error); sendNext(); });
+                    .catch(error => {
+                        console.error('BLE send error:', error);
+                        msg.reject(error);
+                        sendNext();
+                    });
             } else if (connectionType === 'usb' && midiOutput) {
-                midiOutput.send(msg.data);
-                msg.resolve();
+                try {
+                    midiOutput.send(msg.data);
+                    msg.resolve();
+                } catch (sendError) {
+                    // Device may have been disconnected mid-send
+                    console.error('USB MIDI send error:', sendError);
+                    msg.reject(sendError);
+                }
                 sendNext();
             } else {
+                // Not connected - resolve silently to drain queue
                 msg.resolve();
                 sendNext();
             }
@@ -310,6 +321,14 @@ const createMidiController = () => {
             console.error('Error in MIDI send:', error);
             msg.reject(error);
             sendNext();
+        }
+    };
+
+    /** Clear pending messages from the send queue */
+    const clearQueue = () => {
+        while (sendQueue.length > 0) {
+            const msg = sendQueue.shift();
+            msg.resolve(); // Resolve pending promises to prevent hanging
         }
     };
 
@@ -486,6 +505,13 @@ const createMidiController = () => {
         bluetoothDevice.addEventListener('gattserverdisconnected', () => {
             connectionType = null;
             midiCharacteristic = null;
+            bluetoothDevice = null;
+            clearQueue();
+            // Reset clock state
+            isReceivingClock = false;
+            bpmHistory = [];
+            lastClockTime = 0;
+            clockCount = 0;
             if (disconnectListener) disconnectListener('ble');
         });
 
@@ -534,6 +560,12 @@ const createMidiController = () => {
                 connectionType = null;
                 midiOutput = null;
                 midiInput = null;
+                clearQueue();
+                // Reset clock state
+                isReceivingClock = false;
+                bpmHistory = [];
+                lastClockTime = 0;
+                clockCount = 0;
                 if (disconnectListener) disconnectListener('usb');
             }
         };
@@ -542,9 +574,12 @@ const createMidiController = () => {
     };
 
     return {
-        sendCC, sendNoteOn, sendNoteOff, sendSystemRealTime, connectBle, connectUsb,
+        sendCC, sendNoteOn, sendNoteOff, sendSystemRealTime, connectBle, connectUsb, clearQueue,
         addClockListener: (cb) => clockListeners.push(cb),
-        removeClockListener: (cb) => clockListeners.splice(clockListeners.indexOf(cb), 1),
+        removeClockListener: (cb) => {
+            const idx = clockListeners.indexOf(cb);
+            if (idx !== -1) clockListeners.splice(idx, 1);
+        },
         setDisconnectListener: (cb) => disconnectListener = cb,
         getClockStatus: () => ({ isReceivingClock, clockCount })
     };
@@ -584,6 +619,10 @@ Alpine.data('tx6Controller', () => ({
     cssFileName: '',
 
     showIosSafariWarning: false,
+
+    // Service worker update state
+    updateAvailable: false,
+    _pendingWorker: null,
 
     /** Creates standardized knob change handler - reduces boilerplate */
     createKnobHandler(knobType, customHandler) {
@@ -792,9 +831,22 @@ Alpine.data('tx6Controller', () => ({
         // Check for iOS Safari and show warning if BLE/MIDI not supported
         this.showIosSafariWarning = isIosSafari();
 
-        // Clear any hanging notes on page unload
+        // Clear any hanging notes on page unload or tab switch
         window.addEventListener('beforeunload', () => {
             this.allNotesOff();
+        });
+
+        // Handle stuck notes when tab loses focus
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.allNotesOff();
+            }
+        });
+
+        // Listen for service worker update notifications
+        window.addEventListener('swUpdateAvailable', (e) => {
+            this._pendingWorker = e.detail.worker;
+            this.updateAvailable = true;
         });
 
         // Schema versioning
@@ -905,8 +957,8 @@ Alpine.data('tx6Controller', () => ({
             this.knobs.masterVolume.value = this.masterChannelValues[newChannel] ?? MIDI.MIN;
 
             const sliderModeMap = {
-                aux: 92,
-                volume: 7
+                aux: CC.AUX_SEND,
+                volume: CC.VOLUME
             };
 
             if (sliderModeMap[newChannel]) {
@@ -947,11 +999,19 @@ Alpine.data('tx6Controller', () => ({
                 }
 
                 if (!this.startStopActive) {
-                    await this.startTimingSystem(false);
+                    try {
+                        await this.startTimingSystem(false);
+                    } catch (e) {
+                        console.error('Failed to start timing system:', e);
+                    }
                 }
                 this.startStopActive = true;
             } else if (clockData.type === 'start') {
-                await this.startTimingSystem(false);
+                try {
+                    await this.startTimingSystem(false);
+                } catch (e) {
+                    console.error('Failed to start timing system:', e);
+                }
                 this.startStopActive = true;
                 this.clockStatus.clockCount = 0;
             } else if (clockData.type === 'stop') {
@@ -960,7 +1020,11 @@ Alpine.data('tx6Controller', () => ({
                 this.clockStatus.isReceiving = false;
             } else if (clockData.type === 'continue') {
                 if (!this.startStopActive) {
-                    await this.startTimingSystem(false);
+                    try {
+                        await this.startTimingSystem(false);
+                    } catch (e) {
+                        console.error('Failed to start timing system:', e);
+                    }
                 }
                 this.startStopActive = true;
             }
@@ -972,6 +1036,8 @@ Alpine.data('tx6Controller', () => ({
             this.stopTimingSystem();
             this.startStopActive = false;
             this.lastSentCCValues = {};
+            // Reset clock status
+            this.clockStatus = { isReceiving: false, bpm: 0, clockCount: 0, lastUpdate: 0 };
             this.status = `${type === 'ble' ? 'Bluetooth' : 'USB'} disconnected`;
             setTimeout(() => this.status = '', TIME.CONNECTION_ERROR_DISPLAY);
         });
@@ -1331,6 +1397,10 @@ Alpine.data('tx6Controller', () => ({
         }
         // Clear LFO output values to prevent stale ghost indicators
         this.lfoOutputValues = {};
+        // Reset LFO phases for clean restart
+        if (this.lfoPhases) {
+            this.lfoPhases = this.lfoPhases.map(() => 0);
+        }
     },
 
     async togglePlay() {
@@ -1339,6 +1409,10 @@ Alpine.data('tx6Controller', () => ({
             await this.startTimingSystem(true); // true = send MIDI clock
         } else {
             this.stopTimingSystem();
+            // Send MIDI stop when manually stopping
+            if (this.isConnected) {
+                this.midi.sendSystemRealTime(MIDI.SYSTEM_REALTIME.STOP);
+            }
         }
     },
 
@@ -1409,7 +1483,8 @@ Alpine.data('tx6Controller', () => ({
             try {
                 const globalLfoIndex = this.globalLfos.indexOf(lfo);
 
-                const hz = lfo.rate / LFO.PHASE_MULTIPLIER;
+                // Validate rate is positive
+                const hz = Math.max(0.001, lfo.rate / LFO.PHASE_MULTIPLIER);
 
                 const absolutePhase = (2 * Math.PI * hz * elapsedTime) % (2 * Math.PI);
                 this.lfoPhases[globalLfoIndex] = absolutePhase;
@@ -1418,7 +1493,8 @@ Alpine.data('tx6Controller', () => ({
                 const effectivePhase = (absolutePhase + phaseOffset) % (2 * Math.PI);
 
                 // PWM value (0-100) normalized to threshold (0-1)
-                const pwm = (lfo.pwm ?? 50) / 100;
+                // Clamp to avoid divide-by-zero at extremes
+                const pwm = Math.max(0.01, Math.min(0.99, (lfo.pwm ?? 50) / 100));
                 // Normalized position within current cycle (0-1)
                 const cyclePos = effectivePhase / (2 * Math.PI);
 
@@ -1792,6 +1868,13 @@ Alpine.data('tx6Controller', () => ({
 
         // Reload page to reinitialize with defaults
         window.location.reload();
+    },
+
+    /** Apply pending service worker update */
+    applyUpdate() {
+        if (this._pendingWorker) {
+            this._pendingWorker.postMessage('skipWaiting');
+        }
     },
 
     midiNoteToFrequency(midiNote) {
@@ -2183,7 +2266,39 @@ Alpine.data('tx6Controller', () => ({
 Alpine.start();
 
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js');
+    navigator.serviceWorker.register('/service-worker.js').then(registration => {
+        // Check for updates on page load
+        registration.update();
+
+        // Handle waiting worker (update available)
+        const handleWaiting = (worker) => {
+            // Dispatch custom event that Alpine component can listen to
+            window.dispatchEvent(new CustomEvent('swUpdateAvailable', { detail: { worker } }));
+        };
+
+        if (registration.waiting) {
+            handleWaiting(registration.waiting);
+        }
+
+        registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // New worker installed but waiting to activate
+                    handleWaiting(newWorker);
+                }
+            });
+        });
+    });
+
+    // Reload page when new service worker takes over
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+        }
+    });
 }
 
 export {
