@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tx6-cache-1767610076';
+const CACHE_NAME = 'tx6-cache-1767755713';
 
 self.addEventListener('install', event => {
   // Don't skipWaiting() - let the main app control when to activate

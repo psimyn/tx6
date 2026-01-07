@@ -828,6 +828,7 @@ Alpine.data('tx6Controller', () => ({
         this.initializeTrackValues();
         this.setupFullscreenListener();
         this.initializeLfoRates();
+        this.initRouting();
 
         // Check for iOS Safari and show warning if BLE/MIDI not supported
         this.showIosSafariWarning = isIosSafari();
@@ -1610,19 +1611,54 @@ Alpine.data('tx6Controller', () => ({
         this.updateLfoKnobs();
     },
 
+    setupLfoCanvas() {
+        const canvas = document.getElementById('lfo-canvas');
+        if (!canvas) return null;
+        
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        const width = rect.width || 300;
+        const height = rect.height || 100;
+        
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        
+        canvas._logicalWidth = width;
+        canvas._logicalHeight = height;
+        canvas._dpr = dpr;
+        
+        return ctx;
+    },
+
     drawLfoWaveform() {
         const canvas = document.getElementById('lfo-canvas');
         if (!canvas) return;
 
+        // Setup canvas for HiDPI if not already done or if size changed
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        if (!canvas._dpr || canvas._logicalWidth !== rect.width) {
+            this.setupLfoCanvas();
+        }
+
         const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
-        const centerY = height / 2;
+        const width = canvas._logicalWidth || 300;
+        const height = canvas._logicalHeight || 100;
+        const centerY = Math.round(height / 2) + 0.5;
 
         const computedStyle = getComputedStyle(document.documentElement);
         const textColor = computedStyle.getPropertyValue('--text-color').trim();
 
-        ctx.clearRect(0, 0, width, height);
+        // Clear with proper transform handling
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
 
         const currentLfo = this.globalLfos[this.currentLfoIndex];
         const shape = currentLfo.shape;
@@ -1645,16 +1681,17 @@ Alpine.data('tx6Controller', () => ({
         ctx.globalAlpha = 1.0;
         ctx.setLineDash([]);
 
+        // Use Manrope font with proper sizing
         ctx.fillStyle = textColor;
         ctx.globalAlpha = 0.6;
-        ctx.font = '12px Arial';
+        ctx.font = '500 11px Manrope, sans-serif';
 
         ctx.textAlign = 'right';
-        ctx.fillText(`${hz.toFixed(2)} Hz`, width - 5, 15);
+        ctx.fillText(`${hz.toFixed(2)} Hz`, width - 5, 14);
         ctx.globalAlpha = 1.0;
 
         ctx.textAlign = 'left';
-        ctx.fillText(`Amt: ${amount}`, 5, 15);
+        ctx.fillText(`Amt: ${amount}`, 5, 14);
 
         const phaseDegrees = Math.floor((currentLfo.phase / MIDI.MAX) * 360);
         ctx.fillText(`Phase: ${phaseDegrees}°`, 5, height - 5);
@@ -1663,11 +1700,15 @@ Alpine.data('tx6Controller', () => ({
         const pwm = (currentLfo.pwm ?? 50) / 100;
 
         ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--button-color');
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
         ctx.beginPath();
 
-        for (let x = 0; x < width; x++) {
-            const basePhase = (x / width) * cycles * 2 * Math.PI;
+        const samplePoints = Math.round(width * (canvas._dpr || 1));
+        for (let i = 0; i <= samplePoints; i++) {
+            const x = (i / samplePoints) * width;
+            const basePhase = (i / samplePoints) * cycles * 2 * Math.PI;
             const phaseOffset = (currentLfo.phase / MIDI.MAX) * 2 * Math.PI;
             const phase = basePhase + phaseOffset;
 
@@ -1729,7 +1770,7 @@ Alpine.data('tx6Controller', () => ({
             y = amount >= 0 ? y * amplitude : -y * amplitude;
             y = centerY - y;
 
-            x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         }
 
         ctx.stroke();
@@ -1843,6 +1884,36 @@ Alpine.data('tx6Controller', () => ({
     setupFullscreenListener() {
         document.addEventListener('fullscreenchange', () => {
             this.isFullscreen = !!document.fullscreenElement;
+        });
+    },
+
+    initRouting() {
+        // Handle initial path
+        const path = window.location.pathname;
+        if (path === '/help') this.currentView = 'help';
+        else if (path === '/about') this.currentView = 'about';
+        // Don't override persisted view for main views (main, fx, synth, lfo)
+
+        // Update URL when view changes (using history API)
+        this.$watch('currentView', (view) => {
+            // Only update URL for help/about views, keep main views at root
+            const routedViews = ['help', 'about'];
+            const newPath = routedViews.includes(view) ? `/${view}` : '/';
+            if (window.location.pathname !== newPath) {
+                history.pushState({ view }, '', newPath);
+            }
+        });
+
+        // Handle back/forward navigation
+        window.addEventListener('popstate', (event) => {
+            if (event.state && event.state.view) {
+                this.currentView = event.state.view;
+            } else {
+                const path = window.location.pathname;
+                if (path === '/help') this.currentView = 'help';
+                else if (path === '/about') this.currentView = 'about';
+                else this.currentView = 'main';
+            }
         });
     },
 
