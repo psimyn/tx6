@@ -25,7 +25,15 @@
     <!-- Top Bar -->
     <div class="top-bar">
         <div class="top-bar-header">
-            <h1 class="app-title">tx6-ctl</h1>
+            <div class="title-menu-wrapper">
+                <h1 class="app-title" @click="showTitleMenu = !showTitleMenu">tx6-ctl</h1>
+                <div class="title-dropdown" x-show="showTitleMenu" @click.away="showTitleMenu = false" x-transition>
+                    <a class="dropdown-item" href="/"
+                        @click.prevent="currentView = 'main'; showTitleMenu = false">TX6</a>
+                    <a class="dropdown-item" href="https://op1.psimyn.com" target="_blank"
+                        @click="showTitleMenu = false">OP1</a>
+                </div>
+            </div>
             <div class="header-controls">
                 <button class="header-button" @click="toggleTheme()" title="Toggle theme">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"

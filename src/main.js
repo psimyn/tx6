@@ -603,6 +603,7 @@ Alpine.data('tx6Controller', () => ({
     settingsView: null,
     currentView: Alpine.$persist('main').as('tx6-currentView'),
     showOptionsMenu: false,
+    showTitleMenu: false,
     currentTheme: 'system',
     masterChannel: Alpine.$persist('volume').as('tx6-masterChannel'),
     currentLfoIndex: Alpine.$persist(0).as('tx6-currentLfoIndex'),
