@@ -234,7 +234,7 @@ body {
 }
 
 body {
-    padding: 6.5rem 0 0 0;
+    padding: 6rem 0 0 0;
 }
 
 h1 {
@@ -261,7 +261,7 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--space-sm) var(--space-lg);
+    padding: var(--space-xs) var(--space-lg);
 }
 
 .header-controls {
