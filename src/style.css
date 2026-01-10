@@ -633,7 +633,87 @@ body.dark-theme .ios-safari-warning a {
 }
 
 .bpm-input {
-    width: 60px;
+    width: 50px;
+    text-align: center;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+}
+
+.bpm-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.bpm-input-group {
+    display: flex;
+    align-items: center;
+}
+
+.bpm-adjust-btn {
+    width: 1.75rem;
+    height: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--knob-color);
+    border: 1px solid var(--knob-border);
+    color: var(--text-color);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.bpm-adjust-btn:first-child {
+    border-radius: 0.25rem 0 0 0.25rem;
+}
+
+.bpm-adjust-btn:last-child {
+    border-radius: 0 0.25rem 0.25rem 0;
+}
+
+.bpm-adjust-btn:hover {
+    background: var(--button-hover);
+    color: var(--bg-color);
+}
+
+.bpm-adjust-btn:active {
+    background: var(--button-color);
+    color: var(--text-inverse);
+}
+
+.bpm-label {
+    cursor: pointer;
+    transition: color 0.15s, transform 0.1s, text-shadow 0.15s;
+    user-select: none;
+}
+
+.bpm-label:hover {
+    color: var(--button-color);
+}
+
+.bpm-label:active {
+    color: var(--button-color);
+    transform: scale(1.15);
+    text-shadow: 0 0 8px var(--button-color);
+    animation: bpm-pulse 0.15s ease-out;
+}
+
+@keyframes bpm-pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1.15);
+    }
 }
 
 .seq-input {

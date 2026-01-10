@@ -31,8 +31,7 @@
                 <div class="title-dropdown" x-show="showTitleMenu" @click.away="showTitleMenu = false" x-transition>
                     <a class="dropdown-item" href="/"
                         @click.prevent="currentView = 'main'; showTitleMenu = false">TX6</a>
-                    <a class="dropdown-item" href="https://op1.psimyn.com"
-                        @click="showTitleMenu = false">OP1</a>
+                    <a class="dropdown-item" href="https://op1.psimyn.com" @click="showTitleMenu = false">OP1</a>
                 </div>
             </div>
             <div class="header-controls">
@@ -512,10 +511,17 @@
                                     <path d="M6 6h12v12H6z" />
                                 </svg>
                             </button>
-                            <div>
-                                <input x-model.number="bpm" @change="updateBpm()" @focus="$event.target.select()"
-                                    class="bpm-input" min="40" max="400">
-                                <div class="knob-label">BPM</div>
+                            <div class="bpm-controls">
+                                <div class="bpm-input-group">
+                                    <button @click="bpm = Math.max(40, bpm - 1); updateBpm()"
+                                        class="bpm-adjust-btn">−</button>
+                                    <input type="tel" x-model.number="bpm" @change="updateBpm()"
+                                        @focus="$event.target.select()" class="bpm-input" inputmode="numeric"
+                                        pattern="[0-9]*">
+                                    <button @click="bpm = Math.min(400, bpm + 1); updateBpm()"
+                                        class="bpm-adjust-btn">+</button>
+                                </div>
+                                <div class="knob-label bpm-label" @click="tapBpm()">BPM</div>
                             </div>
                         </div>
                     </div>

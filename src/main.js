@@ -8,7 +8,6 @@ const CC = {
     VOLUME: 7, AUX: 14, CUE: 15, FX: 82, EQ_HIGH: 85, EQ_MID: 86, EQ_LOW: 87,
     FILTER: 74, START_STOP: 46, BPM: 47, FX_ENGINE: 15, FX_PARAM1: 12,
     FX_PARAM2: 13, FX_RETURN: 7, FX_TRACK_SELECT: 9, PAN: 8,
-    // Additional CC numbers used in LFO targets
     AUX_SEND: 92, COMPRESSOR: 93, DETUNE: 95, SYNTH_LEN: 90
 };
 
@@ -50,9 +49,7 @@ const FX_ENGINES = {
     FX2: ['FLT', 'CRU', 'DST', 'TRM', 'FRZ', 'TPE']
 };
 
-/** Centralized LFO target definitions with CC mappings */
 const LFO_TARGETS = {
-    // Track targets (channels 0-5) - ordered: VOL, FLT, CMP, PAN, LEN, DET, AUX
     track: {
         vol: { cc: CC.VOLUME, defaultBase: 0, label: 'VOL' },
         flt: { cc: CC.FILTER, defaultBase: 64, label: 'FLT' },
@@ -62,13 +59,11 @@ const LFO_TARGETS = {
         det: { cc: CC.DETUNE, defaultBase: 0, label: 'DET' },
         aux: { cc: CC.AUX_SEND, defaultBase: 0, label: 'AUX' }
     },
-    // FX1 targets (channel 7)
     fx1: {
         fx1_active: { cc: CC.FX, defaultBase: 0, label: 'ON' },
         fx1_param: { cc: CC.FX_PARAM1, defaultBase: 0, label: 'P1' },
         fx1_return: { cc: CC.FX_RETURN, defaultBase: 0, label: 'RET' }
     },
-    // FX2 targets (channel 8)
     fx2: {
         fx2_active: { cc: CC.FX, defaultBase: 0, label: 'ON' },
         fx2_param1: { cc: CC.FX_PARAM1, defaultBase: 0, label: 'P1' },
@@ -106,8 +101,8 @@ const TIME = {
     CONNECTION_SUCCESS_DISPLAY: 2000,
     CONNECTION_ERROR_DISPLAY: 5000,
     CLOCK_QUARTER_NOTE: 24,
-    BPM_HISTORY_SIZE: 6, // Smaller window for faster response
-    BPM_OUTLIER_THRESHOLD: 0.10, // Reject readings >10% from median
+    BPM_HISTORY_SIZE: 6,
+    BPM_OUTLIER_THRESHOLD: 0.10,
     MIDI_TIMESTAMP_MASK: 8191,
     MIDI_TIMESTAMP_SHIFT: 7,
     MIDI_STATUS_MASK: 0xBF,
@@ -167,33 +162,27 @@ const clampMidiValue = (value) => Math.max(MIDI.MIN, Math.min(MIDI.MAX, Math.rou
 /** Create a unique key for track/CC value storage */
 const createTrackValueKey = (track, cc) => `${track}-${cc}`;
 
-/** Detect if running in iOS Safari (not a BLE-capable browser like Bluefy) */
 const isIosSafari = () => {
     const ua = navigator.userAgent;
     const isIos = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS|Chrome/.test(ua);
-    // Bluefy and WebBLE browsers typically have Web Bluetooth API available
     const hasBle = 'bluetooth' in navigator;
     const hasMidi = 'requestMIDIAccess' in navigator;
     return isIos && isSafari && !hasBle && !hasMidi;
 };
 
-/** Calculate LFO modulation output value */
 const calculateLfoModulation = (baseValue, amount, shapeValue) => {
     const distanceFromCenter = Math.abs(amount - LFO.AMOUNT_DEFAULT);
     const scaledAmount = distanceFromCenter * (MIDI.MID / 50);
     return clampMidiValue(baseValue + scaledAmount * shapeValue);
 };
 
-/** Calculate LFO rate from BPM and multiplier */
 const calculateBpmSyncRate = (bpm, multiplier) => {
     const quarterNoteDuration = 60 / bpm;
     const noteDuration = quarterNoteDuration / multiplier;
     const targetHz = 1 / noteDuration;
     return Math.max(LFO.RATE_MIN, Math.min(LFO.RATE_MAX, Math.round(targetHz * LFO.PHASE_MULTIPLIER)));
 };
-
-// Angle conversion functions exposed via Alpine component methods below
 
 Alpine.data('knob', (config) => ({
     knobData: { value: 0 },
@@ -313,7 +302,6 @@ const createMidiController = () => {
                 }
                 sendNext();
             } else {
-                // Not connected - resolve silently to drain queue
                 msg.resolve();
                 sendNext();
             }
@@ -324,11 +312,10 @@ const createMidiController = () => {
         }
     };
 
-    /** Clear pending messages from the send queue */
     const clearQueue = () => {
         while (sendQueue.length > 0) {
             const msg = sendQueue.shift();
-            msg.resolve(); // Resolve pending promises to prevent hanging
+            msg.resolve();
         }
     };
 
@@ -354,29 +341,22 @@ const createMidiController = () => {
             clockCount++;
             if (!isReceivingClock) isReceivingClock = true;
 
-            // Only notify listeners every quarter note (24 clock messages)
             if (clockCount % TIME.CLOCK_QUARTER_NOTE === 0) {
                 if (lastClockTime > 0) {
                     const quarterInterval = now - lastClockTime;
                     const instantBpm = 60000 / quarterInterval;
 
-                    // Outlier rejection - but detect tempo changes
                     if (bpmHistory.length >= 2) {
                         const sorted = [...bpmHistory].sort((a, b) => a - b);
                         const median = sorted[Math.floor(sorted.length / 2)];
                         const deviation = Math.abs(instantBpm - median) / median;
 
                         if (deviation <= TIME.BPM_OUTLIER_THRESHOLD) {
-                            // Normal variation, add to history
                             bpmHistory.push(instantBpm);
                         } else if (deviation > 0.20) {
-                            // Large change (>20%) - likely intentional tempo change
-                            // Clear history and start fresh with new tempo
                             bpmHistory = [instantBpm];
                         }
-                        // Else: outlier between 10-20% - ignore it
                     } else {
-                        // Build initial history without filtering
                         bpmHistory.push(instantBpm);
                     }
 
@@ -384,9 +364,7 @@ const createMidiController = () => {
                         bpmHistory.shift();
                     }
 
-                    // Report BPM after just 2 samples for quick initial response
                     if (bpmHistory.length >= 2) {
-                        // Simple average - weighted average was adding latency
                         const avgBpm = bpmHistory.reduce((a, b) => a + b, 0) / bpmHistory.length;
 
                         clockListeners.forEach(cb => {
@@ -396,7 +374,6 @@ const createMidiController = () => {
                                     bpm: avgBpm,
                                     clockCount,
                                     timestamp: now,
-                                    // Phase sync info for drift correction
                                     quarterNoteTime: quarterInterval
                                 });
                             }
@@ -501,13 +478,11 @@ const createMidiController = () => {
             }
         });
 
-        // Listen for disconnect
         bluetoothDevice.addEventListener('gattserverdisconnected', () => {
             connectionType = null;
             midiCharacteristic = null;
             bluetoothDevice = null;
             clearQueue();
-            // Reset clock state
             isReceivingClock = false;
             bpmHistory = [];
             lastClockTime = 0;
@@ -554,14 +529,12 @@ const createMidiController = () => {
 
         connectionType = 'usb';
 
-        // Listen for USB MIDI device disconnect
         midiAccess.onstatechange = (event) => {
             if (event.port === midiOutput && event.port.state === 'disconnected') {
                 connectionType = null;
                 midiOutput = null;
                 midiInput = null;
                 clearQueue();
-                // Reset clock state
                 isReceivingClock = false;
                 bpmHistory = [];
                 lastClockTime = 0;
@@ -612,20 +585,17 @@ Alpine.data('tx6Controller', () => ({
     lastTapTime: 0,
     trackValues: Alpine.$persist({}).as('tx6-trackValues'),
     midi: null,
-    _switchingChannel: false,  // Guard flag to prevent watcher re-entrancy
+    _switchingChannel: false,
 
-    // Version info for about page
     swCacheVersion: null,
     jsFileName: '',
     cssFileName: '',
 
     showIosSafariWarning: false,
 
-    // Service worker update state
     updateAvailable: false,
     _pendingWorker: null,
 
-    /** Creates standardized knob change handler - reduces boilerplate */
     createKnobHandler(knobType, customHandler) {
         return (v) => {
             if (customHandler) customHandler(v);
@@ -664,7 +634,6 @@ Alpine.data('tx6Controller', () => ({
         };
     },
 
-    // Note: synth knobs (freq, det, len) are stored in trackSynthSettings, not here
     knobs: Alpine.$persist({
         eq: { value: EQ.NEUTRAL_VALUE }, masterVolume: { value: MIDI.MIN },
         fx1: { value: MIDI.MIN },
@@ -681,13 +650,13 @@ Alpine.data('tx6Controller', () => ({
 
     globalLfos: Alpine.$persist(Array(LFO.COUNT).fill(null).map((_, i) => ({
         name: `LFO ${i + 1}`,
-        target: Object.keys(LFO_TARGETS.track)[0],  // Use first target from centralized config
+        target: Object.keys(LFO_TARGETS.track)[0],
         shape: ['sine', 'triangle', 'square', 'saw', 'sine'][i % 5],
         enabled: true,
         rate: 1.0,
         amount: LFO.AMOUNT_DEFAULT,
         phase: MIDI.MIN,
-        pwm: 50,  // Pulse width modulation (0-100, default 50%)
+        pwm: 50,
         assignedTrack: MIDI.MIN
     }))).as('tx6-globalLfos'),
 
@@ -729,7 +698,6 @@ Alpine.data('tx6Controller', () => ({
         this.currentView = view;
     },
 
-    // Angle conversion methods (replacing global window.* functions)
     midiToAngle(value) {
         return midiToAngle(value);
     },
@@ -816,8 +784,6 @@ Alpine.data('tx6Controller', () => ({
     },
 
     getGridStyle(count) {
-        // Use 3 columns if more than 4 items (e.g. 5, 6, 9)
-        // Otherwise 2 columns (e.g. 3, 4)
         const cols = count > 4 ? 3 : 2;
         return `grid-template-columns: repeat(${cols}, 1fr); grid-template-rows: repeat(${Math.ceil(count / cols)}, 1fr)`;
     },
@@ -830,41 +796,34 @@ Alpine.data('tx6Controller', () => ({
         this.initializeLfoRates();
         this.initRouting();
 
-        // Check for iOS Safari and show warning if BLE/MIDI not supported
         this.showIosSafariWarning = isIosSafari();
 
-        // Clear any hanging notes on page unload or tab switch
         window.addEventListener('beforeunload', () => {
             this.allNotesOff();
         });
 
-        // Handle stuck notes when tab loses focus
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.allNotesOff();
             }
         });
 
-        // Listen for service worker update notifications
         window.addEventListener('swUpdateAvailable', (e) => {
             this._pendingWorker = e.detail.worker;
             this.updateAvailable = true;
         });
 
-        // Schema versioning
         const storedVersion = localStorage.getItem('tx6-schema-version');
         if (storedVersion !== String(SCHEMA_VERSION)) {
             console.log(`Schema migration: ${storedVersion || 'none'} → ${SCHEMA_VERSION}`);
             localStorage.setItem('tx6-schema-version', String(SCHEMA_VERSION));
         }
 
-        // Populate version info for about page
         const scripts = document.querySelectorAll('script[src*="index"]');
         this.jsFileName = scripts.length ? scripts[0].src.split('/').pop() : '';
         const styles = document.querySelectorAll('link[rel="stylesheet"][href*="index"]');
         this.cssFileName = styles.length ? styles[0].href.split('/').pop() : '';
 
-        // Get cache version from service worker
         if ('caches' in window) {
             caches.keys().then(names => {
                 const tx6Cache = names.find(n => n.startsWith('tx6-cache'));
@@ -874,16 +833,12 @@ Alpine.data('tx6Controller', () => ({
 
 
 
-        // Validate and migrate globalLfos structure
         this.globalLfos.forEach(lfo => {
-            // Ensure assignedTrack has a valid value
             if (lfo.assignedTrack === undefined || lfo.assignedTrack === null) {
-                lfo.assignedTrack = 0; // Default to T1
+                lfo.assignedTrack = 0;
             }
-            // Coerce to number for consistent comparison
             lfo.assignedTrack = Number(lfo.assignedTrack);
 
-            // Get valid targets for this track
             let validTargets;
             if (lfo.assignedTrack === TRACKS.FX1) {
                 validTargets = LFO_TARGETS.fx1;
@@ -893,7 +848,6 @@ Alpine.data('tx6Controller', () => ({
                 validTargets = LFO_TARGETS.track;
             }
 
-            // Reset target if missing or invalid for current track
             if (!lfo.target || !validTargets[lfo.target]) {
                 lfo.target = Object.keys(validTargets)[0];
             }
@@ -901,7 +855,6 @@ Alpine.data('tx6Controller', () => ({
 
         this.lfoPhases = Array(this.globalLfos.length).fill(0);
 
-        // Ensure valid currentLfoIndex from persisted storage
         if (this.currentLfoIndex >= this.globalLfos.length) {
             this.currentLfoIndex = 0;
         }
@@ -946,7 +899,6 @@ Alpine.data('tx6Controller', () => ({
         });
 
         this.$watch('masterChannel', (newChannel, oldChannel) => {
-            // Prevent re-entrancy - the knobs.masterVolume.value assignment can trigger this again
             if (this._switchingChannel) return;
             this._switchingChannel = true;
 
@@ -967,7 +919,6 @@ Alpine.data('tx6Controller', () => ({
                 this.currentSliderMode = sliderModeMap[newChannel];
             }
 
-            // Reset guard after next tick to allow future switches
             this.$nextTick(() => {
                 this._switchingChannel = false;
             });
@@ -989,7 +940,6 @@ Alpine.data('tx6Controller', () => ({
                     }
                 }
 
-                // Send phase sync to correct drift (especially important for BLE)
                 if (this.timingWorklet && clockData.quarterNoteTime) {
                     this.timingWorklet.port.postMessage({
                         type: 'syncPhase',
@@ -1032,13 +982,11 @@ Alpine.data('tx6Controller', () => ({
             }
         });
 
-        // Handle disconnection
         this.midi.setDisconnectListener((type) => {
             this.isConnected = false;
             this.stopTimingSystem();
             this.startStopActive = false;
             this.lastSentCCValues = {};
-            // Reset clock status
             this.clockStatus = { isReceiving: false, bpm: 0, clockCount: 0, lastUpdate: 0 };
             this.status = `${type === 'ble' ? 'Bluetooth' : 'USB'} disconnected`;
             setTimeout(() => this.status = '', TIME.CONNECTION_ERROR_DISPLAY);
@@ -1058,10 +1006,7 @@ Alpine.data('tx6Controller', () => ({
     },
 
     initializeLfoRates() {
-        // Only set default rates if LFOs haven't been persisted yet
-        // Check if first LFO still has default rate of 1.0
         if (this.globalLfos[0].rate === 1.0) {
-            // Set all LFOs to 1/2 note (multiplier 0.5) of current BPM
             const multiplier = 0.5;
             const quarterNoteDuration = 60 / this.bpm;
             const noteDuration = quarterNoteDuration / multiplier;
@@ -1082,7 +1027,6 @@ Alpine.data('tx6Controller', () => ({
         try {
             await (type === 'ble' ? this.midi.connectBle() : this.midi.connectUsb());
             this.isConnected = true;
-            // Clear CC cache so values get resent on reconnect
             this.lastSentCCValues = {};
             this.status = `Connected to TX-6 via ${connectionName}`;
             setTimeout(() => this.status = '', TIME.CONNECTION_SUCCESS_DISPLAY);
@@ -1119,7 +1063,6 @@ Alpine.data('tx6Controller', () => ({
 
         applyThemeClass(this.currentTheme);
 
-        // Listen for system changes
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
             if (this.currentTheme === 'system') {
                 applyThemeClass('system');
@@ -1130,7 +1073,6 @@ Alpine.data('tx6Controller', () => ({
     toggleTheme() {
         const root = document.documentElement;
 
-        // Disable transitions during theme switch to prevent flash
         root.classList.add('no-transitions');
 
         let isDark;
@@ -1140,27 +1082,21 @@ Alpine.data('tx6Controller', () => ({
             isDark = this.currentTheme === 'dark';
         }
 
-        // Remove both classes to start fresh
         root.classList.remove('dark-theme', 'light-theme');
 
-        // Toggle
         if (isDark) {
-            // Switch to light
             this.currentTheme = 'light';
             root.classList.add('light-theme');
         } else {
-            // Switch to dark
             this.currentTheme = 'dark';
             root.classList.add('dark-theme');
         }
 
-        // Update theme-color meta tag to prevent Android system bar flickering
         const themeColor = this.currentTheme === 'dark' ? '#1a1a1a' : '#e2e2e4';
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColor);
 
         localStorage.setItem('tx6-theme', this.currentTheme);
 
-        // Re-enable transitions after paint
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 root.classList.remove('no-transitions');
@@ -1176,7 +1112,6 @@ Alpine.data('tx6Controller', () => ({
 
         this.currentTrack = trackIndex;
 
-        // Update EQ and FX knobs for the new track
         this.$nextTick(() => {
             const eqKey = `${this.currentTrack}-${this.currentEqMode}`;
             const eqValue = this.trackValues[eqKey] !== undefined ? this.trackValues[eqKey] : EQ.NEUTRAL_VALUE;
@@ -1239,21 +1174,18 @@ Alpine.data('tx6Controller', () => ({
             value = Math.max(LFO.AMOUNT_MIN, Math.min(LFO.AMOUNT_MAX, value));
         }
 
-        // Synth knobs update synthSettings directly (no entry in knobs object)
         if (['synthFreq', 'synthDet', 'synthLen'].includes(knobType)) {
             const prop = knobType.replace('synth', '').toLowerCase();
             this.synthSettings[prop] = value;
             return;
         }
 
-        // Update LFO state directly (this must happen even if knobs entry doesn't exist)
         if (['lfoRate', 'lfoAmount', 'lfoPhase', 'lfoPwm'].includes(knobType)) {
             const prop = knobType.replace('lfo', '').toLowerCase();
             this.globalLfos[this.currentLfoIndex][prop] = value;
             this.$nextTick(() => this.drawLfoWaveform());
         }
 
-        // Skip knobs update if entry doesn't exist in persisted state (migration safety)
         if (!this.knobs[knobType]) return;
 
         this.knobs[knobType].value = value;
@@ -1269,7 +1201,6 @@ Alpine.data('tx6Controller', () => ({
      * @returns {boolean} True if message was sent, false if validation failed or not connected
      */
     sendValidatedCC(channel, cc, value, isLfoGenerated = false) {
-        // Validate inputs
         if (!Number.isInteger(channel) || channel < 0 || channel > 15) {
             console.warn('Invalid MIDI channel:', channel);
             return false;
@@ -1279,26 +1210,21 @@ Alpine.data('tx6Controller', () => ({
             return false;
         }
 
-        // Clamp value to valid range
         const clampedValue = Math.max(MIDI.MIN, Math.min(MIDI.MAX, Math.round(value)));
         const key = `${channel}-${cc}`;
 
-        // Deduplication: skip if same as last sent value (reduces MIDI traffic for LFOs)
         if (this.lastSentCCValues[key] === clampedValue) {
             return false;
         }
 
-        // Store in trackValues for LFO base value lookup (unless LFO-generated)
         if (!isLfoGenerated) {
             this.trackValues[key] = clampedValue;
         }
 
-        // Check connection state
         if (!this.isConnected) {
             return false;
         }
 
-        // Update cache and send
         this.lastSentCCValues[key] = clampedValue;
         this.midi.sendCC(channel, cc, clampedValue);
         return true;
@@ -1342,7 +1268,6 @@ Alpine.data('tx6Controller', () => ({
             const prop = this.fx.currentChannel === TRACKS.FX1 ? 'return' : 'track';
             this.fx.channels[this.fx.currentChannel].values[prop] = value;
         }
-        // Note: LFO knob updates are handled by setKnobValue to avoid duplication
     },
 
     async startTimingSystem(sendMidiClock = true) {
@@ -1367,9 +1292,7 @@ Alpine.data('tx6Controller', () => ({
                         midiStop: () => sendMidiClock && this.midi.sendSystemRealTime(MIDI.SYSTEM_REALTIME.STOP),
                         midiClock: () => sendMidiClock && this.midi.sendSystemRealTime(MIDI.SYSTEM_REALTIME.CLOCK),
                         lfoUpdate: () => {
-                            // Use AudioContext time instead of performance.now()
                             const currentTime = this.audioContext.currentTime;
-                            // Run LFOs for tracks 0-5, plus FX1 (7) and FX2 (8)
                             for (let i = 0; i < TRACKS.COUNT; i++) this.runLfo(i, deltaTime, currentTime);
                             this.runLfo(TRACKS.FX1, deltaTime, currentTime);
                             this.runLfo(TRACKS.FX2, deltaTime, currentTime);
@@ -1380,7 +1303,6 @@ Alpine.data('tx6Controller', () => ({
                 };
             }
 
-            // Sync LFO start time to AudioContext
             this.lfoStartTime = this.audioContext.currentTime;
 
             this.timingWorklet.port.postMessage({
@@ -1397,9 +1319,7 @@ Alpine.data('tx6Controller', () => ({
         if (this.timingWorklet) {
             this.timingWorklet.port.postMessage({ type: 'stop' });
         }
-        // Clear LFO output values to prevent stale ghost indicators
         this.lfoOutputValues = {};
-        // Reset LFO phases for clean restart
         if (this.lfoPhases) {
             this.lfoPhases = this.lfoPhases.map(() => 0);
         }
@@ -1411,7 +1331,6 @@ Alpine.data('tx6Controller', () => ({
             await this.startTimingSystem(true); // true = send MIDI clock
         } else {
             this.stopTimingSystem();
-            // Send MIDI stop when manually stopping
             if (this.isConnected) {
                 this.midi.sendSystemRealTime(MIDI.SYSTEM_REALTIME.STOP);
             }
@@ -1426,6 +1345,32 @@ Alpine.data('tx6Controller', () => ({
             });
         }
         this.drawLfoWaveform();
+    },
+
+    tapBpm() {
+        const now = performance.now();
+        if (!this._tapTimes) this._tapTimes = [];
+
+        if (this._tapTimes.length > 0 && now - this._tapTimes[this._tapTimes.length - 1] > 2000) {
+            this._tapTimes = [];
+        }
+
+        this._tapTimes.push(now);
+
+        if (this._tapTimes.length > 8) {
+            this._tapTimes.shift();
+        }
+
+        if (this._tapTimes.length >= 2) {
+            const intervals = [];
+            for (let i = 1; i < this._tapTimes.length; i++) {
+                intervals.push(this._tapTimes[i] - this._tapTimes[i - 1]);
+            }
+            const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+            const detectedBpm = Math.round(60000 / avgInterval);
+            this.bpm = Math.max(BPM.MIN, Math.min(BPM.MAX, detectedBpm));
+            this.updateBpm();
+        }
     },
 
     handleEqChange(value) {
@@ -1467,17 +1412,14 @@ Alpine.data('tx6Controller', () => ({
     },
 
     runLfo(trackIdx, dt, audioTime) {
-        // Filter LFOs early: only process enabled LFOs with non-zero effect
         const assignedLfos = this.globalLfos.filter(lfo =>
             Number(lfo.assignedTrack) === trackIdx &&
             lfo.enabled &&
             lfo.amount !== LFO.AMOUNT_DEFAULT
         );
 
-        // Early exit if no active LFOs for this track
         if (assignedLfos.length === 0) return;
 
-        // Use AudioContext time for precise timing
         const currentTime = audioTime || (this.audioContext ? this.audioContext.currentTime : performance.now() / 1000);
         const elapsedTime = currentTime - this.lfoStartTime;
 
@@ -1485,7 +1427,6 @@ Alpine.data('tx6Controller', () => ({
             try {
                 const globalLfoIndex = this.globalLfos.indexOf(lfo);
 
-                // Validate rate is positive
                 const hz = Math.max(0.001, lfo.rate / LFO.PHASE_MULTIPLIER);
 
                 const absolutePhase = (2 * Math.PI * hz * elapsedTime) % (2 * Math.PI);
@@ -1494,10 +1435,7 @@ Alpine.data('tx6Controller', () => ({
                 const phaseOffset = (lfo.phase / MIDI.MAX) * 2 * Math.PI;
                 const effectivePhase = (absolutePhase + phaseOffset) % (2 * Math.PI);
 
-                // PWM value (0-100) normalized to threshold (0-1)
-                // Clamp to avoid divide-by-zero at extremes
                 const pwm = Math.max(0.01, Math.min(0.99, (lfo.pwm ?? 50) / 100));
-                // Normalized position within current cycle (0-1)
                 const cyclePos = effectivePhase / (2 * Math.PI);
 
                 let shapeVal = 0;
@@ -1547,12 +1485,9 @@ Alpine.data('tx6Controller', () => ({
 
                 shapeVal = shapes[lfo.shape] ? shapes[lfo.shape]() : 0;
 
-                // Amount centered at 50 (displays 0), range 0-100 (displays -50 to +50)
-                // Scale from display units to CC: max amount (50 display) = ±64 CC
                 const distanceFromCenter = Math.abs(lfo.amount - LFO.AMOUNT_DEFAULT);
                 const scaledAmount = distanceFromCenter * (MIDI.MID / 50);
 
-                // Get target config from centralized LFO_TARGETS
                 let targetConfig, channel;
                 if (trackIdx <= 5 && LFO_TARGETS.track[lfo.target]) {
                     targetConfig = LFO_TARGETS.track[lfo.target];
@@ -1570,7 +1505,6 @@ Alpine.data('tx6Controller', () => ({
                 const { cc, defaultBase } = targetConfig;
                 const base = Number(this.trackValues[`${channel}-${cc}`]) || defaultBase;
 
-                // LFO oscillates around base value, clamped to MIDI range
                 const lfoValue = Math.max(MIDI.MIN, Math.min(MIDI.MAX, base + scaledAmount * shapeVal));
 
                 const outputKey = `${channel}-${cc}`;
@@ -1614,24 +1548,24 @@ Alpine.data('tx6Controller', () => ({
     setupLfoCanvas() {
         const canvas = document.getElementById('lfo-canvas');
         if (!canvas) return null;
-        
+
         const dpr = window.devicePixelRatio || 1;
         const rect = canvas.getBoundingClientRect();
         const width = rect.width || 300;
         const height = rect.height || 100;
-        
+
         canvas.width = Math.round(width * dpr);
         canvas.height = Math.round(height * dpr);
         canvas.style.width = width + 'px';
         canvas.style.height = height + 'px';
-        
+
         const ctx = canvas.getContext('2d');
         ctx.scale(dpr, dpr);
-        
+
         canvas._logicalWidth = width;
         canvas._logicalHeight = height;
         canvas._dpr = dpr;
-        
+
         return ctx;
     },
 
@@ -1639,7 +1573,6 @@ Alpine.data('tx6Controller', () => ({
         const canvas = document.getElementById('lfo-canvas');
         if (!canvas) return;
 
-        // Setup canvas for HiDPI if not already done or if size changed
         const rect = canvas.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
         if (!canvas._dpr || canvas._logicalWidth !== rect.width) {
@@ -1654,7 +1587,6 @@ Alpine.data('tx6Controller', () => ({
         const computedStyle = getComputedStyle(document.documentElement);
         const textColor = computedStyle.getPropertyValue('--text-color').trim();
 
-        // Clear with proper transform handling
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1681,7 +1613,6 @@ Alpine.data('tx6Controller', () => ({
         ctx.globalAlpha = 1.0;
         ctx.setLineDash([]);
 
-        // Use Manrope font with proper sizing
         ctx.fillStyle = textColor;
         ctx.globalAlpha = 0.6;
         ctx.font = '500 11px Manrope, sans-serif';
@@ -1696,7 +1627,6 @@ Alpine.data('tx6Controller', () => ({
         const phaseDegrees = Math.floor((currentLfo.phase / MIDI.MAX) * 360);
         ctx.fillText(`Phase: ${phaseDegrees}°`, 5, height - 5);
 
-        // PWM value (0-100) normalized to threshold (0-1)
         const pwm = (currentLfo.pwm ?? 50) / 100;
 
         ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--button-color');
