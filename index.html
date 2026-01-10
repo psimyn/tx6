@@ -664,34 +664,44 @@
         <div class="view-content">
             <h2 class="view-title">Help</h2>
             <div class="info-text">
-                <p>Connect Bluetooth or USB to get started.</p>
-                <p>Make sure your TX-6 has MIDI CTRL IN enabled, and BLE set to ACCEPT (if needed)</p>
+                <p>Make sure TX-6 has MIDI CTRL IN enabled, and BLE set to ACCEPT.</p>
+                <p></p>
 
                 <h3 id="mix">MIX</h3>
                 <ul>
-                    <li>Select track (T1-T6) from top row</li>
-                    <li>knob 1 controls filter and EQ</li>
-                    <li>Master knob controls aux, cue, or master volume</li>
+                    <li>Select track (T1-T6) from top</li>
+                    <li>Slider controls volume</li>
+                    <li>Knob 1 controls filter and EQ</li>
+                    <li>Knob 2 controls compression, panning, and FX1 send</li>
+                    <li>Master knob controls master volume</li>
+                    <li>Selecting aux, cue, or master from the left to change what the volume controls affect. Note that
+                        CUE has no effect for the slider</li>
                 </ul>
 
                 <h3 id="fx">FX</h3>
                 <ul>
                     <li>Switch between FX I/II, select engine, adjust parameters</li>
+                    <li>Enable with the large button</li>
                 </ul>
-                <p>When FX1 is selected, select track from top row, then move the slider to adjust FX amount for that
-                    track. RET</p>
-                <p> </p>
-
-                <h3 id="lfo">LFO</h3>
-                <p>Note: these only work while play is pressed</p>
-                <ul>
-                    <li>Configure LFOs with waveform, rate, amount, phase</li>
-                    <li>Control BPM and transport (play/stop)</li>
-                </ul>
+                <p>When FX1 is selected, select track from top row, then move the slider to adjust FX send for that
+                    track.</p>
+                <p>When FX2 is selected, choose track from the Track dropdown. The selected track from the top row is
+                    ignored.</p>
 
                 <h3 id="synth">Synth</h3>
                 <ul>
-                    <li>Set sequence pattern, waveform, frequency, and length</li>
+                    <li>Set sequence, waveform, frequency, and length</li>
+                    <li>Use tiny keyboard for live playing. Set synth mode on TX-6 to either PLAY or SEQ/PLAY</li>
+                    <li>The last-pressed note will set the FREQ (used for sequences)</li>
+                    <li>Use the arrows to set the octave</li>
+                </ul>
+
+                <h3 id="lfo">LFO</h3>
+                <p>Note: these only work while play is pressed. If you are sending CLK signal from the TX-6 this will
+                    happen automatically. Otherwise set clock source to USB or BLE to control the BPM from the app.</p>
+                <ul>
+                    <li>Configure LFOs with waveform, rate, amount, phase</li>
+                    <li>Control BPM and transport (play/stop)</li>
                 </ul>
             </div>
             <button @click="currentView = 'main'" class="back-button">Back</button>
@@ -703,14 +713,14 @@
         <div class="view-content">
             <h2 class="view-title">About</h2>
             <div class="info-text">
-                <p>Remote control for TX-6 using Bluetooth or USB.</p>
+                <p>Control your TX-6 using Bluetooth or USB.</p>
 
                 <h3>Features</h3>
                 <ul>
                     <li>LFOs for most parameters</li>
-                    <li>Track volume, FX, and EQ control</li>
+                    <li>Per-track volume, FX, and EQ</li>
                     <li>Synth config and tiny keyboard for live playing</li>
-                    <li>Change FX settings, buttons to jump straight between</li>
+                    <li>Change and automate FX settings</li>
                 </ul>
 
                 <h3>Version Info</h3>
