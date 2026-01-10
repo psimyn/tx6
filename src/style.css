@@ -639,6 +639,7 @@ body.dark-theme .ios-safari-warning a {
     border-radius: 0;
     border-left: none;
     border-right: none;
+    padding: 0.26rem 0;
 }
 
 .bpm-controls {
