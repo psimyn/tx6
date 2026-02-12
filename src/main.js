@@ -1818,11 +1818,24 @@ Alpine.data('tx6Controller', () => ({
     },
 
     initRouting() {
-        // Handle initial path
+        // Handle initial path and persistence interaction
         const path = window.location.pathname;
-        if (path === '/help') this.currentView = 'help';
-        else if (path === '/about') this.currentView = 'about';
-        // Don't override persisted view for main views (main, fx, synth, lfo)
+        const transientViews = ['help', 'about'];
+
+        // If loading root URL, check if we need to reset a transient persisted view
+        if (path === '/' || path === '') {
+            if (transientViews.includes(this.currentView)) {
+                this.currentView = 'main';
+            }
+        }
+        // Explicit routes always override persistence
+        else if (path === '/help') {
+            this.currentView = 'help';
+        }
+        else if (path === '/about') {
+            this.currentView = 'about';
+        }
+        // ... otherwise keep persisted view (for main, fx, etc.)
 
         // Update URL when view changes (using history API)
         this.$watch('currentView', (view) => {
