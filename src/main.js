@@ -581,6 +581,22 @@ Alpine.data('tx6Controller', () => ({
     masterChannel: Alpine.$persist('volume').as('tx6-masterChannel'),
     currentLfoIndex: Alpine.$persist(0).as('tx6-currentLfoIndex'),
     lfoPhases: [],  // Synced with globalLfos.length in init()
+
+    // Musical divisions: multipliers for Hz = mult * bpm / 60
+    // Lower values = slower (more bars), higher values = faster (fraction of a bar)
+    rateDivisions: [
+        { mult: 1/16, label: '16' },    // 16 bars
+        { mult: 1/8, label: '8' },      // 8 bars
+        { mult: 1/4, label: '4' },      // 4 bars
+        { mult: 1/2, label: '2' },      // 2 bars
+        { mult: 1, label: '1' },        // 1 bar
+        { mult: 2, label: '½' },        // half bar
+        { mult: 4, label: '¼' },        // quarter note
+        { mult: 8, label: '⅛' },        // eighth note
+        { mult: 16, label: '1/16' }     // sixteenth note
+    ],
+    // Target division index per LFO (default 4 = "1 bar")
+    lfoTargetDivisions: [],
     lfoStartTime: null,
     lastTapTime: 0,
     trackValues: Alpine.$persist({}).as('tx6-trackValues'),
@@ -742,9 +758,57 @@ Alpine.data('tx6Controller', () => ({
         return '';
     },
 
-    getRateButtonLabel(mult) {
-        const labels = { 0.25: '1', 0.5: '½', [1 / 3]: '⅓', 1: '¼', 2: '⅛', 4: '1/16' };
-        return labels[mult];
+    getRateForDivision(mult) {
+        const targetHz = mult * this.bpm / 60;
+        return Math.max(LFO.RATE_MIN, Math.min(LFO.RATE_MAX, Math.round(targetHz * LFO.PHASE_MULTIPLIER)));
+    },
+
+    decreaseLfoRate() {
+        const idx = this.currentLfoIndex;
+        const targetIdx = this.lfoTargetDivisions[idx];
+        if (targetIdx > 0) {
+            const newIdx = targetIdx - 1;
+            this.lfoTargetDivisions[idx] = newIdx;
+            const rate = this.getRateForDivision(this.rateDivisions[newIdx].mult);
+            this.globalLfos[idx].rate = rate;
+            this.knobs.lfoRate.value = rate;
+            this.$nextTick(() => this.drawLfoWaveform());
+        }
+    },
+
+    increaseLfoRate() {
+        const idx = this.currentLfoIndex;
+        const targetIdx = this.lfoTargetDivisions[idx];
+        if (targetIdx < this.rateDivisions.length - 1) {
+            const newIdx = targetIdx + 1;
+            this.lfoTargetDivisions[idx] = newIdx;
+            const rate = this.getRateForDivision(this.rateDivisions[newIdx].mult);
+            this.globalLfos[idx].rate = rate;
+            this.knobs.lfoRate.value = rate;
+            this.$nextTick(() => this.drawLfoWaveform());
+        }
+    },
+
+    isLfoRateSynced() {
+        const idx = this.currentLfoIndex;
+        const targetIdx = this.lfoTargetDivisions[idx];
+        const targetRate = this.getRateForDivision(this.rateDivisions[targetIdx].mult);
+        return Math.abs(this.globalLfos[idx].rate - targetRate) < 2;
+    },
+
+    getLfoRateLabel() {
+        const idx = this.currentLfoIndex;
+        const targetIdx = this.lfoTargetDivisions[idx];
+        return this.rateDivisions[targetIdx].label;
+    },
+
+    resetLfoBaseRate() {
+        const idx = this.currentLfoIndex;
+        const targetIdx = this.lfoTargetDivisions[idx];
+        const rate = this.getRateForDivision(this.rateDivisions[targetIdx].mult);
+        this.globalLfos[idx].rate = rate;
+        this.knobs.lfoRate.value = rate;
+        this.$nextTick(() => this.drawLfoWaveform());
     },
 
     getFxEngineName() {
@@ -854,6 +918,7 @@ Alpine.data('tx6Controller', () => ({
         });
 
         this.lfoPhases = Array(this.globalLfos.length).fill(0);
+        this.lfoTargetDivisions = Array(this.globalLfos.length).fill(4); // default to "1 bar"
 
         if (this.currentLfoIndex >= this.globalLfos.length) {
             this.currentLfoIndex = 0;
@@ -1541,6 +1606,7 @@ Alpine.data('tx6Controller', () => ({
             assignedTrack: MIDI.MIN
         });
         this.lfoPhases.push(0);
+        this.lfoTargetDivisions.push(4);
         this.currentLfoIndex = newIndex;
         this.updateLfoKnobs();
     },
@@ -1763,27 +1829,6 @@ Alpine.data('tx6Controller', () => ({
         document.addEventListener('touchend', endDrag);
     },
 
-    setLfoRateFromBpm(multiplier) {
-        const quarterNoteDuration = 60 / this.bpm;
-        const noteDuration = quarterNoteDuration / multiplier;
-        const targetHz = 1 / noteDuration;
-
-        let rateValue = Math.max(LFO.RATE_MIN, Math.min(LFO.RATE_MAX, Math.round(targetHz * LFO.PHASE_MULTIPLIER)));
-
-        this.globalLfos[this.currentLfoIndex].rate = rateValue;
-        this.knobs.lfoRate.value = rateValue;
-
-        this.$nextTick(() => this.drawLfoWaveform());
-    },
-
-    isRateButtonActive(multiplier) {
-        const quarterNoteDuration = 60 / this.bpm;
-        const noteDuration = quarterNoteDuration / multiplier;
-        const targetHz = 1 / noteDuration;
-        const expectedRateValue = Math.round(targetHz * LFO.PHASE_MULTIPLIER);
-
-        return this.globalLfos[this.currentLfoIndex].rate === expectedRateValue;
-    },
 
     updateFxDisplay() {
         const channelData = this.fx.channels[this.fx.currentChannel];

@@ -452,12 +452,12 @@
                             <span class="knob-value" x-text="getLfoKnobDisplay('lfoRate')"></span>
                             <span class="knob-label" x-text="getLfoKnobUnit('lfoRate')"></span>
                         </div>
-                        <div class="rate-buttons">
-                            <template x-for="mult in [0.25, 0.5, 1/3, 1, 2, 4]">
-                                <button @click="setLfoRateFromBpm(mult)" class="rate-button"
-                                    :class="{ 'active': isRateButtonActive(mult) }" x-text="getRateButtonLabel(mult)">
-                                </button>
-                            </template>
+                        <div class="rate-buttons-row">
+                            <button @click="decreaseLfoRate()" class="rate-button-small">−</button>
+                            <button @click="resetLfoBaseRate()" class="rate-button-small rate-label"
+                                :class="{ 'active': isLfoRateSynced() }" x-text="getLfoRateLabel()">
+                            </button>
+                            <button @click="increaseLfoRate()" class="rate-button-small">+</button>
                         </div>
                     </div>
 
